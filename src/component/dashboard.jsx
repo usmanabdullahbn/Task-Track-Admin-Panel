@@ -4,19 +4,22 @@ import DashboardStats from "./dashboard-stats"
 
 const DashboardContent = () => {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      {/* Sidebar (fixed width on desktop, collapsible on mobile) */}
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
-          <div className="mb-8 flex items-center justify-between">
+
+      {/* Main content area */}
+      <main className="flex-1 overflow-y-auto pt-20 md:pt-0">
+        <div className="p-4 sm:p-6 md:p-8">
+          {/* Header */}
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="mt-2 text-gray-600">Welcome back, Admin</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="mt-1 sm:mt-2 text-sm text-gray-600">Welcome back, Admin</p>
             </div>
-            <button className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
-              Sign Out
-            </button>
           </div>
+
+          {/* Stats Section */}
           <DashboardStats />
         </div>
       </main>

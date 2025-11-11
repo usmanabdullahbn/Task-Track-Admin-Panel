@@ -9,11 +9,14 @@ const DashboardStats = () => {
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {stats.map((stat) => (
-        <div key={stat.label} className={`rounded-lg border p-6 ${stat.color}`}>
+        <div
+          key={stat.label}
+          className={`rounded-xl border p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow ${stat.color}`}
+        >
           <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
         </div>
       ))}
     </div>

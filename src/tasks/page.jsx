@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Link } from "react-router-dom" // ✅ correct import
+import { Link } from "react-router-dom"
 import Sidebar from "../component/sidebar"
 import { tasks as mockTasks } from "../lib/mock-data"
 
@@ -14,13 +14,16 @@ const TasksPage = () => {
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      {/* Sidebar */}
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Task Management</h1>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Task Management</h1>
             <Link
               to="/tasks/new"
               className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
@@ -29,45 +32,45 @@ const TasksPage = () => {
             </Link>
           </div>
 
-          {/* Table */}
+          {/* Table Wrapper */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
             {/* Search */}
-            <div className="border-b border-gray-200 p-6">
+            <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
                 type="text"
                 placeholder="Search tasks by title or customer..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
               />
             </div>
 
             {/* Table Content */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[900px] text-sm sm:text-base">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Project</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Order</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Asset</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Duration</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Completed</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Created</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Action</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Title</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Customer</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Project</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Order</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Asset</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Duration</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Completed</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Created</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTasks.map((task) => (
                     <tr key={task.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{task.title}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.customer}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.project}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.order}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.asset}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.duration}</td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">{task.title}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.customer}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.project}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.order}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.asset}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.duration}</td>
+                      <td className="px-4 sm:px-6 py-3">
                         <span
                           className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
                             task.completed === "Yes"
@@ -78,10 +81,10 @@ const TasksPage = () => {
                           {task.completed}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{task.created}</td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{task.created}</td>
+                      <td className="px-4 sm:px-6 py-3">
                         <Link
-                          to={`/tasks/${task.id}`} 
+                          to={`/tasks/${task.id}`}
                           className="text-green-700 hover:text-green-900 font-medium"
                         >
                           Edit
@@ -93,8 +96,15 @@ const TasksPage = () => {
               </table>
             </div>
 
+            {/* Empty State */}
+            {filteredTasks.length === 0 && (
+              <p className="text-center text-gray-500 py-6 text-sm sm:text-base">
+                No tasks found.
+              </p>
+            )}
+
             {/* Footer */}
-            <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div className="border-t border-gray-200 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm text-gray-600">
                 Showing 1 to {filteredTasks.length} of {tasks.length} entries
               </p>

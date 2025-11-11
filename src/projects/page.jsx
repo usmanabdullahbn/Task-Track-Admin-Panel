@@ -14,13 +14,16 @@ const ProjectsPage = () => {
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      {/* Sidebar */}
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projects</h1>
             <Link
               to="/projects/new"
               className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
@@ -29,38 +32,38 @@ const ProjectsPage = () => {
             </Link>
           </div>
 
-          {/* Search Input */}
+          {/* Search box */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 p-6">
+            <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
                 type="text"
                 placeholder="Search projects by name or customer..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
               />
             </div>
 
-            {/* Table */}
+            {/* Table Wrapper */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[600px] text-sm sm:text-base">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Action</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Title</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Customer</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Location</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Contact</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProjects.map((project) => (
                     <tr key={project.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{project.title}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{project.customer}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{project.location}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{project.contactName}</td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">{project.title}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{project.customer}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{project.location}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">{project.contactName}</td>
+                      <td className="px-4 sm:px-6 py-3">
                         <Link
                           to={`/projects/${project.id}`}
                           className="text-green-700 hover:text-green-900 font-medium"
@@ -73,6 +76,13 @@ const ProjectsPage = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Empty State */}
+            {filteredProjects.length === 0 && (
+              <p className="text-center text-gray-500 py-6 text-sm sm:text-base">
+                No projects found.
+              </p>
+            )}
           </div>
         </div>
       </main>
