@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { projects as mockProjects } from "../lib/mock-data";
@@ -29,11 +29,9 @@ const EditProjectPage = () => {
       <Sidebar />
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
+          {/* Header */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <Link
-              to="/projects"
-              className="text-green-700 hover:text-green-900"
-            >
+            <Link to="/projects" className="text-green-700 hover:text-green-900">
               ← Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -45,22 +43,16 @@ const EditProjectPage = () => {
             {/* Form Section */}
             <div className="lg:col-span-2">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+
                 {[
                   ["customer", "Customer", "title", "Project Title"],
-                  [
-                    "contactName",
-                    "Contact Name",
-                    "contactPhone",
-                    "Contact Phone",
-                  ],
+                  ["contactName", "Contact Name", "contactPhone", "Contact Phone"],
                   ["contactEmail", "Contact Email", "location", "Location"],
-                  ["latitude", "Latitude", "longitude", "Longitude"],
+                  ["latitude", "Latitude", "longitude", "Longitude"]
                 ].map(([name1, label1, name2, label2], i) => (
                   <div
                     key={i}
-                    className={`mt-${
-                      i === 0 ? "0" : "6"
-                    } grid grid-cols-1 sm:grid-cols-2 gap-6`}
+                    className={`mt-${i === 0 ? "0" : "6"} grid grid-cols-1 sm:grid-cols-2 gap-6`}
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -74,6 +66,7 @@ const EditProjectPage = () => {
                         className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                       />
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {label2}
@@ -104,13 +97,10 @@ const EditProjectPage = () => {
               </div>
             </div>
 
-            {/* Map Section */}
+            {/* Map Section (Placeholder) */}
             <div className="lg:col-span-1">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm h-96">
-                {/* <MapComponent
-                  lat={parseFloat(formData.latitude || 0)}
-                  lng={parseFloat(formData.longitude || 0)}
-                /> */}
+                {/* Map comes here */}
               </div>
             </div>
           </div>
