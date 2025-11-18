@@ -1,11 +1,12 @@
-import { useState } from "react"
-import Link from "react-router-dom"
+import React, { useState } from "react"
+import { useParams, Link } from "react-router-dom"
 import Sidebar from "../component/sidebar"
 import { employees as mockEmployees } from "../lib/mock-data"
-import EmployeeTimeline from "../component/employee-timeline"
 
-const EmployeeTimelinePage = ({ params }) => {
-  const employee = mockEmployees.find((e) => e.id === params.id)
+
+const EmployeeTimelinePage = () => {
+  const { id } = useParams() // <-- useParams hook to get the "id" from the URL
+  const employee = mockEmployees.find((e) => e.id === id)
   const [selectedCustomer, setSelectedCustomer] = useState("ABC Traders")
   const [selectedTask, setSelectedTask] = useState("Install Equipment")
   const [selectedDate, setSelectedDate] = useState("2025-10-09")
@@ -28,7 +29,7 @@ const EmployeeTimelinePage = ({ params }) => {
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <Link href="/employees" className="text-green-700 hover:text-green-900">
+            <Link to="/employees" className="text-green-700 hover:text-green-900">
               ← Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Employee Timeline</h1>
@@ -87,7 +88,7 @@ const EmployeeTimelinePage = ({ params }) => {
                 Show Timeline
               </button>
             </div>
-            <EmployeeTimeline employee={employee.name} date={selectedDate} />
+            {/* <EmployeeTimeline employee={employee.name} date={selectedDate} /> */}
           </div>
         </div>
       </main>

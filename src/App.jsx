@@ -20,6 +20,10 @@ import NewOrderPage from "./orders/new-order";
 import EditOrderPage from "./orders/order_id";
 import NewTaskPage from "./tasks/new-task";
 import EditTaskPage from "./tasks/task_id";
+import NewProjectPage from "./projects/new-project";
+import EditProjectPage from "./projects/project_id";
+import EmployeeTimelinePage from "./employees/employees_id";
+import NewEmployeePage from "./employees/new-employees";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -43,7 +47,6 @@ const App = () => {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/employees" element={<EmployeesPage />} />
 
-
         {/* Customers routes */}
         <Route path="/customers/new" element={<NewCustomerPage />} />
         <Route path="/customers/:id" element={<EditCustomerPage />} />
@@ -53,20 +56,20 @@ const App = () => {
         <Route path="/orders/:id" element={<EditOrderPage />} />
 
         {/* project routes */}
-        {/* <Route path="/projects/new" element={<NewProjectPage />} />
-        <Route path="/projects/:id" element={<EditProjectPage/>} /> */}
-        
+        <Route path="/projects/new" element={<NewProjectPage />} />
+        <Route path="/projects/:id" element={<EditProjectPage />} />
+
         {/* Asset routes */}
         <Route path="/assets/new" element={<NewAssetPage />} />
         <Route path="/assets/:id" element={<EditAsset />} />
-        
+
         {/* Task routes */}
         <Route path="/tasks/new" element={<NewTaskPage />} />
         <Route path="/tasks/:id" element={<EditTaskPage />} />
 
         {/* Task routes */}
-        {/* <Route path="/employees/new" element={<NewEmployeePage />} />
-        <Route path="/employees/:id" element={<EmployeeTimeline />} /> */}
+        <Route path="/employees/new" element={<NewEmployeePage />} />
+        <Route path="/employees/:id" element={<EmployeeTimelinePage />} />
 
         {/* 404 fallback */}
         <Route path="*" element={<NotFoundPage />} />
