@@ -23,7 +23,7 @@ const Login = () => {
         loggedInAt: Date.now(),
       };
 
-      localStorage.setItem("admin", JSON.stringify(adminDetails));
+      localStorage.setItem("User", JSON.stringify(adminDetails));
 
       // Clear any previous error and redirect to dashboard
       setError("");

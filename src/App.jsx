@@ -39,24 +39,20 @@ const App = () => {
 
   // On mount, if admin exists redirect to root. Also listen for storage
   // events so cross-tab logins/logouts will route appropriately.
-  useEffect(() => {
-    if (localStorage.getItem("admin")) {
-      navigate("/", { replace: true });
-    }
-
-    const onStorage = (e) => {
-      if (e.key === "admin") {
-        if (e.newValue) {
-          navigate("/", { replace: true });
-        } else {
-          navigate("/login", { replace: true });
-        }
+useEffect(() => {
+  const onStorage = (e) => {
+    if (e.key === "User") {
+      if (e.newValue) {
+        navigate("/", { replace: true });
+      } else {
+        navigate("/login", { replace: true });
       }
-    };
+    }
+  };
 
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [navigate]);
+  window.addEventListener("storage", onStorage);
+  return () => window.removeEventListener("storage", onStorage);
+}, [navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,7 +62,7 @@ const App = () => {
         <Route
           path="/"
           element={
-            localStorage.getItem("admin") ? (
+            localStorage.getItem("User") ? (
               <ProtectedRoute>
                 <DashboardContent />
               </ProtectedRoute>

@@ -21,7 +21,7 @@ const Sidebar = () => {
   const handleSignOut = () => {
     // Clear stored admin data and navigate to login
     try {
-      localStorage.removeItem("admin");
+      localStorage.removeItem("User");
     } catch (e) {
       // ignore
     }
