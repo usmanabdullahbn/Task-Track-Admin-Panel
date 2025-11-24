@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { useIsMobile } from "./useIsMobile";
 
@@ -19,9 +19,16 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = () => {
-    // your signout logic here (e.g. clearing tokens, navigating to login)
-    console.log("Signed out");
+    // Clear stored admin data and navigate to login
+    try {
+      localStorage.removeItem("admin");
+    } catch (e) {
+      // ignore
+    }
+    navigate("/login", { replace: true });
   };
+
+  const navigate = useNavigate();
 
   if (isMobile) {
     return (

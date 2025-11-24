@@ -1,5 +1,5 @@
-import React from "react";
-import { Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 
 import AssetsPage from "./assets/Page";
 import DashboardContent from "./component/dashboard";
@@ -24,6 +24,8 @@ import NewProjectPage from "./projects/new-project";
 import EditProjectPage from "./projects/project_id";
 import EmployeeTimelinePage from "./employees/employees_id";
 import NewEmployeePage from "./employees/new-employees";
+import Login from "./component/LoginPage";
+import ProtectedRoute from "./component/ProtectedRoute";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -33,43 +35,81 @@ const NotFoundPage = () => (
 );
 
 const App = () => {
+  const navigate = useNavigate();
+
+  // On mount, if admin exists redirect to root. Also listen for storage
+  // events so cross-tab logins/logouts will route appropriately.
+  useEffect(() => {
+    if (localStorage.getItem("admin")) {
+      navigate("/", { replace: true });
+    }
+
+    const onStorage = (e) => {
+      if (e.key === "admin") {
+        if (e.newValue) {
+          navigate("/", { replace: true });
+        } else {
+          navigate("/login", { replace: true });
+        }
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-gray-50">
+
       <Routes>
-        {/* Dashboard */}
-        <Route path="/" element={<DashboardContent />} />
+        {/* Root: if admin in localStorage -> dashboard, else -> /login */}
+        <Route
+          path="/"
+          element={
+            localStorage.getItem("admin") ? (
+              <ProtectedRoute>
+                <DashboardContent />
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
-        {/* Main sections */}
-        <Route path="/customers" element={<CustomersPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/assets" element={<AssetsPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/employees" element={<EmployeesPage />} />
+        {/* Public Route */}
+        <Route path="/login" element={<Login />} />
 
-        {/* Customers routes */}
-        <Route path="/customers/new" element={<NewCustomerPage />} />
-        <Route path="/customers/:id" element={<EditCustomerPage />} />
+        {/* Main sections (protected) */}
+        <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        <Route path="/assets" element={<ProtectedRoute><AssetsPage /></ProtectedRoute>} />
+        <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+        <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
 
-        {/* Orders routes */}
-        <Route path="/orders/new" element={<NewOrderPage />} />
-        <Route path="/orders/:id" element={<EditOrderPage />} />
+        {/* Customers routes (protected) */}
+        <Route path="/customers/new" element={<ProtectedRoute><NewCustomerPage /></ProtectedRoute>} />
+        <Route path="/customers/:id" element={<ProtectedRoute><EditCustomerPage /></ProtectedRoute>} />
 
-        {/* project routes */}
-        <Route path="/projects/new" element={<NewProjectPage />} />
-        <Route path="/projects/:id" element={<EditProjectPage />} />
+        {/* Orders routes (protected) */}
+        <Route path="/orders/new" element={<ProtectedRoute><NewOrderPage /></ProtectedRoute>} />
+        <Route path="/orders/:id" element={<ProtectedRoute><EditOrderPage /></ProtectedRoute>} />
 
-        {/* Asset routes */}
-        <Route path="/assets/new" element={<NewAssetPage />} />
-        <Route path="/assets/:id" element={<EditAsset />} />
+        {/* project routes (protected) */}
+        <Route path="/projects/new" element={<ProtectedRoute><NewProjectPage /></ProtectedRoute>} />
+        <Route path="/projects/:id" element={<ProtectedRoute><EditProjectPage /></ProtectedRoute>} />
 
-        {/* Task routes */}
-        <Route path="/tasks/new" element={<NewTaskPage />} />
-        <Route path="/tasks/:id" element={<EditTaskPage />} />
+        {/* Asset routes (protected) */}
+        <Route path="/assets/new" element={<ProtectedRoute><NewAssetPage /></ProtectedRoute>} />
+        <Route path="/assets/:id" element={<ProtectedRoute><EditAsset /></ProtectedRoute>} />
 
-        {/* Task routes */}
-        <Route path="/employees/new" element={<NewEmployeePage />} />
-        <Route path="/employees/:id" element={<EmployeeTimelinePage />} />
+        {/* Task routes (protected) */}
+        <Route path="/tasks/new" element={<ProtectedRoute><NewTaskPage /></ProtectedRoute>} />
+        <Route path="/tasks/:id" element={<ProtectedRoute><EditTaskPage /></ProtectedRoute>} />
+
+        {/* Employee routes (protected) */}
+        <Route path="/employees/new" element={<ProtectedRoute><NewEmployeePage /></ProtectedRoute>} />
+        <Route path="/employees/:id" element={<ProtectedRoute><EmployeeTimelinePage /></ProtectedRoute>} />
 
         {/* 404 fallback */}
         <Route path="*" element={<NotFoundPage />} />
