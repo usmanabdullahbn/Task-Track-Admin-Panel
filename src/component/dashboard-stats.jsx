@@ -13,11 +13,12 @@ import {
 
 const DashboardStats = ({ stats = {} }) => {
   const statItems = [
+    
     {
-      label: "Total Users",
-      value: stats.totalUsers || 13,
-      color: "bg-blue-50 border-blue-200 text-blue-600",
-      icon: <FaUsers />,
+      label: "Total Employees",
+      value: stats.totalEmployees || 14,
+      color: "bg-red-50 border-red-200 text-red-600",
+      icon: <FaUserTie />,
     },
     {
       label: "Total Customers",
@@ -84,12 +85,6 @@ const DashboardStats = ({ stats = {} }) => {
       value: stats.totalAssets || 11,
       color: "bg-gray-50 border-gray-200 text-gray-700",
       icon: <FaCubes />,
-    },
-    {
-      label: "Total Employees",
-      value: stats.totalEmployees || 14,
-      color: "bg-red-50 border-red-200 text-red-600",
-      icon: <FaUserTie />,
     },
   ];
 
