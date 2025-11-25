@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import DashboardStats from "./dashboard-stats";
-import { apiClient } from "../lib/api-client"
+import { apiClient } from "../lib/api-client";
 
 const DashboardContent = () => {
   const [stats, setStats] = useState(null);
@@ -12,8 +12,11 @@ const DashboardContent = () => {
     const fetchStats = async () => {
       try {
         const data = await apiClient.getDashboardStats();
-        setStats(data);
-        console.log(data)
+
+        // IMPORTANT FIX ⬇️
+        setStats(data.stats);
+
+        console.log("Dashboard Stats:", data.stats);
       } catch (err) {
         setError(err.message || "Failed to load dashboard stats");
       } finally {
@@ -54,7 +57,7 @@ const DashboardContent = () => {
             <p className="text-center text-red-600 text-sm mb-4">{error}</p>
           )}
 
-          {/* Stats Section */}
+          {/* Stats */}
           {!loading && !error && stats && <DashboardStats stats={stats} />}
         </div>
       </main>
