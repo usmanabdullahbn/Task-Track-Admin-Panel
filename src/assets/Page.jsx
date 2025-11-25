@@ -1,18 +1,19 @@
-import React, { useState } from "react"
-import { assets as mockAssets } from "../lib/mock-data"
-import { Link } from "react-router-dom"
-import Sidebar from "../component/sidebar"
+import React, { useState } from "react";
+import { assets as mockAssets } from "../lib/mock-data";
+import { Link } from "react-router-dom";
+import Sidebar from "../component/sidebar";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const AssetsPage = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [assets] = useState(mockAssets)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [assets] = useState(mockAssets);
 
   const filteredAssets = assets.filter(
     (asset) =>
       asset.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.barcode.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -24,7 +25,9 @@ const AssetsPage = () => {
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Assets</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Assets
+            </h1>
             <Link
               to="/assets/new"
               className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
@@ -50,29 +53,65 @@ const AssetsPage = () => {
               <table className="w-full min-w-[700px] text-sm sm:text-base">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Title</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Customer</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Category</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Manufacturer</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Barcode</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">Action</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Title
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Customer
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Category
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Manufacturer
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Barcode
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">{asset.title}</td>
-                      <td className="px-4 sm:px-6 py-3 text-gray-600">{asset.customer}</td>
-                      <td className="px-4 sm:px-6 py-3 text-gray-600">{asset.category}</td>
-                      <td className="px-4 sm:px-6 py-3 text-gray-600">{asset.manufacturer}</td>
-                      <td className="px-4 sm:px-6 py-3 text-gray-600">{asset.barcode}</td>
+                    <tr
+                      key={asset.id}
+                      className="border-b border-gray-200 hover:bg-gray-50"
+                    >
+                      <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">
+                        {asset.title}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">
+                        {asset.customer}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">
+                        {asset.category}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">
+                        {asset.manufacturer}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-600">
+                        {asset.barcode}
+                      </td>
                       <td className="px-4 sm:px-6 py-3">
-                        <Link
-                          to={`/assets/${asset.id}`}
-                          className="text-green-700 hover:text-green-900 font-medium"
-                        >
-                          Edit
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {/* Edit Button */}
+                          <Link
+                            // to={`/customers/${customer._id}`}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm" // brighter teal
+                          >
+                            <FaEdit size={14} />
+                          </Link>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDelete(customer._id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm" // brighter red
+                          >
+                            <FaTrash size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -90,7 +129,7 @@ const AssetsPage = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default AssetsPage
+export default AssetsPage;

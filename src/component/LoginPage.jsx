@@ -11,36 +11,44 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState("admin"); // "admin" or "customer"
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await apiClient.loginUser(email, password);
+  try {
+    let response;
 
-      // Store customer data in localStorage
-      const customerData = {
-        ...response,
-        email,
-        role: userType,
-        loggedInAt: Date.now(),
-      };
-
-      localStorage.setItem("User", JSON.stringify(customerData));
-
-      // Redirect: customers -> /customer-dashboard, admins -> root dashboard
-      if (userType === "customer") {
-        navigate("/customer-dashboard", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-    } catch (err) {
-      setError(err.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
+    // Pick correct API based on userType
+    if (userType === "customer") {
+      response = await apiClient.loginCustomer(email, password);
+    } else {
+      response = await apiClient.loginUser(email, password);
     }
-  };
+
+    // Store user data
+    const userData = {
+      ...response,
+      email,
+      role: userType,
+      loggedInAt: Date.now(),
+    };
+
+    localStorage.setItem("User", JSON.stringify(userData));
+
+    // Redirect based on type
+    if (userType === "customer") {
+      navigate("/customer-dashboard", { replace: true });
+    } else {
+      navigate("/", { replace: true });
+    }
+  } catch (err) {
+    setError(err.message || "Invalid email or password");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

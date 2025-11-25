@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import Sidebar from "../component/sidebar"
 import { tasks as mockTasks } from "../lib/mock-data"
+import { FaEdit, FaTrash } from "react-icons/fa"
 
 const TasksPage = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -314,13 +315,24 @@ const TasksPage = () => {
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-gray-600">{task.created}</td>
-                      <td className="px-4 sm:px-6 py-3">
-                        <Link
-                          to={`/tasks/${task.id}`}
-                          className="text-green-700 hover:text-green-900 font-medium"
-                        >
-                          Edit
-                        </Link>
+<td className="px-4 sm:px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          {/* Edit Button */}
+                          <Link
+                            // to={`/customers/${customer._id}`}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm" // brighter teal
+                          >
+                            <FaEdit size={14} />
+                          </Link>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDelete(customer._id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm" // brighter red
+                          >
+                            <FaTrash size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

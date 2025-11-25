@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://10.0.0.234:4000/api";
+// const API_BASE_URL = "http://10.0.0.234:4000/api";
+const API_BASE_URL = "http://localhost:4000/api";
 
 export const apiClient = {
   // ============================

@@ -1,43 +1,43 @@
-import React, { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import Sidebar from "../component/sidebar"
-import { apiClient } from "../lib/api-client"
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import Sidebar from "../component/sidebar";
+import { apiClient } from "../lib/api-client";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const EmployeesPage = () => {
-  const [employees, setEmployees] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  const [employees, setEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Fetch employees (users) from API
-useEffect(() => {
-  const fetchEmployees = async () => {
-    try {
-      const response = await apiClient.getUsers()
-      console.log("API RESPONSE:", response)
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await apiClient.getUsers();
+        console.log("API RESPONSE:", response);
 
-      // Use the correct key from API response
-      const usersArray = Array.isArray(response)
-        ? response
-        : response.Users || []
+        // Use the correct key from API response
+        const usersArray = Array.isArray(response)
+          ? response
+          : response.Users || [];
 
-      setEmployees(usersArray)
-    } catch (err) {
-      setError(err.message || "Failed to fetch employees")
-    } finally {
-      setLoading(false)
-    }
-  }
+        setEmployees(usersArray);
+      } catch (err) {
+        setError(err.message || "Failed to fetch employees");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchEmployees()
-}, [])
-
+    fetchEmployees();
+  }, []);
 
   const filteredEmployees = employees.filter(
     (employee) =>
       employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -47,10 +47,11 @@ useEffect(() => {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
-          
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Employees</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Employees
+            </h1>
 
             <Link
               to="/employees/new"
@@ -69,7 +70,6 @@ useEffect(() => {
 
           {/* Search + Table */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            
             {/* Search Box */}
             <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
@@ -130,12 +130,23 @@ useEffect(() => {
                           {employee.phone || "—"}
                         </td>
                         <td className="px-4 sm:px-6 py-3">
-                          <Link
-                            to={`/employees/${employee._id}`}
-                            className="text-green-700 hover:text-green-900 font-medium"
-                          >
-                            View
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            {/* Edit Button */}
+                            <Link
+                              // to={`/customers/${customer._id}`}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm" // brighter teal
+                            >
+                              <FaEdit size={14} />
+                            </Link>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleDelete(customer._id)}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm" // brighter red
+                            >
+                              <FaTrash size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -143,12 +154,11 @@ useEffect(() => {
                 </table>
               )}
             </div>
-
           </div>
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default EmployeesPage
+export default EmployeesPage;
