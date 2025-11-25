@@ -9,6 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState("admin"); // "admin" or "customer"
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,13 +23,18 @@ const Login = () => {
       const customerData = {
         ...response,
         email,
+        role: userType,
         loggedInAt: Date.now(),
       };
 
       localStorage.setItem("User", JSON.stringify(customerData));
 
-      // Redirect to dashboard
-      navigate("/", { replace: true });
+      // Redirect: customers -> /customer-dashboard, admins -> root dashboard
+      if (userType === "customer") {
+        navigate("/customer-dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -87,6 +93,30 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
             />
+          </div>
+
+          {/* User Type Toggle */}
+          <div className="flex items-center justify-center gap-2 bg-gray-50 p-4 rounded-lg">
+            <span
+              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                userType === "admin"
+                  ? "bg-green-600 text-white"
+                  : "text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => setUserType("admin")}
+            >
+              Admin
+            </span>
+            <span
+              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                userType === "customer"
+                  ? "bg-green-600 text-white"
+                  : "text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => setUserType("customer")}
+            >
+              Customer
+            </span>
           </div>
 
           {/* Login Button */}

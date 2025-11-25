@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { useIsMobile } from "./useIsMobile";
 
-const menuItems = [
+const defaultMenuItems = [
   { label: "Dashboard", href: "/" },
   { label: "Customers", href: "/customers" },
   { label: "Projects", href: "/projects" },
@@ -13,13 +13,13 @@ const menuItems = [
   { label: "Employees", href: "/employees" },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ items }) => {
   const location = useLocation();
+  const navigate = useNavigate(); // moved above handleSignOut
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = () => {
-    // Clear stored admin data and navigate to login
     try {
       localStorage.removeItem("User");
     } catch (e) {
@@ -28,12 +28,14 @@ const Sidebar = () => {
     navigate("/login", { replace: true });
   };
 
-  const navigate = useNavigate();
+  // Use provided items (for customer) or fall back to default admin menu
+  const menuItems =
+    Array.isArray(items) && items.length > 0 ? items : defaultMenuItems;
 
   if (isMobile) {
     return (
       <>
-        {/* Top bar for mobile with hamburger + signout */}
+        {/* Top bar for mobile with hamburger + signout (keeps same admin colors) */}
         <div
           className={`fixed top-0 left-0 right-0 z-50 -mb-2 flex items-center justify-between p-4 border-b-2 md:hidden transition-colors duration-300 
     ${isOpen ? "bg-green-700 border-none" : "bg-gray-50 border-gray-200"}`}
@@ -90,7 +92,7 @@ const Sidebar = () => {
     );
   }
 
-  // Desktop sidebar
+  // Desktop sidebar (same styling as admin, but uses provided menuItems)
   return (
     <aside className="w-64 bg-green-700 text-white shadow-lg relative flex flex-col justify-between">
       <div>

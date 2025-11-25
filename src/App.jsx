@@ -26,6 +26,7 @@ import EmployeeTimelinePage from "./employees/employees_id";
 import NewEmployeePage from "./employees/new-employees";
 import Login from "./component/LoginPage";
 import ProtectedRoute from "./component/ProtectedRoute";
+import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -74,6 +75,16 @@ useEffect(() => {
 
         {/* Public Route */}
         <Route path="/login" element={<Login />} />
+
+        {/* Customer Dashboard */}
+        <Route
+          path="/customer-dashboard"
+          element={
+            <ProtectedRoute>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Main sections (protected) */}
         <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
