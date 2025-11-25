@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../lib/api-client"; // <-- update path if needed
 
 const Login = () => {
   const navigate = useNavigate();
@@ -7,30 +8,31 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Temporary fake login — replace with API later
-    if (email === "admin@gmail.com" && password === "admin123") {
+    try {
+      const response = await apiClient.loginUser(email, password);
 
-      // Create dummy admin details and store in localStorage
-      const adminDetails = {
+      // Store customer data in localStorage
+      const customerData = {
+        ...response,
         email,
-        name: "Admin User",
-        role: "admin",
-        token: "dummy-token-12345",
         loggedInAt: Date.now(),
       };
 
-      localStorage.setItem("User", JSON.stringify(adminDetails));
+      localStorage.setItem("User", JSON.stringify(customerData));
 
-      // Clear any previous error and redirect to dashboard
-      setError("");
+      // Redirect to dashboard
       navigate("/", { replace: true });
-
-    } else {
-      setError("Invalid email or password");
+    } catch (err) {
+      setError(err.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,7 +52,7 @@ const Login = () => {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-100 text-red-600 text-sm p-2 rounded mb-4 text-center">
+          <div className="bg-red-100 text-red-600 text-sm p-2 rounded mb-4 text-center border border-red-300">
             {error}
           </div>
         )}
@@ -90,9 +92,10 @@ const Login = () => {
           {/* Login Button */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
