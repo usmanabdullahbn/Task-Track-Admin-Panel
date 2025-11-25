@@ -1,6 +1,10 @@
 const API_BASE_URL = "http://10.0.0.234:4000/api";
 
 export const apiClient = {
+  // ============================
+  //            USERS
+  // ============================
+
   async getUsers() {
     const response = await fetch(`${API_BASE_URL}/users`);
     if (!response.ok) throw new Error("Failed to fetch users");
@@ -36,14 +40,11 @@ export const apiClient = {
   },
 
   async changeUserPassword(id, passwordData) {
-    const response = await fetch(
-      `${API_BASE_URL}/users/${id}/change-password`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(passwordData),
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/users/${id}/change-password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(passwordData),
+    });
 
     if (!response.ok) throw new Error("Failed to update password");
     return response.json();
@@ -69,7 +70,79 @@ export const apiClient = {
     return response.json();
   },
 
-  // ========= Dashboard =========
+  // ============================
+  //         CUSTOMERS
+  // ============================
+
+  async getCustomers() {
+    const response = await fetch(`${API_BASE_URL}/customers`);
+    if (!response.ok) throw new Error("Failed to fetch customers");
+    return response.json();
+  },
+
+  async getCustomerById(id) {
+    const response = await fetch(`${API_BASE_URL}/customers/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch customer");
+    return response.json();
+  },
+
+  async createCustomer(customerData) {
+    const response = await fetch(`${API_BASE_URL}/customers/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customerData),
+    });
+
+    if (!response.ok) throw new Error("Failed to create customer");
+    return response.json();
+  },
+
+  async updateCustomer(id, customerData) {
+    const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customerData),
+    });
+
+    if (!response.ok) throw new Error("Failed to update customer");
+    return response.json();
+  },
+
+  async deleteCustomer(id) {
+    const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete customer");
+    return response.json();
+  },
+
+  async changeCustomerPassword(id, passwordData) {
+    const response = await fetch(`${API_BASE_URL}/customers/${id}/change-password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(passwordData),
+    });
+
+    if (!response.ok) throw new Error("Failed to change password");
+    return response.json();
+  },
+
+  async loginCustomer(email, password) {
+    const response = await fetch(`${API_BASE_URL}/customers/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) throw new Error("Invalid credentials");
+    return response.json();
+  },
+
+  // ============================
+  //         DASHBOARD
+  // ============================
+
   async getDashboardStats() {
     const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
     if (!response.ok) throw new Error("Failed to fetch dashboard stats");
