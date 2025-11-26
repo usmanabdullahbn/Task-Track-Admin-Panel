@@ -10,20 +10,35 @@ const CustomersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ✅ DELETE CUSTOMER FUNCTION
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this customer?"
-    );
-    if (!confirmDelete) return;
+  // Popup state for delete confirmation
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
+  const handleDeleteClick = (customer) => {
+    setCustomerToDelete(customer);
+    setDeleteError("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!customerToDelete) return;
+    setDeleting(true);
+    setDeleteError("");
     try {
-      await apiClient.deleteCustomer(id);
-      loadCustomers(); // reload list after deleting
+      await apiClient.deleteCustomer(customerToDelete._id);
+      setCustomerToDelete(null);
+      loadCustomers();
     } catch (error) {
-      alert("Failed to delete customer!");
+      setDeleteError("Failed to delete customer!");
       console.error(error);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setCustomerToDelete(null);
+    setDeleteError("");
   };
 
   // Fetch Customers (API)
@@ -150,11 +165,42 @@ const CustomersPage = () => {
 
                             {/* Delete Button */}
                             <button
-                              onClick={() => handleDelete(customer._id)}
+                              onClick={() => handleDeleteClick(customer)}
                               className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
                             >
                               <FaTrash size={14} />
                             </button>
+                                {/* Delete Confirmation Modal */}
+                                {customerToDelete && (
+                                  <div className="fixed inset-0 z-50 flex items-center justify-center">
+                                    {/* Blurred background overlay */}
+                                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true"></div>
+                                    {/* Modal content */}
+                                    <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 animate-fade-in">
+                                      <h2 className="text-lg font-semibold mb-4 text-gray-900">Confirm Deletion</h2>
+                                      <p className="mb-4 text-gray-700">
+                                        Are you sure you want to delete <span className="font-bold">{customerToDelete.name}</span>?
+                                      </p>
+                                      {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
+                                      <div className="flex justify-end gap-3">
+                                        <button
+                                          onClick={handleCancelDelete}
+                                          disabled={deleting}
+                                          className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={handleConfirmDelete}
+                                          disabled={deleting}
+                                          className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+                                        >
+                                          {deleting ? "Deleting..." : "Delete"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                           </div>
                         </td>
                       </tr>
