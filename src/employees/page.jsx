@@ -10,28 +10,41 @@ const EmployeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch employees (users) from API
+  // Fetch employees (users)
+  const fetchEmployees = async () => {
+    try {
+      const response = await apiClient.getUsers();
+
+      const usersArray = Array.isArray(response)
+        ? response
+        : response.Users || [];
+
+      setEmployees(usersArray);
+    } catch (err) {
+      setError(err.message || "Failed to fetch employees");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const response = await apiClient.getUsers();
-        console.log("API RESPONSE:", response);
-
-        // Use the correct key from API response
-        const usersArray = Array.isArray(response)
-          ? response
-          : response.Users || [];
-
-        setEmployees(usersArray);
-      } catch (err) {
-        setError(err.message || "Failed to fetch employees");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEmployees();
   }, []);
+
+  // 🔥 DELETE FUNCTION HERE
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+
+    try {
+      await apiClient.deleteUser(id);
+
+      // Remove deleted employee from UI
+      setEmployees((prev) => prev.filter((emp) => emp._id !== id));
+    } catch (err) {
+      alert("Delete failed!");
+      console.error(err);
+    }
+  };
 
   const filteredEmployees = employees.filter(
     (employee) =>
@@ -41,13 +54,10 @@ const EmployeesPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main content */}
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
-          {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Employees
@@ -61,16 +71,13 @@ const EmployeesPage = () => {
             </Link>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-100 border border-red-300 text-red-600 p-3 rounded mb-6">
               {error}
             </div>
           )}
 
-          {/* Search + Table */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            {/* Search Box */}
             <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
                 type="text"
@@ -81,7 +88,6 @@ const EmployeesPage = () => {
               />
             </div>
 
-            {/* Table Wrapper */}
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="text-center py-12">Loading...</div>
@@ -129,20 +135,19 @@ const EmployeesPage = () => {
                         <td className="px-4 sm:px-6 py-3 text-gray-600">
                           {employee.phone || "—"}
                         </td>
+
                         <td className="px-4 sm:px-6 py-3">
                           <div className="flex items-center gap-2">
-                            {/* Edit Button */}
                             <Link
-                              // to={`/customers/${customer._id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm" // brighter teal
+                              to={`/employees/${employee._id}`}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm"
                             >
                               <FaEdit size={14} />
                             </Link>
 
-                            {/* Delete Button */}
                             <button
-                              onClick={() => handleDelete(customer._id)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm" // brighter red
+                              onClick={() => handleDelete(employee._id)}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm"
                             >
                               <FaTrash size={14} />
                             </button>

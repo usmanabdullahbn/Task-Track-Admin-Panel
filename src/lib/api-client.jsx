@@ -3,6 +3,22 @@ const API_BASE_URL = "http://localhost:4000/api";
 
 export const apiClient = {
   // ============================
+  //         DASHBOARD
+  // ============================
+
+  async getDashboardStats() {
+    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+    if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+    return response.json();
+  },
+
+  async getDashboardActivities() {
+    const response = await fetch(`${API_BASE_URL}/activities`);
+    if (!response.ok) throw new Error("Failed to fetch activities");
+    return response.json();
+  },
+
+  // ============================
   //            USERS
   // ============================
 
@@ -27,18 +43,18 @@ export const apiClient = {
 
     if (!response.ok) {
       // Try to extract more detailed error info from the server
-      let details = ""
+      let details = "";
       try {
-        const data = await response.json()
-        details = data.message || JSON.stringify(data)
+        const data = await response.json();
+        details = data.message || JSON.stringify(data);
       } catch (e) {
         try {
-          details = await response.text()
+          details = await response.text();
         } catch (ee) {
-          details = response.statusText || "Unknown error"
+          details = response.statusText || "Unknown error";
         }
       }
-      throw new Error(`Failed to create user: ${response.status} ${details}`)
+      throw new Error(`Failed to create user: ${response.status} ${details}`);
     }
 
     return response.json();
@@ -56,11 +72,14 @@ export const apiClient = {
   },
 
   async changeUserPassword(id, passwordData) {
-    const response = await fetch(`${API_BASE_URL}/users/${id}/change-password`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(passwordData),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/users/${id}/change-password`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordData),
+      }
+    );
 
     if (!response.ok) throw new Error("Failed to update password");
     return response.json();
@@ -134,11 +153,14 @@ export const apiClient = {
   },
 
   async changeCustomerPassword(id, passwordData) {
-    const response = await fetch(`${API_BASE_URL}/customers/${id}/change-password`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(passwordData),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${id}/change-password`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordData),
+      }
+    );
 
     if (!response.ok) throw new Error("Failed to change password");
     return response.json();
@@ -156,18 +178,49 @@ export const apiClient = {
   },
 
   // ============================
-  //         DASHBOARD
+  //          PROJECTS
   // ============================
 
-  async getDashboardStats() {
-    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
-    if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+  async getProjects() {
+    const response = await fetch(`${API_BASE_URL}/projects`);
+    if (!response.ok) throw new Error("Failed to fetch projects");
     return response.json();
   },
 
-  async getDashboardActivities() {
-    const response = await fetch(`${API_BASE_URL}/activities`);
-    if (!response.ok) throw new Error("Failed to fetch activities");
+  async getProjectById(id) {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch project");
+    return response.json();
+  },
+
+  async createProject(projectData) {
+    const response = await fetch(`${API_BASE_URL}/projects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(projectData),
+    });
+
+    if (!response.ok) throw new Error("Failed to create project");
+    return response.json();
+  },
+
+  async updateProject(id, projectData) {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(projectData),
+    });
+
+    if (!response.ok) throw new Error("Failed to update project");
+    return response.json();
+  },
+
+  async deleteProject(id) {
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete project");
     return response.json();
   },
 };

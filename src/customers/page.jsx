@@ -10,12 +10,28 @@ const CustomersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ✅ DELETE CUSTOMER FUNCTION
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this customer?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await apiClient.deleteCustomer(id);
+      loadCustomers(); // reload list after deleting
+    } catch (error) {
+      alert("Failed to delete customer!");
+      console.error(error);
+    }
+  };
+
   // Fetch Customers (API)
   const loadCustomers = async () => {
     try {
       setLoading(true);
       const response = await apiClient.getCustomers(); // <-- API call
-      setCustomers(response?.customers || response || []); // backend may return different structure
+      setCustomers(response?.customers || response || []); 
     } catch (err) {
       setError(err.message || "Failed to load customers");
     } finally {
@@ -30,7 +46,7 @@ const CustomersPage = () => {
   // Filter Logic
   const filteredCustomers = customers.filter(
     (customer) =>
-      customer.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -76,7 +92,9 @@ const CustomersPage = () => {
             )}
 
             {/* Error State */}
-            {error && <p className="text-center py-6 text-red-500">{error}</p>}
+            {error && (
+              <p className="text-center py-6 text-red-500">{error}</p>
+            )}
 
             {/* Table */}
             {!loading && !error && (
@@ -84,30 +102,31 @@ const CustomersPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase">
                         Name
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase">
                         Email
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase">
                         Phone
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase">
                         Address
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase">
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase">
                         Action
                       </th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {filteredCustomers.map((customer) => (
                       <tr
                         key={customer._id}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
-                        <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">
+                        <td className="px-4 sm:px-6 py-3 font-medium text-gray-900">
                           {customer.name}
                         </td>
                         <td className="px-4 sm:px-6 py-3 text-gray-600">
@@ -124,7 +143,7 @@ const CustomersPage = () => {
                             {/* Edit Button */}
                             <Link
                               to={`/customers/${customer._id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm" // brighter teal
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                             >
                               <FaEdit size={14} />
                             </Link>
@@ -132,7 +151,7 @@ const CustomersPage = () => {
                             {/* Delete Button */}
                             <button
                               onClick={() => handleDelete(customer._id)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm" // brighter red
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
                             >
                               <FaTrash size={14} />
                             </button>
@@ -147,7 +166,7 @@ const CustomersPage = () => {
 
             {/* Empty State */}
             {!loading && filteredCustomers.length === 0 && (
-              <p className="text-center text-gray-500 py-6 text-sm sm:text-base">
+              <p className="text-center text-gray-500 py-6">
                 No customers found.
               </p>
             )}
