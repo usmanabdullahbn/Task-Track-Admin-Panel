@@ -26,7 +26,10 @@ import EmployeeTimelinePage from "./employees/employees_id";
 import NewEmployeePage from "./employees/new-employees";
 import Login from "./component/LoginPage";
 import ProtectedRoute from "./component/ProtectedRoute";
+
+// Customer screens
 import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
+import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -82,6 +85,16 @@ useEffect(() => {
           element={
             <ProtectedRoute>
               <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Customer Projects (customer-facing) */}
+        <Route
+          path="/customer-projects"
+          element={
+            <ProtectedRoute>
+              <CustomerProjects />
             </ProtectedRoute>
           }
         />

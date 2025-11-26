@@ -25,7 +25,22 @@ export const apiClient = {
       body: JSON.stringify(userData),
     });
 
-    if (!response.ok) throw new Error("Failed to create user");
+    if (!response.ok) {
+      // Try to extract more detailed error info from the server
+      let details = ""
+      try {
+        const data = await response.json()
+        details = data.message || JSON.stringify(data)
+      } catch (e) {
+        try {
+          details = await response.text()
+        } catch (ee) {
+          details = response.statusText || "Unknown error"
+        }
+      }
+      throw new Error(`Failed to create user: ${response.status} ${details}`)
+    }
+
     return response.json();
   },
 

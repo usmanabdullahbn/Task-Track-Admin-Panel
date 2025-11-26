@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 
 import { apiClient } from "../../lib/api-client";
-import Sidebar from "../../component/sidebar";
+import CustomerSidebar from "./customer-sidebar";
 import DashboardStats from "../../component/dashboard-stats";
 
 const CustomerDashboard = () => {
@@ -31,14 +31,8 @@ const CustomerDashboard = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      {/* Sidebar - show minimal items for customers */}
-      <Sidebar
-        items={[
-          { label: "Projects", to: "/projects" },
-          { label: "Orders", to: "/orders" },
-          { label: "Assets", to: "/assets" },
-        ]}
-      />
+      {/* Customer Sidebar */}
+      <CustomerSidebar />
 
       {/* Main content area */}
       <main className="flex-1 overflow-y-auto pt-20 md:pt-0">
