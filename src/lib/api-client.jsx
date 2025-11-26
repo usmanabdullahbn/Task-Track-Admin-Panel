@@ -194,6 +194,12 @@ export const apiClient = {
     return response.json();
   },
 
+  async getProjectByCustomerId(customerId) {
+    const res = await fetch(`${API_BASE_URL}/projects/customer/${customerId}`);
+    if (!res.ok) throw new Error("Failed to fetch project");
+    return res.json();
+  },
+
   async createProject(projectData) {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
