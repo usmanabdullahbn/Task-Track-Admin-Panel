@@ -9,7 +9,6 @@ const NewEmployeePage = () => {
     designation: "",
     email: "",
     phone: "",
-    password: "",
     role: "worker",
   })
 
@@ -26,8 +25,9 @@ const NewEmployeePage = () => {
     if (e && e.preventDefault) e.preventDefault()
     setError("")
     setSubmitting(true)
-    // Basic client-side validation matching API requirements
+
     const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/
+
     if (!formData.name.trim()) {
       setError("Please provide a User name")
       setSubmitting(false)
@@ -35,11 +35,6 @@ const NewEmployeePage = () => {
     }
     if (!emailRe.test(formData.email)) {
       setError("Please provide a valid email")
-      setSubmitting(false)
-      return
-    }
-    if (!formData.password) {
-      setError("Please provide a password")
       setSubmitting(false)
       return
     }
@@ -53,12 +48,13 @@ const NewEmployeePage = () => {
       setSubmitting(false)
       return
     }
+
     try {
-      // Call API client to create user (employee)
-      // Ensure role is sent lowercase (API expects lowercased roles)
       const payload = { ...formData, role: String(formData.role).toLowerCase() }
+
+      // Backend should auto-generate password
       await apiClient.createUser(payload)
-      // On success navigate back to employees list
+
       navigate("/employees")
     } catch (err) {
       console.error("createUser error:", err)
@@ -101,7 +97,7 @@ const NewEmployeePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{name2}</label>
                   <input
-                    type={name2 === "email" ? "email" : "text"}
+                    type="text"
                     name={name2}
                     placeholder={placeholder2}
                     value={formData[name2]}
@@ -113,21 +109,8 @@ const NewEmployeePage = () => {
               </div>
             ))}
 
-            {/* Role selection required by API */}
+            {/* Role selection */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <select
@@ -153,7 +136,9 @@ const NewEmployeePage = () => {
               >
                 {submitting ? "Adding..." : "Add Employee"}
               </button>
+
               {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
+
               <Link
                 to="/employees"
                 className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"

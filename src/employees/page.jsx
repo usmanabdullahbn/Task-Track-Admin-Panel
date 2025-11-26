@@ -10,11 +10,16 @@ const EmployeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch employees (users)
+  // Delete popup states
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  // Fetch employees
   const fetchEmployees = async () => {
     try {
+      setLoading(true);
       const response = await apiClient.getUsers();
-
       const usersArray = Array.isArray(response)
         ? response
         : response.Users || [];
@@ -31,19 +36,37 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, []);
 
-  // 🔥 DELETE FUNCTION HERE
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+  // Show delete modal
+  const handleDeleteClick = (employee) => {
+    setEmployeeToDelete(employee);
+    setDeleteError("");
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = async () => {
+    if (!employeeToDelete) return;
 
     try {
-      await apiClient.deleteUser(id);
+      setDeleting(true);
+      await apiClient.deleteUser(employeeToDelete._id);
 
-      // Remove deleted employee from UI
-      setEmployees((prev) => prev.filter((emp) => emp._id !== id));
+      setEmployees((prev) =>
+        prev.filter((emp) => emp._id !== employeeToDelete._id)
+      );
+
+      setEmployeeToDelete(null);
     } catch (err) {
-      alert("Delete failed!");
+      setDeleteError("Failed to delete employee!");
       console.error(err);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setEmployeeToDelete(null);
+    setDeleteError("");
   };
 
   const filteredEmployees = employees.filter(
@@ -146,7 +169,7 @@ const EmployeesPage = () => {
                             </Link>
 
                             <button
-                              onClick={() => handleDelete(employee._id)}
+                              onClick={() => handleDeleteClick(employee)}
                               className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm"
                             >
                               <FaTrash size={14} />
@@ -162,6 +185,46 @@ const EmployeesPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {employeeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Confirm Deletion
+            </h2>
+
+            <p className="mb-4 text-gray-700">
+              Are you sure you want to delete{" "}
+              <span className="font-bold">{employeeToDelete.name}</span>?
+            </p>
+
+            {deleteError && (
+              <div className="text-red-600 text-sm mb-2">{deleteError}</div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
