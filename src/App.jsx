@@ -30,6 +30,7 @@ import ProtectedRoute from "./component/ProtectedRoute";
 // Customer screens
 import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
+import CustomerProjectDetail from "./CustomerScreens/CustomerDash/customer-project-detail";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -95,6 +96,16 @@ useEffect(() => {
           element={
             <ProtectedRoute>
               <CustomerProjects />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Customer Project Detail */}
+        <Route
+          path="/project/:projectId"
+          element={
+            <ProtectedRoute>
+              <CustomerProjectDetail />
             </ProtectedRoute>
           }
         />
