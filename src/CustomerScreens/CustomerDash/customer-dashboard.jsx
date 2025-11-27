@@ -16,7 +16,7 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
 
-  const customer = JSON.parse(localStorage.getItem("User")); // assuming you store customer info
+const customer = JSON.parse(localStorage.getItem("User"))?.customer;
 
   const handleSignOut = () => {
     try {
@@ -27,53 +27,46 @@ const CustomerDashboard = () => {
     navigate("/login", { replace: true });
   };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!customer?._id) return;
+useEffect(() => {
+  const fetchStats = async () => {
+    if (!customer) return;
 
-      try {
-        const [projects, orders] = await Promise.all([
-          apiClient.getProjectByCustomerId(customer._id),
-          apiClient.getOrdersByCustomerId(customer._id),
-        ]);
+    try {
+      
+      const [projectsRes, ordersRes] = await Promise.all([
+        apiClient.getProjectByCustomerId(customer._id || customer.id),
+        apiClient.getOrdersByCustomerId(customer._id || customer.id),
+      ]);
 
-        // 🔹 Project counts
-        const totalProjects = projects.length;
-        const activeProjects = projects.filter(
-          (p) => p.status === "Active"
-        ).length;
-        const completedProjects = projects.filter(
-          (p) => p.status === "Completed"
-        ).length;
+      // If API returns {projects: []}, unwrap it
+      const projects = projectsRes.projects || projectsRes;
+      const orders = ordersRes.orders || ordersRes;
 
-        // 🔹 Order counts
-        const totalOrders = orders.length;
-        const pendingOrders = orders.filter(
-          (o) => o.status === "Pending"
-        ).length;
-        const completedOrders = orders.filter(
-          (o) => o.status === "Completed"
-        ).length;
+      const totalProjects = projects.length;
+      const activeProjects = projects.filter(p => p.status === "Active").length;
+      const completedProjects = projects.filter(p => p.status === "Completed").length;
 
-        // 🔹 Assets (extend later if you have tasks/assets API)
-        const totalAssets = 0;
+      const totalOrders = orders.length;
+      const pendingOrders = orders.filter(o => o.status === "Pending").length;
+      const completedOrders = orders.filter(o => o.status === "Completed").length;
 
-        setStats({
-          totalProjects,
-          activeProjects,
-          completedProjects,
-          totalOrders,
-          pendingOrders,
-          completedOrders,
-          totalAssets,
-        });
-      } catch (err) {
-        console.error("Failed to fetch stats", err);
-      }
-    };
+      setStats({
+        totalProjects,
+        activeProjects,
+        completedProjects,
+        totalOrders,
+        pendingOrders,
+        completedOrders,
+        totalAssets: 0,
+      });
+    } catch (err) {
+      console.error("Failed to fetch stats", err);
+    }
+  };
 
-    fetchStats();
-  }, [customer?._id]);
+  fetchStats();
+}, [customer]);
+
 
   const statItems = [
     {
