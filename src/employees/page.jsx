@@ -129,6 +129,9 @@ const EmployeesPage = () => {
                         Position
                       </th>
                       <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
+                        Role
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
                         Email
                       </th>
                       <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
@@ -151,6 +154,9 @@ const EmployeesPage = () => {
                         </td>
                         <td className="px-4 sm:px-6 py-3 text-gray-600">
                           {employee.designation || "—"}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-gray-600">
+                          {employee.role || "—"}
                         </td>
                         <td className="px-4 sm:px-6 py-3 text-gray-600">
                           {employee.email}

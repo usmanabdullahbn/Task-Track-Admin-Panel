@@ -1,168 +1,151 @@
-import React, { useState } from "react"
-import { useParams, Link } from "react-router-dom"
-import Sidebar from "../component/sidebar"
-import { customers as mockCustomers } from "../lib/mock-data"
-import MapComponent from "../component/map"
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Sidebar from "../component/sidebar";
+import { apiClient } from "../lib/api-client";
 
 const EditCustomerPage = () => {
-  const { id } = useParams()
-  const customer = mockCustomers.find((c) => c.id === id)
-  const [formData, setFormData] = useState(customer || {})
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  if (!customer) {
-    return (
-      <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto pt-16 md:pt-0 p-4 sm:p-6 md:p-8">
-          <p className="text-gray-600">Customer not found</p>
-        </main>
-      </div>
-    )
-  }
+  const [formData, setFormData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // 🔥 Fetch customer by ID
+  const loadCustomer = async () => {
+    try {
+      const response = await apiClient.getCustomerById(id);
+      setFormData(response.customer);
+    } catch (err) {
+      setError("Failed to load customer");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomer();
+  }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await apiClient.updateCustomer(id, formData);
+      navigate("/customers"); // redirect back
+    } catch (err) {
+      alert("Failed to update customer");
+      console.error(err);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex justify-center items-center h-screen">
+      Loading...
+    </div>
+  );
+
+  if (error || !formData) return (
+    <div className="flex justify-center items-center h-screen">
+      <p className="text-red-500">{error || "Customer not found"}</p>
+    </div>
+  );
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar />
+
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
-          <div className="mb-6 flex flex-wrap items-center gap-4">
-            <Link to="/customers" className="text-green-700 hover:text-green-900">
-              ← Back
-            </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Customer</h1>
+
+          <div className="mb-6 flex items-center gap-4">
+            <Link to="/customers" className="text-green-700">← Back</Link>
+            <h1 className="text-2xl font-bold">Edit Customer</h1>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Section */}
+
+            {/* Form */}
             <div className="lg:col-span-2">
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                {/* Title & Fax */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Fax</label>
-                    <input
-                      type="text"
-                      name="fax"
-                      value={formData.fax || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
+              <div className="rounded-lg border bg-white p-6 shadow-sm">
+
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full border px-4 py-2 rounded-lg"
+                  />
                 </div>
 
-                {/* Address & Email */}
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
+                {/* Email */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full border px-4 py-2 rounded-lg"
+                  />
                 </div>
 
-                {/* Phone & Website */}
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                    <input
-                      type="text"
-                      name="website"
-                      value={formData.website || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
+                {/* Address */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className="w-full border px-4 py-2 rounded-lg"
+                  />
                 </div>
 
-                {/* Latitude & Longitude */}
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
-                    <input
-                      type="text"
-                      name="latitude"
-                      value={formData.latitude || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
-                    <input
-                      type="text"
-                      name="longitude"
-                      value={formData.longitude || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  </div>
+                {/* Phone */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full border px-4 py-2 rounded-lg"
+                  />
                 </div>
 
                 {/* Buttons */}
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <button className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors">
+                <div className="mt-6 flex gap-4">
+                  <button
+                    onClick={handleUpdate}
+                    className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800"
+                  >
                     Update
                   </button>
+
                   <Link
                     to="/customers"
-                    className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="border px-6 py-2 rounded-lg"
                   >
-                    Back
+                    Cancel
                   </Link>
                 </div>
+
               </div>
             </div>
 
-            {/* Map Section */}
-            <div className="lg:col-span-1">
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm h-96">
-                <MapComponent lat={formData.latitude} lng={formData.longitude} />
-              </div>
-            </div>
+
           </div>
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default EditCustomerPage
+export default EditCustomerPage;
