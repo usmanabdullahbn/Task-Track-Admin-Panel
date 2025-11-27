@@ -92,7 +92,7 @@ const CustomerDashboard = ({ stats = {} }) => {
         {statItems.map((stat) => (
           <div
             key={stat.label}
-            className={`w-full max-w-xs rounded-xl border p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br ${stat.color}`}
+            className={`w-full max-w-xs rounded-xl border p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${stat.color}`}
           >
             <div className="flex items-center gap-5">
               <div
