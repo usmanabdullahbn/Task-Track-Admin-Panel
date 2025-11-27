@@ -1,4 +1,5 @@
-import React from "react";
+// src/components/CustomerDashboard.jsx
+import React, { useEffect, useState } from "react";
 import {
   FaProjectDiagram,
   FaCheckCircle,
@@ -9,9 +10,13 @@ import {
   FaClock,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../../lib/api-client";
 
-const CustomerDashboard = ({ stats = {} }) => {
+const CustomerDashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({});
+
+  const customer = JSON.parse(localStorage.getItem("User")); // assuming you store customer info
 
   const handleSignOut = () => {
     try {
@@ -21,6 +26,54 @@ const CustomerDashboard = ({ stats = {} }) => {
     }
     navigate("/login", { replace: true });
   };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!customer?._id) return;
+
+      try {
+        const [projects, orders] = await Promise.all([
+          apiClient.getProjectByCustomerId(customer._id),
+          apiClient.getOrdersByCustomerId(customer._id),
+        ]);
+
+        // 🔹 Project counts
+        const totalProjects = projects.length;
+        const activeProjects = projects.filter(
+          (p) => p.status === "Active"
+        ).length;
+        const completedProjects = projects.filter(
+          (p) => p.status === "Completed"
+        ).length;
+
+        // 🔹 Order counts
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(
+          (o) => o.status === "Pending"
+        ).length;
+        const completedOrders = orders.filter(
+          (o) => o.status === "Completed"
+        ).length;
+
+        // 🔹 Assets (extend later if you have tasks/assets API)
+        const totalAssets = 0;
+
+        setStats({
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalOrders,
+          pendingOrders,
+          completedOrders,
+          totalAssets,
+        });
+      } catch (err) {
+        console.error("Failed to fetch stats", err);
+      }
+    };
+
+    fetchStats();
+  }, [customer?._id]);
 
   const statItems = [
     {
@@ -66,27 +119,6 @@ const CustomerDashboard = ({ stats = {} }) => {
       icon: <FaCheckCircle />,
     },
     {
-      label: "Total Tasks",
-      value: stats.totalTasks ?? 0,
-      color: "from-blue-50 to-blue-100 border-blue-200",
-      iconBg: "bg-blue-100 text-blue-600 ring-blue-200",
-      icon: <FaTasks />,
-    },
-    {
-      label: "Completed Tasks",
-      value: stats.completedTasks ?? 0,
-      color: "from-green-50 to-green-100 border-green-200",
-      iconBg: "bg-green-100 text-green-600 ring-green-200",
-      icon: <FaCheckCircle />,
-    },
-    {
-      label: "In Progress Tasks",
-      value: stats.inProgressTasks ?? 0,
-      color: "from-purple-50 to-purple-100 border-purple-200",
-      iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
-      icon: <FaSpinner />,
-    },
-    {
       label: "Total Assets",
       value: stats.totalAssets ?? 0,
       color: "from-gray-50 to-gray-100 border-gray-200",
@@ -97,7 +129,6 @@ const CustomerDashboard = ({ stats = {} }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      
       {/* Header With Logout */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
@@ -110,6 +141,7 @@ const CustomerDashboard = ({ stats = {} }) => {
         </button>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
         {statItems.map((stat) => (
           <div

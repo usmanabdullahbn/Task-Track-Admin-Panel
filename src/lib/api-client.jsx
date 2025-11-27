@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "http://localhost:4000/api";
+// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -228,6 +228,131 @@ export const apiClient = {
     });
 
     if (!response.ok) throw new Error("Failed to delete project");
+    return response.json();
+  },
+
+  // ============================
+  //           ORDERS
+  // ============================
+
+  async getOrders() {
+    const response = await fetch(`${API_BASE_URL}/orders`);
+    if (!response.ok) throw new Error("Failed to fetch orders");
+    return response.json();
+  },
+
+  async getOrderById(id) {
+    const response = await fetch(`${API_BASE_URL}/orders/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch order");
+    return response.json();
+  },
+
+  async getOrdersByCustomerId(customerId) {
+    const response = await fetch(
+      `${API_BASE_URL}/orders/customer/${customerId}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch customer orders");
+    return response.json();
+  },
+
+  async getOrdersByProjectId(projectId) {
+    const response = await fetch(`${API_BASE_URL}/orders/project${projectId}`);
+    if (!response.ok) throw new Error("Failed to fetch customer orders");
+    return response.json();
+  },
+
+  async createOrder(orderData) {
+    const response = await fetch(`${API_BASE_URL}/orders/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) throw new Error("Failed to create order");
+    return response.json();
+  },
+
+  async updateOrder(id, orderData) {
+    const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) throw new Error("Failed to update order");
+    return response.json();
+  },
+
+  async deleteOrder(id) {
+    const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete order");
+    return response.json();
+  },
+
+  // ============================
+  //           TASKS
+  // ============================
+
+  async getTasks() {
+    const response = await fetch(`${API_BASE_URL}/tasks`);
+    if (!response.ok) throw new Error("Failed to fetch tasks");
+    return response.json();
+  },
+
+  async getTaskById(id) {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch task");
+    return response.json();
+  },
+
+  async getTasksByProjectId(projectId) {
+    const response = await fetch(`${API_BASE_URL}/tasks/project/${projectId}`);
+    if (!response.ok) throw new Error("Failed to fetch project tasks");
+    return response.json();
+  },
+
+  async createTask(taskData) {
+    const response = await fetch(`${API_BASE_URL}/tasks/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(taskData),
+    });
+
+    if (!response.ok) throw new Error("Failed to create task");
+    return response.json();
+  },
+
+  async updateTask(id, taskData) {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(taskData),
+    });
+
+    if (!response.ok) throw new Error("Failed to update task");
+    return response.json();
+  },
+
+  async deleteTask(id) {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete task");
+    return response.json();
+  },
+
+  async changeTaskStatus(id, statusData) {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}/change-status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(statusData),
+    });
+
+    if (!response.ok) throw new Error("Failed to change task status");
     return response.json();
   },
 };
