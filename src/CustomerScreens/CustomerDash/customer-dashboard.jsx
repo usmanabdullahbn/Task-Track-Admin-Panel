@@ -8,8 +8,20 @@ import {
   FaSpinner,
   FaClock,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const CustomerDashboard = ({ stats = {} }) => {
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem("User");
+    } catch (e) {
+      // ignore
+    }
+    navigate("/login", { replace: true });
+  };
+
   const statItems = [
     {
       label: "Total Projects",
@@ -85,9 +97,19 @@ const CustomerDashboard = ({ stats = {} }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
-        Customer Dashboard
-      </h2>
+      
+      {/* Header With Logout */}
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
+
+        <button
+          onClick={handleSignOut}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
         {statItems.map((stat) => (
           <div

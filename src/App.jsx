@@ -30,10 +30,9 @@ import ProtectedRoute from "./component/ProtectedRoute";
 // Customer screens
 import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
-
-import EditEmployeePage from "./employees/edit-employees";
 import CustomerProjectDetail from "./CustomerScreens/CustomerDash/customer-project-detail";
 
+import EditEmployeePage from "./employees/edit-employees";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -45,34 +44,39 @@ const NotFoundPage = () => (
 const App = () => {
   const navigate = useNavigate();
 
-  // On mount, if admin exists redirect to root. Also listen for storage
-  // events so cross-tab logins/logouts will route appropriately.
-useEffect(() => {
-  const onStorage = (e) => {
-    if (e.key === "User") {
-      if (e.newValue) {
-        navigate("/", { replace: true });
-      } else {
-        navigate("/login", { replace: true });
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "User") {
+        if (e.newValue) {
+          navigate("/", { replace: true });
+        } else {
+          navigate("/login", { replace: true });
+        }
       }
-    }
-  };
+    };
 
-  window.addEventListener("storage", onStorage);
-  return () => window.removeEventListener("storage", onStorage);
-}, [navigate]);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [navigate]);
+
+  const user = JSON.parse(localStorage.getItem("User"));
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       <Routes>
-        {/* Root: if admin in localStorage -> dashboard, else -> /login */}
+        {/* Root route: redirect based on role */}
         <Route
           path="/"
           element={
-            localStorage.getItem("User") ? (
-              <ProtectedRoute>
+            !user ? (
+              <Navigate to="/login" replace />
+            ) : user.role === "admin" ? (
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <DashboardContent />
+              </ProtectedRoute>
+            ) : user.role === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
+                <CustomerDashboard />
               </ProtectedRoute>
             ) : (
               <Navigate to="/login" replace />
@@ -83,68 +87,197 @@ useEffect(() => {
         {/* Public Route */}
         <Route path="/login" element={<Login />} />
 
-        {/* Customer Dashboard */}
+        {/* Customer Routes */}
         <Route
           path="/customer-dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["customer"]}>
               <CustomerDashboard />
             </ProtectedRoute>
           }
         />
-
-        {/* Customer Projects (customer-facing) */}
         <Route
           path="/customer-projects"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["customer"]}>
               <CustomerProjects />
             </ProtectedRoute>
           }
         />
-
-        {/* Customer Project Detail */}
         <Route
           path="/project/:projectId"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["customer"]}>
               <CustomerProjectDetail />
             </ProtectedRoute>
           }
         />
 
-        {/* Main sections (protected) */}
-        <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
-        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-        <Route path="/assets" element={<ProtectedRoute><AssetsPage /></ProtectedRoute>} />
-        <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-        <Route path="/employees" element={<ProtectedRoute><EmployeesPage /></ProtectedRoute>} />
+        {/* Admin Routes */}
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ProjectsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assets"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AssetsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <TasksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employees"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EmployeesPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Customers routes (protected) */}
-        <Route path="/customers/new" element={<ProtectedRoute><NewCustomerPage /></ProtectedRoute>} />
-        <Route path="/customers/:id" element={<ProtectedRoute><EditCustomerPage /></ProtectedRoute>} />
+        {/* Customers routes (admin only) */}
+        <Route
+          path="/customers/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewCustomerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditCustomerPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Orders routes (protected) */}
-        <Route path="/orders/new" element={<ProtectedRoute><NewOrderPage /></ProtectedRoute>} />
-        <Route path="/orders/:id" element={<ProtectedRoute><EditOrderPage /></ProtectedRoute>} />
+        {/* Orders routes (admin only) */}
+        <Route
+          path="/orders/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewOrderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditOrderPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* project routes (protected) */}
-        <Route path="/projects/new" element={<ProtectedRoute><NewProjectPage /></ProtectedRoute>} />
-        <Route path="/projects/:id" element={<ProtectedRoute><EditProjectPage /></ProtectedRoute>} />
+        {/* Project routes (admin only) */}
+        <Route
+          path="/projects/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewProjectPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditProjectPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Asset routes (protected) */}
-        <Route path="/assets/new" element={<ProtectedRoute><NewAssetPage /></ProtectedRoute>} />
-        <Route path="/assets/:id" element={<ProtectedRoute><EditAsset /></ProtectedRoute>} />
+        {/* Asset routes (admin only) */}
+        <Route
+          path="/assets/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewAssetPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assets/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditAsset />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Task routes (protected) */}
-        <Route path="/tasks/new" element={<ProtectedRoute><NewTaskPage /></ProtectedRoute>} />
-        <Route path="/tasks/:id" element={<ProtectedRoute><EditTaskPage /></ProtectedRoute>} />
+        {/* Task routes (admin only) */}
+        <Route
+          path="/tasks/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewTaskPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tasks/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditTaskPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Employee routes (protected) */}
-        <Route path="/employees/new" element={<ProtectedRoute><NewEmployeePage /></ProtectedRoute>} />
-        <Route path="/employees/:id" element={<ProtectedRoute><EditEmployeePage /></ProtectedRoute>} />
-        <Route path="/employees/timeline/:id" element={<ProtectedRoute><EmployeeTimelinePage /></ProtectedRoute>} />
+        {/* Employee routes (admin only) */}
+        <Route
+          path="/employees/new"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <NewEmployeePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employees/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditEmployeePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employees/timeline/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EmployeeTimelinePage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 404 fallback */}
         <Route path="*" element={<NotFoundPage />} />
