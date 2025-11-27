@@ -7,6 +7,9 @@ const DashboardContent = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const user = JSON.parse(localStorage.getItem("User"))?.user;
+  console.log(user)
+
 
   useEffect(() => {
     const fetchStats = async () => {
