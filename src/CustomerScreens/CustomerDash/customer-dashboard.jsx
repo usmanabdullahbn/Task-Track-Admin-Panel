@@ -1,4 +1,3 @@
-// src/components/CustomerDashboard.jsx
 import React, { useEffect, useState } from "react";
 import {
   FaProjectDiagram,
@@ -15,8 +14,7 @@ import { apiClient } from "../../lib/api-client";
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
-
-const customer = JSON.parse(localStorage.getItem("User"))?.customer;
+  const customer = JSON.parse(localStorage.getItem("User"))?.customer;
 
   const handleSignOut = () => {
     try {
@@ -27,46 +25,69 @@ const customer = JSON.parse(localStorage.getItem("User"))?.customer;
     navigate("/login", { replace: true });
   };
 
-useEffect(() => {
-  const fetchStats = async () => {
-    if (!customer) return;
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!customer) return;
 
-    try {
-      
-      const [projectsRes, ordersRes] = await Promise.all([
-        apiClient.getProjectByCustomerId(customer._id || customer.id),
-        apiClient.getOrdersByCustomerId(customer._id || customer.id),
-      ]);
+      try {
+        const [projectsRes, ordersRes] = await Promise.all([
+          apiClient.getProjectByCustomerId(customer._id),
+          apiClient.getOrdersByCustomerId(customer._id),
+        ]);
 
-      // If API returns {projects: []}, unwrap it
-      const projects = projectsRes.projects || projectsRes;
-      const orders = ordersRes.orders || ordersRes;
+        const projects = projectsRes.projects || projectsRes;
+        const orders = ordersRes.orders || ordersRes;
 
-      const totalProjects = projects.length;
-      const activeProjects = projects.filter(p => p.status === "Active").length;
-      const completedProjects = projects.filter(p => p.status === "Completed").length;
+        // 🔹 Project stats
+        const totalProjects = projects.length;
+        const activeProjects = projects.filter(p => p.status === "Active").length;
+        const completedProjects = projects.filter(p => p.status === "Completed").length;
 
-      const totalOrders = orders.length;
-      const pendingOrders = orders.filter(o => o.status === "Pending").length;
-      const completedOrders = orders.filter(o => o.status === "Completed").length;
+        // 🔹 Order stats
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(o => o.status === "Pending").length;
+        const completedOrders = orders.filter(o => o.status === "Completed").length;
 
-      setStats({
-        totalProjects,
-        activeProjects,
-        completedProjects,
-        totalOrders,
-        pendingOrders,
-        completedOrders,
-        totalAssets: 0,
-      });
-    } catch (err) {
-      console.error("Failed to fetch stats", err);
-    }
-  };
+        // 🔹 Task stats
+        let allTasks = [];
+        for (const project of projects) {
+          try {
+            const taskRes = await apiClient.getTasksByProjectId(project._id);
+            const tasks = taskRes.tasks || taskRes;
+            allTasks = allTasks.concat(tasks);
+          } catch (err) {
+            console.warn(`Failed to fetch tasks for project ${project._id}`, err);
+          }
+        }
 
-  fetchStats();
-}, [customer]);
+        const totalTasks = allTasks.length;
+        const completedTasks = allTasks.filter(t => t.status === "Completed").length;
+        const inProgressTasks = allTasks.filter(
+          t =>
+            t.status === "In Progress" ||
+            t.status === "Todo" ||
+            t.status === "On Hold"
+        ).length;
 
+        setStats({
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalOrders,
+          pendingOrders,
+          completedOrders,
+          totalTasks,
+          completedTasks,
+          inProgressTasks,
+          totalAssets: 0,
+        });
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+      }
+    };
+
+    fetchStats();
+  }, [customer]);
 
   const statItems = [
     {
@@ -112,6 +133,27 @@ useEffect(() => {
       icon: <FaCheckCircle />,
     },
     {
+      label: "Total Tasks",
+      value: stats.totalTasks ?? 0,
+      color: "from-blue-50 to-blue-100 border-blue-200",
+      iconBg: "bg-blue-100 text-blue-600 ring-blue-200",
+      icon: <FaTasks />,
+    },
+    {
+      label: "Completed Tasks",
+      value: stats.completedTasks ?? 0,
+      color: "from-green-50 to-green-100 border-green-200",
+      iconBg: "bg-green-100 text-green-600 ring-green-200",
+      icon: <FaCheckCircle />,
+    },
+    {
+      label: "In Progress Tasks",
+      value: stats.inProgressTasks ?? 0,
+      color: "from-purple-50 to-purple-100 border-purple-200",
+      iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
+      icon: <FaSpinner />,
+    },
+    {
       label: "Total Assets",
       value: stats.totalAssets ?? 0,
       color: "from-gray-50 to-gray-100 border-gray-200",
@@ -125,7 +167,6 @@ useEffect(() => {
       {/* Header With Logout */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
-
         <button
           onClick={handleSignOut}
           className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
