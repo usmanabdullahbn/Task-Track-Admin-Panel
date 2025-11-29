@@ -1,23 +1,61 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Sidebar from "../component/sidebar"
 import { Link } from "react-router-dom"
 
 const NewTaskPage = () => {
   const [formData, setFormData] = useState({
     customer: "",
-    title: "",
     project: "",
+    order: "",
+    asset: "",
+    title: "",
     duration: "",
     startTime: "",
     endTime: "",
-    order: "",
-    asset: "",
     completed: "No",
+    file: null,
   })
+
+  const [customers, setCustomers] = useState([])
+  const [projects, setProjects] = useState([])
+  const [orders, setOrders] = useState([])
+  const [assets, setAssets] = useState([])
+
+  // Fetch data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [customersRes, projectsRes, ordersRes, assetsRes] = await Promise.all([
+          fetch("/api/customers"),
+          fetch("/api/projects"),
+          fetch("/api/orders"),
+          fetch("/api/assets"),
+        ])
+
+        const customersData = await customersRes.json()
+        const projectsData = await projectsRes.json()
+        const ordersData = await ordersRes.json()
+        const assetsData = await assetsRes.json()
+
+        setCustomers(customersData)
+        setProjects(projectsData)
+        setOrders(ordersData)
+        setAssets(assetsData)
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, file: e.target.files[0] }))
   }
 
   return (
@@ -32,39 +70,146 @@ const NewTaskPage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add Task</h1>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-4xl">
-            {/* Form Fields */}
-            {[
-              ["customer", "Type to search...", "title", "Task title"],
-              ["project", "Type to search...", "duration", "Hours"],
-              ["startTime", "mm/dd/yyyy --:--", "endTime", "mm/dd/yyyy --:--"],
-              ["order", "Type to search...", "asset", "Type to search..."],
-            ].map(([name1, placeholder1, name2, placeholder2], i) => (
-              <div key={i} className={`mt-${i === 0 ? "0" : "6"} grid grid-cols-1 sm:grid-cols-2 gap-6`}>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{name1}</label>
-                  <input
-                    type="text"
-                    name={name1}
-                    placeholder={placeholder1}
-                    value={formData[name1]}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{name2}</label>
-                  <input
-                    type="text"
-                    name={name2}
-                    placeholder={placeholder2}
-                    value={formData[name2]}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
-                </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-4x2">
+            {/* Customer Dropdown */}
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+                <select
+                  name="customer"
+                  value={formData.customer}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                >
+                  <option value="">Select Customer</option>
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
+            </div>
+
+            {/* Project Dropdown */}
+            <div className="mt-3 grid grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Project</label>
+                <select
+                  name="project"
+                  value={formData.project}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                >
+                  <option value="">Select Project</option>
+                  {projects.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Order Dropdown */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                <select
+                  name="order"
+                  value={formData.order}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                >
+                  <option value="">Select Order</option>
+                  {orders.map((o) => (
+                    <option key={o._id} value={o._id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Asset Dropdown */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Asset</label>
+                <select
+                  name="asset"
+                  value={formData.asset}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                >
+                  <option value="">Select Asset</option>
+                  {assets.map((a) => (
+                    <option key={a._id} value={a._id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Task Title */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Task Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="Task title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+              </div>
+            </div>
+
+            {/* Task Duration */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Hours)</label>
+                <input
+                  type="text"
+                  name="duration"
+                  placeholder="Hours"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+              </div>
+            </div>
+
+            {/* Start Time */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                <input
+                  type="text"
+                  name="startTime"
+                  placeholder="mm/dd/yyyy --:--"
+                  value={formData.startTime}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+              </div>
+            </div>
+
+            {/* End Time */}
+            <div className="mt-6 grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                <input
+                  type="text"
+                  name="endTime"
+                  placeholder="mm/dd/yyyy --:--"
+                  value={formData.endTime}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+              </div>
+            </div>
 
             {/* Completed */}
             <div className="mt-6 grid grid-cols-1 gap-6">

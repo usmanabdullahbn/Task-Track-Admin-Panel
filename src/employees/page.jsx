@@ -15,6 +15,27 @@ const EmployeesPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // -------------------------
+  // GET USER ROLE
+  // -------------------------
+  const getUserRole = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("User"))?.user;
+      return (user?.role || "").toLowerCase();
+    } catch {
+      return "";
+    }
+  };
+
+  const role = getUserRole();
+
+  // -------------------------
+  // PERMISSIONS BASED ON MATRIX
+  // -------------------------
+  const canAddEmployee = role === "admin";
+  const canEditEmployee = role === "admin";
+  const canDeleteEmployee = role === "admin";
+
   // Fetch employees
   const fetchEmployees = async () => {
     try {
@@ -38,6 +59,7 @@ const EmployeesPage = () => {
 
   // Show delete modal
   const handleDeleteClick = (employee) => {
+    if (!canDeleteEmployee) return; // extra safety
     setEmployeeToDelete(employee);
     setDeleteError("");
   };
@@ -57,13 +79,11 @@ const EmployeesPage = () => {
       setEmployeeToDelete(null);
     } catch (err) {
       setDeleteError("Failed to delete employee!");
-      console.error(err);
     } finally {
       setDeleting(false);
     }
   };
 
-  // Cancel delete
   const handleCancelDelete = () => {
     setEmployeeToDelete(null);
     setDeleteError("");
@@ -86,12 +106,15 @@ const EmployeesPage = () => {
               Employees
             </h1>
 
-            <Link
-              to="/employees/new"
-              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-            >
-              + Add Employee
-            </Link>
+            {/* ADD EMPLOYEE BUTTON — ONLY ADMIN */}
+            {canAddEmployee && (
+              <Link
+                to="/employees/new"
+                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+              >
+                + Add Employee
+              </Link>
+            )}
           </div>
 
           {error && (
@@ -122,24 +145,12 @@ const EmployeesPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Name
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Position
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Role
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Email
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Phone
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium text-gray-700 uppercase text-xs sm:text-sm">
-                        Action
-                      </th>
+                      <th className="px-4 sm:px-6 py-3">Name</th>
+                      <th className="px-4 sm:px-6 py-3">Position</th>
+                      <th className="px-4 sm:px-6 py-3">Role</th>
+                      <th className="px-4 sm:px-6 py-3">Email</th>
+                      <th className="px-4 sm:px-6 py-3">Phone</th>
+                      <th className="px-4 sm:px-6 py-3">Action</th>
                     </tr>
                   </thead>
 
@@ -149,37 +160,35 @@ const EmployeesPage = () => {
                         key={employee._id}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
-                        <td className="px-4 sm:px-6 py-3 text-gray-900 font-medium">
+                        <td className="px-4 sm:px-6 py-3 font-medium text-gray-900">
                           {employee.name}
                         </td>
-                        <td className="px-4 sm:px-6 py-3 text-gray-600">
-                          {employee.designation || "—"}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 text-gray-600">
-                          {employee.role || "—"}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 text-gray-600">
-                          {employee.email}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 text-gray-600">
-                          {employee.phone || "—"}
-                        </td>
+                        <td className="px-4 sm:px-6 py-3">{employee.designation || "—"}</td>
+                        <td className="px-4 sm:px-6 py-3">{employee.role || "—"}</td>
+                        <td className="px-4 sm:px-6 py-3">{employee.email}</td>
+                        <td className="px-4 sm:px-6 py-3">{employee.phone || "—"}</td>
 
                         <td className="px-4 sm:px-6 py-3">
                           <div className="flex items-center gap-2">
-                            <Link
-                              to={`/employees/${employee._id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white text-sm"
-                            >
-                              <FaEdit size={14} />
-                            </Link>
+                            {/* EDIT — ONLY ADMIN */}
+                            {canEditEmployee && (
+                              <Link
+                                to={`/employees/${employee._id}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                              >
+                                <FaEdit size={14} />
+                              </Link>
+                            )}
 
-                            <button
-                              onClick={() => handleDeleteClick(employee)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white text-sm"
-                            >
-                              <FaTrash size={14} />
-                            </button>
+                            {/* DELETE — ONLY ADMIN */}
+                            {canDeleteEmployee && (
+                              <button
+                                onClick={() => handleDeleteClick(employee)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -192,15 +201,13 @@ const EmployeesPage = () => {
         </div>
       </main>
 
-      {/* Delete Confirmation Modal */}
+      {/* DELETE CONFIRMATION MODAL */}
       {employeeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">
-              Confirm Deletion
-            </h2>
+            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
 
             <p className="mb-4 text-gray-700">
               Are you sure you want to delete{" "}
@@ -215,7 +222,7 @@ const EmployeesPage = () => {
               <button
                 onClick={handleCancelDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
               >
                 Cancel
               </button>
