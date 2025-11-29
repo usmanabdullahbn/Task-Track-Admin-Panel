@@ -10,6 +10,22 @@ const CustomersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Get logged-in user's role from localStorage
+  const getUserRole = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("User"))?.user;
+      return (user?.role || "").toString().toLowerCase();
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const loggedUserRole = getUserRole();
+  const isAdmin = loggedUserRole === "admin";
+  const isManager = loggedUserRole === "manager";
+  const isSupervisor = loggedUserRole === "supervisor";
+  const isTechnician = loggedUserRole === "technician";
+
   // Popup state for delete confirmation
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -79,12 +95,14 @@ const CustomersPage = () => {
               Customers
             </h1>
 
-            <Link
-              to="/customers/new"
-              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-            >
-              + Add Customer
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/customers/new"
+                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+              >
+                + Add Customer
+              </Link>
+            )}
           </div>
 
           {/* Search Box */}
@@ -155,21 +173,27 @@ const CustomersPage = () => {
                         </td>
                         <td className="px-4 sm:px-6 py-3">
                           <div className="flex items-center gap-2">
-                            {/* Edit Button */}
-                            <Link
-                              to={`/customers/${customer._id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                            >
-                              <FaEdit size={14} />
-                            </Link>
+                            {/* Edit Button (admin & manager only) */}
+                            {(isAdmin || isManager) && (
+                              <Link
+                                to={`/customers/${customer._id}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                title="Edit customer"
+                              >
+                                <FaEdit size={14} />
+                              </Link>
+                            )}
 
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => handleDeleteClick(customer)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                            >
-                              <FaTrash size={14} />
-                            </button>
+                            {/* Delete Button (admin only) */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteClick(customer)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                title="Delete customer"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            )}
                                 {/* Delete Confirmation Modal */}
                                 {customerToDelete && (
                                   <div className="fixed inset-0 z-50 flex items-center justify-center">
