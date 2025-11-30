@@ -105,7 +105,7 @@ const ProjectsPage = () => {
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="px-4 py-3 text-left">Title</th>
-                      <th className="px-4 py-3 text-left">Customer ID</th>
+                      <th className="px-4 py-3 text-left">Customer Name</th>
                       <th className="px-4 py-3 text-left">Contact Name</th>
                       <th className="px-4 py-3 text-left">Contact Email</th>
                       <th className="px-4 py-3 text-left">Contact Phone</th>
@@ -124,7 +124,7 @@ const ProjectsPage = () => {
                         <td className="px-4 py-3 font-medium">
                           {project.title}
                         </td>
-                        <td className="px-4 py-3">{project.customer_id}</td>
+                        <td className="px-4 py-3">{project.customer.name}</td>
                         <td className="px-4 py-3">{project.contact_name}</td>
                         <td className="px-4 py-3">{project.contact_email}</td>
                         <td className="px-4 py-3">{project.contact_phone}</td>

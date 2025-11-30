@@ -15,6 +15,11 @@ const EmployeesPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // Success modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successAction, setSuccessAction] = useState("");
+
   // -------------------------
   // GET USER ROLE
   // -------------------------
@@ -76,6 +81,10 @@ const EmployeesPage = () => {
         prev.filter((emp) => emp._id !== employeeToDelete._id)
       );
 
+      // Show success modal
+      setSuccessMessage(`Employee ${employeeToDelete.name} has been deleted successfully`);
+      setSuccessAction("deleted");
+      setShowSuccessModal(true);
       setEmployeeToDelete(null);
     } catch (err) {
       setDeleteError("Failed to delete employee!");
@@ -89,6 +98,12 @@ const EmployeesPage = () => {
     setDeleteError("");
   };
 
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessMessage("");
+    setSuccessAction("");
+  };
+
   const filteredEmployees = employees.filter(
     (employee) =>
       employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,9 +112,9 @@ const EmployeesPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar className={employeeToDelete || showSuccessModal ? "blur-sm" : ""} />
 
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${employeeToDelete || showSuccessModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -203,10 +218,10 @@ const EmployeesPage = () => {
 
       {/* DELETE CONFIRMATION MODAL */}
       {employeeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
 
-          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2">
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
 
             <p className="mb-4 text-gray-700">
@@ -233,6 +248,30 @@ const EmployeesPage = () => {
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
               >
                 {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+
+            <p className="mb-6 text-gray-700">
+              {successMessage}
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+              >
+                OK
               </button>
             </div>
           </div>

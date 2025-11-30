@@ -12,14 +12,17 @@ const NewEmployeePage = () => {
     role: "worker",
   })
 
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+  const [showModal, setShowModal] = useState(false)
+  const [employeeData, setEmployeeData] = useState(null)
+
+  const navigate = useNavigate()
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
-
-  const navigate = useNavigate()
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
@@ -53,9 +56,11 @@ const NewEmployeePage = () => {
       const payload = { ...formData, role: String(formData.role).toLowerCase() }
 
       // Backend should auto-generate password
-      await apiClient.createUser(payload)
+      const response = await apiClient.createUser(payload)
 
-      navigate("/employees")
+      // Set employee data and show modal
+      setEmployeeData(response)
+      setShowModal(true)
     } catch (err) {
       console.error("createUser error:", err)
       setError(err.message || "Failed to add employee")
@@ -64,10 +69,16 @@ const NewEmployeePage = () => {
     }
   }
 
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEmployeeData(null)
+    navigate("/employees")
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <Sidebar className={showModal ? "blur-sm" : ""} />
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center gap-4">
             <Link to="/employees" className="text-green-700 hover:text-green-900">
@@ -77,6 +88,7 @@ const NewEmployeePage = () => {
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-3xl">
+            {/* Form Rows */}
             {[
               ["name", "Employee name", "designation", "Job designation"],
               ["email", "Email address", "phone", "Phone number"],
@@ -149,6 +161,39 @@ const NewEmployeePage = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal */}
+      {showModal && employeeData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          {/* Background overlay */}
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          {/* Modal content */}
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4">Employee Added Successfully</h2>
+
+            <p className="mb-4 text-gray-700">
+              The employee has been added successfully. Here are the login credentials:
+            </p>
+
+            <p className="mb-2">
+              <strong>Email:</strong> {employeeData?.user?.email}
+            </p>
+            <p className="mb-4">
+              <strong>Password:</strong> {employeeData?.password}
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

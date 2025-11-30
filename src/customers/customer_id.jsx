@@ -10,6 +10,11 @@ const EditCustomerPage = () => {
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Success modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [customerName, setCustomerName] = useState("");
 
   // 🔥 Fetch customer by ID
   const loadCustomer = async () => {
@@ -34,12 +39,23 @@ const EditCustomerPage = () => {
 
   const handleUpdate = async () => {
     try {
+      setSubmitting(true);
       await apiClient.updateCustomer(id, formData);
-      navigate("/customers"); // redirect back
+      
+      // Show success modal
+      setCustomerName(formData.name);
+      setShowSuccessModal(true);
     } catch (err) {
       alert("Failed to update customer");
       console.error(err);
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate("/customers");
   };
 
   if (loading) return (
@@ -56,9 +72,9 @@ const EditCustomerPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
 
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
 
           <div className="mb-6 flex items-center gap-4">
@@ -124,9 +140,10 @@ const EditCustomerPage = () => {
                 <div className="mt-6 flex gap-4">
                   <button
                     onClick={handleUpdate}
-                    className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800"
+                    disabled={submitting}
+                    className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 disabled:opacity-60"
                   >
-                    Update
+                    {submitting ? "Updating..." : "Update"}
                   </button>
 
                   <Link
@@ -144,6 +161,30 @@ const EditCustomerPage = () => {
           </div>
         </div>
       </main>
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+
+            <p className="mb-6 text-gray-700">
+              Customer <span className="font-bold">{customerName}</span> has been edited successfully
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

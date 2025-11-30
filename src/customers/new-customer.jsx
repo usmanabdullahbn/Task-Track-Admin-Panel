@@ -1,8 +1,7 @@
-import React, { useState, lazy, Suspense } from "react";
+import React, { useState } from "react";
 import Sidebar from "../component/sidebar";
 import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
-
 
 const NewCustomerPage = () => {
   const navigate = useNavigate();
@@ -20,6 +19,8 @@ const NewCustomerPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [customerData, setCustomerData] = useState(null);
 
   // Handle Input
   const handleInputChange = (e) => {
@@ -36,7 +37,9 @@ const NewCustomerPage = () => {
       const res = await apiClient.createCustomer(formData);
       console.log("Customer Created:", res);
 
-      navigate("/customers"); // Redirect on success
+      // Set customer data and show modal
+      setCustomerData(res);
+      setShowModal(true);
     } catch (err) {
       setError(err.message || "Failed to create customer");
     } finally {
@@ -48,7 +51,11 @@ const NewCustomerPage = () => {
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 transition-all duration-300 ${
+          showModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -64,7 +71,6 @@ const NewCustomerPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-
                 {/* Show error */}
                 {error && (
                   <p className="mb-4 text-sm text-red-600">{error}</p>
@@ -131,10 +137,30 @@ const NewCustomerPage = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </main>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-0">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Customer Added Successfully</h2>
+            <p className="mb-2">Login Credentials:</p>
+            <p className="mb-1"><strong>Email:</strong> {customerData?.customer?.email}</p>
+            <p className="mb-4"><strong>Password:</strong> {customerData?.password}</p>
+            <button
+              onClick={() => {
+                setShowModal(false);
+                navigate("/customers");
+              }}
+              className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
