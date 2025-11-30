@@ -141,7 +141,7 @@ const ProjectsPage = () => {
                             {/* Edit: Admin + Manager */}
                             {canEdit && (
                               <Link
-                                to={`/projects/${project._id}/edit`}
+                                to={`/projects/${project._id}`}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                               >
                                 <FaEdit size={14} />

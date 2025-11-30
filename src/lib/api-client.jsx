@@ -232,7 +232,20 @@ export const apiClient = {
       body: JSON.stringify(projectData),
     });
 
-    if (!response.ok) throw new Error("Failed to update project");
+    if (!response.ok) {
+      let details = "";
+      try {
+        const data = await response.json();
+        details = data.message || JSON.stringify(data);
+      } catch (e) {
+        try {
+          details = await response.text();
+        } catch (ee) {
+          details = response.statusText || "Unknown error";
+        }
+      }
+      throw new Error(details || "Failed to update project");
+    }
     return response.json();
   },
 
