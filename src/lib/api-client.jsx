@@ -1,6 +1,6 @@
-const API_BASE_URL = "http://10.0.0.234:4000/api";
+// const API_BASE_URL = "http://10.0.0.234:4000/api";
 // const API_BASE_URL = "http://localhost:4000/api";
-// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -289,7 +289,7 @@ export const apiClient = {
   },
 
   async createOrder(orderData) {
-    const response = await fetch(`${API_BASE_URL}/orders/create`, {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(orderData),

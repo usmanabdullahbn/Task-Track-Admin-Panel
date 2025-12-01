@@ -1,6 +1,7 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import Sidebar from "../component/sidebar"
+import { apiClient } from "../lib/api-client"
 
 const NewAssetPage = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,49 @@ const NewAssetPage = () => {
     manufacturer: "",
     description: "",
   })
+
+  const [customers, setCustomers] = useState([])
+  const [projects, setProjects] = useState([])
+  const [orders, setOrders] = useState([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
+  // Fetch customers, projects, and orders on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingData(true)
+        
+        // Fetch customers
+        const customersResponse = await apiClient.getCustomers()
+        const customersList = Array.isArray(customersResponse)
+          ? customersResponse
+          : customersResponse.customers || []
+        setCustomers(customersList)
+
+        // Fetch projects
+        const projectsResponse = await apiClient.getProjects()
+        const projectsList = Array.isArray(projectsResponse.projects)
+          ? projectsResponse.projects
+          : []
+        setProjects(projectsList)
+
+        // Fetch orders
+        const ordersResponse = await apiClient.getOrders()
+        const ordersList = Array.isArray(ordersResponse.orders)
+          ? ordersResponse.orders
+          : []
+        setOrders(ordersList)
+      } catch (err) {
+        console.error("Failed to fetch data:", err)
+        setLoadError("Failed to load dropdown data")
+      } finally {
+        setLoadingData(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -38,15 +82,58 @@ const NewAssetPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
-                <input
-                  type="text"
+                <select
                   name="customer"
-                  placeholder="Customer name"
                   value={formData.customer}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
+                  disabled={loadingData}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select a customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer._id} value={customer._id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+            
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Project</label>
+                <select
+                  name="project"
+                  value={formData.project}
+                  onChange={handleInputChange}
+                  disabled={loadingData}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select a project</option>
+                  {projects.map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                <select
+                  name="order"
+                  value={formData.order}
+                  onChange={handleInputChange}
+                  disabled={loadingData}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select an order</option>
+                  {orders.map((order) => (
+                    <option key={order.name} value={order.name}>
+                      { order.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+             
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
@@ -80,28 +167,7 @@ const NewAssetPage = () => {
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Project</label>
-                <input
-                  type="text"
-                  name="project"
-                  placeholder="Project name"
-                  value={formData.project}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
-                <input
-                  type="text"
-                  name="order"
-                  placeholder="Order number"
-                  value={formData.order}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
                 <input
@@ -113,6 +179,7 @@ const NewAssetPage = () => {
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <input

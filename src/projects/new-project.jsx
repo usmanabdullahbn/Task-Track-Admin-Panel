@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../component/sidebar";
 import MapComponent from "../component/map";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
 import { toast } from "react-toastify";
 
 const NewProjectPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -19,11 +23,48 @@ const NewProjectPage = () => {
     contact_name: "",
     contact_phone: "",
     contact_email: "",
+    status: "active",
   });
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Fetch customers on component mount
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoadingCustomers(true);
+        const response = await apiClient.getCustomers();
+        const customersList = Array.isArray(response)
+          ? response
+          : response.customers || [];
+        setCustomers(customersList);
+      } catch (err) {
+        console.error("Failed to fetch customers:", err);
+        toast.error("Failed to load customers");
+      } finally {
+        setLoadingCustomers(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // If changing customer, auto-populate customer ID and name
+    if (name === "customerName") {
+      const selectedCustomer = customers.find((c) => c._id === value);
+      if (selectedCustomer) {
+        setFormData((prev) => ({
+          ...prev,
+          customerName: selectedCustomer.name,
+          customerId: selectedCustomer._id,
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -46,6 +87,7 @@ const NewProjectPage = () => {
       contact_name: formData.contact_name,
       contact_phone: formData.contact_phone,
       contact_email: formData.contact_email,
+      status: formData.status,
       latitude: Number(formData.latitude),
       longitude: Number(formData.longitude),
     };
@@ -53,23 +95,26 @@ const NewProjectPage = () => {
     try {
       setLoading(true);
       await apiClient.createProject(projectPayload);
-
-      toast.success("Project created successfully!");
-      setLoading(false);
-      window.location.href = "/projects"; // redirect
+      setShowSuccessModal(true);
     } catch (err) {
       console.log(err);
-      setLoading(false);
       toast.error("Failed to create project");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    window.location.href = "/projects";
   };
 
 
   return (
   <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-    <Sidebar />
+    <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
 
-    <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+    <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
       <div className="p-4 sm:p-6 md:p-8">
 
         {/* Header */}
@@ -96,15 +141,29 @@ const NewProjectPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name
+                    Customer
                   </label>
-                  <input
+                  <select
                     name="customerName"
-                    placeholder="Enter customer name"
                     value={formData.customerName}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
+                    disabled={loadingCustomers}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map((customer) => (
+                      <option key={customer._id} value={customer._id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/customers/new")}
+                    className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                  >
+                    + Add New Customer
+                  </button>
                 </div>
 
                 <div>
@@ -113,10 +172,10 @@ const NewProjectPage = () => {
                   </label>
                   <input
                     name="customerId"
-                    placeholder="Enter customer ID"
+                    placeholder="Auto-populated"
                     value={formData.customerId}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600"
                   />
                 </div>
               </div>
@@ -195,7 +254,22 @@ const NewProjectPage = () => {
                   />
                 </div>
 
-                <div></div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                  >
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
               </div>
 
               {/* Row 5 - Lat/Lng */}
@@ -255,8 +329,32 @@ const NewProjectPage = () => {
           </div>
 
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+
+            <p className="mb-6 text-gray-700">
+              Project <span className="font-bold">{formData.title}</span> has been created successfully
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   </div>
 );
 

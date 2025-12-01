@@ -10,6 +10,15 @@ const ProjectsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Delete confirmation modal states
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  // Success modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [deletedProjectName, setDeletedProjectName] = useState("");
+
   // Get logged-in user's role
   const getUserRole = () => {
     try {
@@ -45,13 +54,38 @@ const ProjectsPage = () => {
     fetchProjects();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDeleteClick = (project) => {
+    setProjectToDelete(project);
+    setDeleteError("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete) return;
     try {
-      await apiClient.deleteProject(id);
-      setProjects((prev) => prev.filter((p) => p._id !== id));
+      setDeleting(true);
+      await apiClient.deleteProject(projectToDelete._id);
+      setProjects((prev) => prev.filter((p) => p._id !== projectToDelete._id));
+      
+      // Show success modal
+      setDeletedProjectName(projectToDelete.title);
+      setShowSuccessModal(true);
+      setProjectToDelete(null);
     } catch (err) {
+      setDeleteError("Failed to delete project");
       console.error("Failed to delete project:", err);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setProjectToDelete(null);
+    setDeleteError("");
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setDeletedProjectName("");
   };
 
   const filteredProjects = projects.filter(
@@ -62,9 +96,9 @@ const ProjectsPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar className={projectToDelete || showSuccessModal ? "blur-sm" : ""} />
 
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${projectToDelete || showSuccessModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -151,7 +185,7 @@ const ProjectsPage = () => {
                             {/* Delete: Admin Only */}
                             {canDelete && (
                               <button
-                                onClick={() => handleDelete(project._id)}
+                                onClick={() => handleDeleteClick(project)}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
                               >
                                 <FaTrash size={14} />
@@ -174,6 +208,63 @@ const ProjectsPage = () => {
           )}
         </div>
       </main>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {projectToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
+            <p className="mb-4 text-gray-700">
+              Are you sure you want to delete <span className="font-bold">{projectToDelete.title}</span>?
+            </p>
+            {deleteError && <div className="text-red-600 text-sm mb-2">{deleteError}</div>}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+
+            <p className="mb-6 text-gray-700">
+              Project <span className="font-bold">{deletedProjectName}</span> has been deleted successfully
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
