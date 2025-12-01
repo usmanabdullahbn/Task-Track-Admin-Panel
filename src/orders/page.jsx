@@ -43,6 +43,7 @@ const OrdersPage = () => {
       try {
         setLoading(true);
         const data = await apiClient.getOrders();
+        console.log(data)
 
         setOrders(Array.isArray(data.orders) ? data.orders : []);
       } catch (err) {
@@ -153,6 +154,7 @@ const OrdersPage = () => {
                       <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Project</th>
                       <th className="px-4 py-3">Amount</th>
+                      <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Created</th>
                       <th className="px-4 py-3">Action</th>
                     </tr>
@@ -168,11 +170,13 @@ const OrdersPage = () => {
                           {order.order_number}
                         </td>
                         <td className="px-4 py-3">{order.erp_number || "-"}</td>
-                        <td className="px-4 py-3">{order.customer_id}</td>
-                        <td className="px-4 py-3">{order.project_id}</td>
+                        <td className="px-4 py-3">{order.customer.name}</td>
+                        <td className="px-4 py-3">{order.project.name}</td>
                         <td className="px-4 py-3">
                           {order.amount?.$numberDecimal}
                         </td>
+                        <td className="px-4 py-3">{order.status}</td>
+
                         <td className="px-4 py-3">
                           {order.created_at
                             ? new Date(order.created_at).toLocaleDateString()
@@ -184,7 +188,7 @@ const OrdersPage = () => {
                             {/* EDIT BUTTON (Admin + Manager) */}
                             {canEditOrder && (
                               <Link
-                                to={`/orders/${order._id}/edit`}
+                                to={`/orders/${order._id}`}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                               >
                                 <FaEdit size={14} />

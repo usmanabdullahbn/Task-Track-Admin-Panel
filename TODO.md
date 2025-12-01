@@ -1,4 +1,0 @@
-- [x] Add state variables for modal visibility and customer data
-- [x] Modify handleSubmit to capture API response and show modal on success
-- [ ] Add modal JSX to display success message and login credentials
-- [ ] Implement close modal functionality with navigation to /customers
