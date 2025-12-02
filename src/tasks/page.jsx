@@ -20,6 +20,7 @@ const TasksPage = () => {
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
   // -------------------------
   // GET USER ROLE
@@ -45,12 +46,20 @@ const TasksPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
 
+    const idToDelete = id;
+    setDeletingId(idToDelete);
     try {
-      await apiClient.deleteTask(id); // <-- your API call
-      setTasks((prev) => prev.filter((task) => task.id !== id)); // <-- update UI
+      await apiClient.deleteTask(idToDelete);
+      setTasks((prev) =>
+        prev.filter(
+          (task) => (task.id || task._id) !== idToDelete
+        )
+      );
     } catch (err) {
       console.error("Failed to delete task:", err);
       alert("Failed to delete task");
+    } finally {
+      setDeletingId(null);
     }
   };
   // LOAD TASKS
@@ -87,16 +96,24 @@ const TasksPage = () => {
   // FILTER LOGIC
   // -------------------------
   const filteredTasks = tasks.filter((task) => {
+    const title = task.title || "";
+    const customerName = task.customer?.name || "";
+    const search = (searchTerm || "").toLowerCase();
     const matchesSearch =
-      task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.customer?.toLowerCase().includes(searchTerm.toLowerCase());
+      title.toLowerCase().includes(search) ||
+      customerName.toLowerCase().includes(search);
 
-    const matchesAsset = !filters.asset || task.asset === filters.asset;
-    const matchesEmployee =
-      !filters.employee || task.employee === filters.employee;
-    const matchesStatus = !filters.status || task.completed === filters.status;
-    const matchesProject = !filters.project || task.project === filters.project;
-    const matchesOrder = !filters.order || task.order === filters.order;
+    const assetId = task.asset?.id || task.asset?._id || "";
+    const employeeId = task.employee?.id || task.employee?._id || "";
+    const projectId = task.project?.id || task.project?._id || "";
+    const orderId = task.order?.id || task.order?._id || "";
+
+    const matchesAsset = !filters.asset || assetId === filters.asset;
+    const matchesEmployee = !filters.employee || employeeId === filters.employee;
+    const matchesStatus =
+      !filters.status || String(task.completed) === String(filters.status);
+    const matchesProject = !filters.project || projectId === filters.project;
+    const matchesOrder = !filters.order || orderId === filters.order;
 
     return (
       matchesSearch &&
@@ -265,7 +282,7 @@ const TasksPage = () => {
                 <tbody>
                   {filteredTasks.map((task) => (
                     <tr
-                      key={task.id}
+                      key={task.id || task._id}
                       className="border-b border-gray-200 hover:bg-gray-50"
                     >
                       <td className="px-4 py-3 font-medium text-gray-900">
@@ -321,7 +338,7 @@ const TasksPage = () => {
                       <td className="px-4 py-3 flex items-center gap-2">
                         {canEditTask && (
                           <Link
-                            to={`/tasks/${task.id}`}
+                            to={`/tasks/${task.id || task._id}`}
                             className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                           >
                             <FaEdit size={14} />
@@ -330,8 +347,9 @@ const TasksPage = () => {
 
                         {canDeleteTask && (
                           <button
-                            onClick={() => handleDelete(task.id)}
-                            className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                            onClick={() => handleDelete(task.id || task._id)}
+                            disabled={deletingId === (task.id || task._id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white disabled:opacity-50"
                           >
                             <FaTrash size={13} />
                           </button>

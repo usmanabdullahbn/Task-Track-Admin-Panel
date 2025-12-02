@@ -107,22 +107,16 @@ const NewAssetPage = () => {
     }
 
     const payload = {
-      customer: {
-        id: formData.customer,
-        name: formData.customerName,
-      },
-      employee: {
-        id: "0",
-        name: "Not Assigned",
-      },
-      project: {
-        id: formData.project,
-        name: formData.projectName,
-      },
-      order: {
-        id: formData.order,
-        order_number: orderNumber,
-      },
+
+      customer_id :formData.customer,
+      customer_name: formData.customerName,
+      employee_id: "",
+      employee_name: "",
+      project_id: formData.project,
+      project_name: formData.projectName,
+      order_id: formData.order,
+      order_number: orderNumber,
+     
       title: formData.title,
       description: formData.description,
       model: formData.model,
