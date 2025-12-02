@@ -42,11 +42,17 @@ const TasksPage = () => {
   );
   const canDeleteTask = ["admin", "manager"].includes(role);
 
-  // DELETE mock
-  // const handleDelete = (id) => {
-  //   setTasks((prev) => prev.filter((task) => task.id !== id));
-  // };
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
 
+    try {
+      await apiClient.deleteTask(id); // <-- your API call
+      setTasks((prev) => prev.filter((task) => task.id !== id)); // <-- update UI
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+      alert("Failed to delete task");
+    }
+  };
   // LOAD TASKS
   useEffect(() => {
     const fetchTasks = async () => {
@@ -126,219 +132,225 @@ const TasksPage = () => {
   // JSX BELOW (FULL + FIXED)
   // -------------------------
 
- return (
-  <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-    <Sidebar />
+  return (
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      <Sidebar />
 
-    <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
-      <div className="p-4 sm:p-6 md:p-8">
-        {/* HEADER */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Task Management
-          </h1>
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        <div className="p-4 sm:p-6 md:p-8">
+          {/* HEADER */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Task Management
+            </h1>
 
-          {canAddTask && (
-            <Link
-              to="/tasks/new"
-              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-            >
-              + Add Task
-            </Link>
-          )}
-        </div>
+            {canAddTask && (
+              <Link
+                to="/tasks/new"
+                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+              >
+                + Add Task
+              </Link>
+            )}
+          </div>
 
-        {/* FILTERS */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm mb-6 p-4 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
-              <input
-                type="text"
-                placeholder="Search by title or customer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-green-700 focus:outline-none"
-              />
+          {/* FILTERS */}
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm mb-6 p-4 sm:p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Search
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by title or customer..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-green-700 focus:outline-none"
+                />
+              </div>
+
+              {/* Asset */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Asset
+                </label>
+                <select
+                  name="asset"
+                  value={filters.asset}
+                  onChange={handleFilterChange}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
+                >
+                  <option value="">All Assets</option>
+                  {uniqueValues.assets.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Employee */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Employee
+                </label>
+                <select
+                  name="employee"
+                  value={filters.employee}
+                  onChange={handleFilterChange}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
+                >
+                  <option value="">All Employees</option>
+                  {uniqueValues.employees.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
+                >
+                  <option value="">All Statuses</option>
+                  {uniqueValues.statuses.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Asset */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Asset
-              </label>
-              <select
-                name="asset"
-                value={filters.asset}
-                onChange={handleFilterChange}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
+            {/* Reset */}
+            <div className="flex justify-end">
+              <button
+                onClick={resetFilters}
+                className="text-sm font-medium text-gray-700 hover:text-green-700 underline"
               >
-                <option value="">All Assets</option>
-                {uniqueValues.assets.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Employee */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Employee
-              </label>
-              <select
-                name="employee"
-                value={filters.employee}
-                onChange={handleFilterChange}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
-              >
-                <option value="">All Employees</option>
-                {uniqueValues.employees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                name="status"
-                value={filters.status}
-                onChange={handleFilterChange}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-green-700 focus:outline-none"
-              >
-                <option value="">All Statuses</option>
-                {uniqueValues.statuses.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                Reset Filters
+              </button>
             </div>
           </div>
 
-          {/* Reset */}
-          <div className="flex justify-end">
-            <button
-              onClick={resetFilters}
-              className="text-sm font-medium text-gray-700 hover:text-green-700 underline"
-            >
-              Reset Filters
-            </button>
-          </div>
-        </div>
-
-        {/* TABLE */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm sm:text-base">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 text-left">Title</th>
-                  <th className="px-4 py-3 text-left">Customer</th>
-                  <th className="px-4 py-3 text-left">Project</th>
-                  <th className="px-4 py-3 text-left">Order</th>
-                  <th className="px-4 py-3 text-left">Asset</th>
-                  <th className="px-4 py-3 text-left">Employee</th>
-                  <th className="px-4 py-3 text-left">Duration</th>
-                  <th className="px-4 py-3 text-left">Completed</th>
-                  <th className="px-4 py-3 text-left">Created</th>
-                  <th className="px-4 py-3 text-left">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredTasks.map((task) => (
-                  <tr
-                    key={task.id}
-                    className="border-b border-gray-200 hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {task.title}
-                    </td>
-
-                    {/* FIXED: Display names instead of objects */}
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.customer?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.project?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.order?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.asset?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.employee?.name}
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">
-                      {task.duration}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                          task.completed === "Yes"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {task.completed}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600">{task.created_at}</td>
-
-                    <td className="px-4 py-3 flex items-center gap-2">
-                      {canEditTask && (
-                        <Link
-                          to={`/tasks/${task.id}`}
-                          className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                        >
-                          <FaEdit size={14} />
-                        </Link>
-                      )}
-
-                      {canDeleteTask && (
-                        <button
-                          onClick={() => handleDelete(task.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                        >
-                          <FaTrash size={13} />
-                        </button>
-                      )}
-                    </td>
+          {/* TABLE */}
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm sm:text-base">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 text-left">Title</th>
+                    <th className="px-4 py-3 text-left">Customer</th>
+                    <th className="px-4 py-3 text-left">Project</th>
+                    <th className="px-4 py-3 text-left">Order</th>
+                    <th className="px-4 py-3 text-left">Asset</th>
+                    <th className="px-4 py-3 text-left">Employee</th>
+                    <th className="px-4 py-3 text-left">Duration</th>
+                    <th className="px-4 py-3 text-left">Completed</th>
+                    <th className="px-4 py-3 text-left">Created</th>
+                    <th className="px-4 py-3 text-left">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {filteredTasks.map((task) => (
+                    <tr
+                      key={task.id}
+                      className="border-b border-gray-200 hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {task.title}
+                      </td>
+
+                      {/* FIXED: Display names instead of objects */}
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.customer?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.project?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.order?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.asset?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {task.employee?.name}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-600">
+                        {(() => {
+                          const start = new Date(task.start_time);
+                          const end = new Date(task.end_time);
+                          const diffMs = end - start; // difference in ms
+                          const diffHours = diffMs / (1000 * 60 * 60); // convert to hours
+                          return diffHours + " hours";
+                        })()}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                            task.completed === true
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {task.completed === true ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {new Date(task.created_at).toLocaleDateString()}
+                      </td>
+
+                      <td className="px-4 py-3 flex items-center gap-2">
+                        {canEditTask && (
+                          <Link
+                            to={`/tasks/${task.id}`}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                          >
+                            <FaEdit size={14} />
+                          </Link>
+                        )}
+
+                        {canDeleteTask && (
+                          <button
+                            onClick={() => handleDelete(task.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                          >
+                            <FaTrash size={13} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredTasks.length === 0 && (
+              <p className="text-center text-gray-500 py-6">No tasks found.</p>
+            )}
           </div>
-
-          {filteredTasks.length === 0 && (
-            <p className="text-center text-gray-500 py-6">No tasks found.</p>
-          )}
         </div>
-      </div>
-    </main>
-  </div>
-);
-
+      </main>
+    </div>
+  );
 };
 
 export default TasksPage;
