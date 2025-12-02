@@ -29,12 +29,12 @@ const EditProjectPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch project details
         const projectResponse = await apiClient.getProjectById(id);
         const projectData = projectResponse?.project || projectResponse;
         console.log("Loaded project data:", projectData);
-        
+
         setFormData({
           customer: projectData.customer.name || "",
           title: projectData.title || "",
@@ -44,6 +44,7 @@ const EditProjectPage = () => {
           contactName: projectData.contact_name || "",
           contactPhone: projectData.contact_phone || "",
           contactEmail: projectData.contact_email || "",
+          contactEmail: projectData.status || "",
         });
 
         // Fetch customers list
@@ -71,7 +72,7 @@ const EditProjectPage = () => {
   const handleUpdate = async () => {
     try {
       setSubmitting(true);
-      
+
       // Map form data to API format (snake_case)
       const updateData = {
         title: formData.title,
@@ -82,7 +83,7 @@ const EditProjectPage = () => {
         contact_phone: formData.contactPhone,
         contact_email: formData.contactEmail,
       };
-      
+
       await apiClient.updateProject(id, updateData);
       setShowSuccessModal(true);
     } catch (err) {
@@ -112,11 +113,18 @@ const EditProjectPage = () => {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
-      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
+          showSuccessModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <Link to="/projects" className="text-green-700 hover:text-green-900">
+            <Link
+              to="/projects"
+              className="text-green-700 hover:text-green-900"
+            >
               ← Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -134,10 +142,20 @@ const EditProjectPage = () => {
             {/* Form Section */}
             <div className="lg:col-span-2">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-
                 {/* Customer Dropdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Project Title
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.customer || ""}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Project Title
@@ -239,6 +257,25 @@ const EditProjectPage = () => {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+
+                  <select
+                    name="status"
+                    value={formData.longitude || ""}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border-gray-300 focus:border-green-700 focus:ring-green-700 shadow-sm px-3 py-2"
+                  >
+
+                    <option value="Active">Active</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Completed">Processing</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+
                 {/* Buttons */}
                 <div className="mt-8 flex flex-wrap gap-4">
                   <button
@@ -274,10 +311,13 @@ const EditProjectPage = () => {
           <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
 
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+            <h2 className="text-lg font-semibold mb-4 text-green-600">
+              Success
+            </h2>
 
             <p className="mb-6 text-gray-700">
-              Project <span className="font-bold">{formData.title}</span> has been edited successfully
+              Project <span className="font-bold">{formData.title}</span> has
+              been edited successfully
             </p>
 
             <div className="flex justify-end">
