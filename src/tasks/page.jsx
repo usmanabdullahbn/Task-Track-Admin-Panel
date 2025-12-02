@@ -21,6 +21,8 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   // -------------------------
   // GET USER ROLE
@@ -43,9 +45,17 @@ const TasksPage = () => {
   );
   const canDeleteTask = ["admin", "manager"].includes(role);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
+  const openDeleteModal = (task) => {
+    setTaskToDelete(task);
+    setShowDeleteModal(true);
+  };
 
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setTaskToDelete(null);
+  };
+
+  const handleDelete = async (id) => {
     const idToDelete = id;
     setDeletingId(idToDelete);
     try {
@@ -55,9 +65,9 @@ const TasksPage = () => {
           (task) => (task.id || task._id) !== idToDelete
         )
       );
+      closeDeleteModal();
     } catch (err) {
       console.error("Failed to delete task:", err);
-      alert("Failed to delete task");
     } finally {
       setDeletingId(null);
     }
@@ -347,7 +357,7 @@ const TasksPage = () => {
 
                         {canDeleteTask && (
                           <button
-                            onClick={() => handleDelete(task.id || task._id)}
+                            onClick={() => openDeleteModal(task)}
                             disabled={deletingId === (task.id || task._id)}
                             className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white disabled:opacity-50"
                           >
@@ -367,6 +377,51 @@ const TasksPage = () => {
           </div>
         </div>
       </main>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && taskToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-lg bg-white shadow-lg max-w-sm w-full mx-4">
+            {/* Header */}
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-lg font-bold text-gray-900">Delete Task</h2>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4">
+              <p className="text-gray-600 mb-2">
+                Are you sure you want to delete this task?
+              </p>
+              <p className="font-semibold text-gray-900">
+                {taskToDelete.title}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deletingId === (taskToDelete.id || taskToDelete._id)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(taskToDelete.id || taskToDelete._id)}
+                disabled={deletingId === (taskToDelete.id || taskToDelete._id)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50"
+              >
+                {deletingId === (taskToDelete.id || taskToDelete._id)
+                  ? "Deleting..."
+                  : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
