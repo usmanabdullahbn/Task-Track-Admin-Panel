@@ -10,6 +10,9 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // -------------------------
   // GET USER ROLE
@@ -59,13 +62,29 @@ const OrdersPage = () => {
   // -------------------------
   // DELETE ORDER
   // -------------------------
-  const handleDelete = async (id) => {
+  const handleDeleteClick = (order) => {
+    setSelectedOrder(order);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedOrder) return;
+
     try {
-      await apiClient.deleteOrder(id);
-      setOrders((prev) => prev.filter((order) => order._id !== id));
+      await apiClient.deleteOrder(selectedOrder._id);
+      setOrders((prev) => prev.filter((order) => order._id !== selectedOrder._id));
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
     } catch (err) {
       console.error("Failed to delete order:", err);
+      setError("Failed to delete order");
+      setShowConfirmModal(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSelectedOrder(null);
   };
 
   // -------------------------
@@ -92,9 +111,9 @@ const OrdersPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar className={showConfirmModal || showSuccessModal ? "blur-sm" : ""} />
 
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showConfirmModal || showSuccessModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -198,7 +217,7 @@ const OrdersPage = () => {
                             {/* DELETE BUTTON (Admin + Manager) */}
                             {canDeleteOrder && (
                               <button
-                                onClick={() => handleDelete(order._id)}
+                                onClick={() => handleDeleteClick(order)}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
                               >
                                 <FaTrash size={14} />
@@ -221,6 +240,60 @@ const OrdersPage = () => {
           )}
         </div>
       </main>
+
+      {/* CONFIRM DELETE MODAL */}
+      {showConfirmModal && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">Confirm Delete</h2>
+
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to delete order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS DELETE MODAL */}
+      {showSuccessModal && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
+
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+
+            <p className="mb-6 text-gray-700">
+              Order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span> has been deleted successfully.
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800 transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

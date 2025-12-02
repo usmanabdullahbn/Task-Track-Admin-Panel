@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "http://localhost:4000/api";
+// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -316,6 +316,71 @@ export const apiClient = {
     });
 
     if (!response.ok) throw new Error("Failed to delete order");
+    return response.json();
+  },
+
+
+  // ============================
+  //           ASSETS
+  // ============================
+
+  async getAssets() {
+    const response = await fetch(`${API_BASE_URL}/assets`);
+    if (!response.ok) throw new Error("Failed to fetch assets");
+    return response.json();
+  },
+
+  async getAssetById(id) {
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch asset");
+    return response.json();
+  },
+
+  async getAssetsByCustomerId(customerId) {
+    const response = await fetch(
+      `${API_BASE_URL}/assets/customer/${customerId}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch customer assets");
+    return response.json();
+  },
+
+  async getAssetsByProjectId(projectId) {
+    const response = await fetch(`${API_BASE_URL}/assets/project/${projectId}`);
+    if (!response.ok) throw new Error("Failed to fetch customer assets");
+    return response.json();
+  },
+  async createAsset(assetData) {
+    const response = await fetch(`${API_BASE_URL}/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(assetData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to create asset");
+    }
+
+    return response.json();
+  },
+
+  async updateAsset(id, assetData) {
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(assetData),
+    });
+
+    if (!response.ok) throw new Error("Failed to update asset");
+    return response.json();
+  },
+
+  async deleteAsset(id) {
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete asset");
     return response.json();
   },
 

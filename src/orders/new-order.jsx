@@ -67,25 +67,18 @@ const NewOrderPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Customer selection
-    if (name === "customerId") {
-      const selected = customers.find((c) => c._id === value);
-      setFormData((prev) => ({
-        ...prev,
-        customerId: selected?._id || "",
-        customerName: selected?.name || "",
-      }));
-      return;
-    }
-
-    // Project selection
+    // Project selection - auto-fill customer from project's customer
     if (name === "projectId") {
       const selected = projects.find((p) => p._id === value);
-      setFormData((prev) => ({
-        ...prev,
-        projectId: selected?._id || "",
-        projectName: selected?.title || "",
-      }));
+      if (selected) {
+        setFormData((prev) => ({
+          ...prev,
+          projectId: selected._id,
+          projectName: selected.title,
+          customerId: selected.customer?.id || "",
+          customerName: selected.customer?.name || "",
+        }));
+      }
       return;
     }
 
@@ -192,43 +185,47 @@ const NewOrderPage = () => {
             <div className="lg:col-span-2">
               <div className="rounded-lg border bg-white p-6 shadow-sm">
 
-                {/* CUSTOMER + PROJECT */}
+                {/* PROJECT + CUSTOMER */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                  {/* Customer */}
-                  <div>
-                    <label className="text-sm font-medium">Customer</label>
-                    <select
-                      name="customerId"
-                      value={formData.customerId}
-                      onChange={handleInputChange}
-                      className="w-full border rounded-lg px-4 py-2 mt-1"
-                    >
-                      <option value="">Select Customer</option>
-                      {customers.map((customer) => (
-                        <option key={customer._id} value={customer._id}>
-                          {customer.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
 
                   {/* Project */}
                   <div>
-                    <label className="text-sm font-medium">Project</label>
-                    <select
-                      name="projectId"
-                      value={formData.projectId}
-                      onChange={handleInputChange}
-                      className="w-full border rounded-lg px-4 py-2 mt-1"
+                    <label className="text-sm font-medium">Project <span className="text-red-600">*</span></label>
+                    <div className="flex gap-2 mt-1">
+                      <select
+                        name="projectId"
+                        value={formData.projectId}
+                        onChange={handleInputChange}
+                        className="flex-1 border rounded-lg px-4 py-2"
+                      >
+                        <option value="">Select Project</option>
+                        {projects.map((project) => (
+                          <option key={project._id} value={project._id}>
+                            {project.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/projects/new")}
+                      className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
                     >
-                      <option value="">Select Project</option>
-                      {projects.map((project) => (
-                        <option key={project._id} value={project._id}>
-                          {project.title}
-                        </option>
-                      ))}
-                    </select>
+                      + Add New Project
+                    </button>
+                  </div>
+
+                  {/* Customer - Read Only */}
+                  <div>
+                    <label className="text-sm font-medium">Customer</label>
+                    <input
+                      type="text"
+                      value={formData.customerName}
+                      disabled
+                      readOnly
+                      className="w-full border rounded-lg px-4 py-2 mt-1 bg-gray-100 text-gray-600 cursor-not-allowed"
+                      placeholder="Auto-filled from project selection"
+                    />
                   </div>
 
                 </div>
@@ -300,7 +297,7 @@ const NewOrderPage = () => {
                     <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
-                
+
 
                 {/* BUTTONS */}
                 <div className="mt-8 flex gap-4">
