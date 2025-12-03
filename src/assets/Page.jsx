@@ -184,7 +184,7 @@ const AssetsPage = () => {
                             {/* EDIT (Admin + Manager) */}
                             {canEditAsset && (
                               <Link
-                                to={`/assets/${asset.id || asset._id}/edit`}
+                                to={`/assets/${asset.id || asset._id}`}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                               >
                                 <FaEdit size={14} />
