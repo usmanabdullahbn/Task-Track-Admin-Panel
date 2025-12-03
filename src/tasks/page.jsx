@@ -321,13 +321,7 @@ const TasksPage = () => {
                       </td>
 
                       <td className="px-4 py-3 text-gray-600">
-                        {(() => {
-                          const start = new Date(task.start_time);
-                          const end = new Date(task.end_time);
-                          const diffMs = end - start; // difference in ms
-                          const diffHours = diffMs / (1000 * 60 * 60); // convert to hours
-                          return diffHours + " hours";
-                        })()}
+                        {task.plan_duration}
                       </td>
 
                       <td className="px-4 py-3">
