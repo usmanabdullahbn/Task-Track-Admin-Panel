@@ -7,9 +7,9 @@ const defaultMenuItems = [
   { label: "Dashboard", href: "/" },
   { label: "Customers", href: "/customers" },
   { label: "Projects", href: "/projects" },
-  { label: "Orders", href: "/orders" },
   { label: "Assets", href: "/assets" },
-  { label: "Tasks", href: "/tasks" },
+  { label: "Orders", href: "/orders" },
+  // { label: "Tasks", href: "/tasks" },
   { label: "Employees", href: "/employees" },
 ];
 

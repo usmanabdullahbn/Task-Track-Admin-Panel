@@ -31,6 +31,7 @@ import ProtectedRoute from "./component/ProtectedRoute";
 import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
 import CustomerProjectDetail from "./CustomerScreens/CustomerDash/customer-project-detail";
+import CustomerAssets from "./CustomerScreens/CustomerDash/customer-assets";
 
 import EditEmployeePage from "./employees/edit-employees";
 
@@ -105,10 +106,18 @@ const App = () => {
           }
         />
         <Route
-          path="/project/:projectId"
+          path="/customer-projects"
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
               <CustomerProjectDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customer-assets"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <CustomerAssets />
             </ProtectedRoute>
           }
         />
@@ -146,14 +155,14 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/tasks"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <TasksPage />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/employees"
           element={
@@ -236,7 +245,7 @@ const App = () => {
         />
 
         {/* Task routes (admin only) */}
-        <Route
+        {/* <Route
           path="/tasks/new"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
@@ -251,7 +260,7 @@ const App = () => {
               <EditTaskPage />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* Employee routes (admin only) */}
         <Route

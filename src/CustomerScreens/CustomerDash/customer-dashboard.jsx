@@ -10,20 +10,21 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../lib/api-client";
+import CustomerSidebar from "./customer-sidebar";
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
   const customer = JSON.parse(localStorage.getItem("User"))?.customer;
 
-  const handleSignOut = () => {
-    try {
-      localStorage.removeItem("User");
-    } catch (e) {
-      // ignore
-    }
-    navigate("/login", { replace: true });
-  };
+  // const handleSignOut = () => {
+  //   try {
+  //     localStorage.removeItem("User");
+  //   } catch (e) {
+  //     // ignore
+  //   }
+  //   navigate("/login", { replace: true });
+  // };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -49,25 +50,25 @@ const CustomerDashboard = () => {
         const completedOrders = orders.filter(o => o.status === "Completed").length;
 
         // 🔹 Task stats
-        let allTasks = [];
-        for (const project of projects) {
-          try {
-            const taskRes = await apiClient.getTasksByProjectId(project._id);
-            const tasks = taskRes.tasks || taskRes;
-            allTasks = allTasks.concat(tasks);
-          } catch (err) {
-            console.warn(`Failed to fetch tasks for project ${project._id}`, err);
-          }
-        }
+        // let allTasks = [];
+        // for (const project of projects) {
+        //   try {
+        //     const taskRes = await apiClient.getTasksByProjectId(project._id);
+        //     const tasks = taskRes.tasks || taskRes;
+        //     allTasks = allTasks.concat(tasks);
+        //   } catch (err) {
+        //     console.warn(`Failed to fetch tasks for project ${project._id}`, err);
+        //   }
+        // }
 
-        const totalTasks = allTasks.length;
-        const completedTasks = allTasks.filter(t => t.status === "Completed").length;
-        const inProgressTasks = allTasks.filter(
-          t =>
-            t.status === "In Progress" ||
-            t.status === "Todo" ||
-            t.status === "On Hold"
-        ).length;
+        // const totalTasks = allTasks.length;
+        // const completedTasks = allTasks.filter(t => t.status === "Completed").length;
+        // const inProgressTasks = allTasks.filter(
+        //   t =>
+        //     t.status === "In Progress" ||
+        //     t.status === "Todo" ||
+        //     t.status === "On Hold"
+        // ).length;
 
         setStats({
           totalProjects,
@@ -76,9 +77,9 @@ const CustomerDashboard = () => {
           totalOrders,
           pendingOrders,
           completedOrders,
-          totalTasks,
-          completedTasks,
-          inProgressTasks,
+          // totalTasks,
+          // completedTasks,
+          // inProgressTasks,
           totalAssets: 0,
         });
       } catch (err) {
@@ -132,27 +133,27 @@ const CustomerDashboard = () => {
       iconBg: "bg-green-100 text-green-600 ring-green-200",
       icon: <FaCheckCircle />,
     },
-    {
-      label: "Total Tasks",
-      value: stats.totalTasks ?? 0,
-      color: "from-blue-50 to-blue-100 border-blue-200",
-      iconBg: "bg-blue-100 text-blue-600 ring-blue-200",
-      icon: <FaTasks />,
-    },
-    {
-      label: "Completed Tasks",
-      value: stats.completedTasks ?? 0,
-      color: "from-green-50 to-green-100 border-green-200",
-      iconBg: "bg-green-100 text-green-600 ring-green-200",
-      icon: <FaCheckCircle />,
-    },
-    {
-      label: "In Progress Tasks",
-      value: stats.inProgressTasks ?? 0,
-      color: "from-purple-50 to-purple-100 border-purple-200",
-      iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
-      icon: <FaSpinner />,
-    },
+    // {
+    //   label: "Total Tasks",
+    //   value: stats.totalTasks ?? 0,
+    //   color: "from-blue-50 to-blue-100 border-blue-200",
+    //   iconBg: "bg-blue-100 text-blue-600 ring-blue-200",
+    //   icon: <FaTasks />,
+    // },
+    // {
+    //   label: "Completed Tasks",
+    //   value: stats.completedTasks ?? 0,
+    //   color: "from-green-50 to-green-100 border-green-200",
+    //   iconBg: "bg-green-100 text-green-600 ring-green-200",
+    //   icon: <FaCheckCircle />,
+    // },
+    // {
+    //   label: "In Progress Tasks",
+    //   value: stats.inProgressTasks ?? 0,
+    //   color: "from-purple-50 to-purple-100 border-purple-200",
+    //   iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
+    //   icon: <FaSpinner />,
+    // },
     {
       label: "Total Assets",
       value: stats.totalAssets ?? 0,
@@ -163,43 +164,48 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header With Logout */}
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
-        <button
-          onClick={handleSignOut}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-        {statItems.map((stat) => (
-          <div
-            key={stat.label}
-            className={`w-full max-w-xs rounded-xl border p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${stat.color}`}
-          >
-            <div className="flex items-center gap-5">
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ring-4 ring-opacity-30 ${stat.iconBg}`}
-              >
-                {stat.icon}
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {stat.label}
-                </p>
-                <p className="mt-1 text-3xl font-extrabold text-gray-900">
-                  {stat.value}
-                </p>
-              </div>
-            </div>
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      <CustomerSidebar />
+      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Header With Logout */}
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
+            {/* <button
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
+            >
+              Logout
+            </button> */}
           </div>
-        ))}
-      </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+            {statItems.map((stat) => (
+              <div
+                key={stat.label}
+                className={`w-full max-w-xs rounded-xl border p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${stat.color}`}
+              >
+                <div className="flex items-center gap-5">
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ring-4 ring-opacity-30 ${stat.iconBg}`}
+                  >
+                    {stat.icon}
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                      {stat.label}
+                    </p>
+                    <p className="mt-1 text-3xl font-extrabold text-gray-900">
+                      {stat.value}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
