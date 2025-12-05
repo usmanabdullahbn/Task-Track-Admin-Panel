@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 
 const AssetsPage = () => {
@@ -11,6 +11,8 @@ const AssetsPage = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
+  const [printData, setPrintData] = useState(null);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // -------------------------
   // GET USER ROLE
@@ -88,6 +90,197 @@ const AssetsPage = () => {
   };
 
   // -------------------------
+  // PRINT ASSET
+  // -------------------------
+  const handlePrint = (asset) => {
+    setPrintData(asset);
+    setShowPrintPreview(true);
+  };
+
+  const closePrintPreview = () => {
+    setShowPrintPreview(false);
+    setPrintData(null);
+  };
+
+  const generatePrintDocument = () => {
+    if (!printData) return "";
+
+    const currentDate = new Date().toLocaleDateString();
+    const currentTime = new Date().toLocaleTimeString();
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Asset Report - ${printData.title}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+          }
+          .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #059669;
+            margin: 0;
+            font-size: 28px;
+          }
+          .header p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+          }
+          .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .detail-item {
+            margin-bottom: 15px;
+          }
+          .detail-label {
+            color: #059669;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+          }
+          .detail-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+          }
+          .section-title {
+            color: #059669;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-left: 3px solid #059669;
+            padding-left: 10px;
+          }
+          .description-box {
+            background-color: #f0fdf4;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #059669;
+            color: #333;
+            line-height: 1.6;
+          }
+          .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+          }
+          @media print {
+            body {
+              background-color: white;
+            }
+            .container {
+              box-shadow: none;
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${printData.title}</h1>
+            <p>Asset Report</p>
+            <p style="font-size: 12px; margin-top: 10px;">${currentDate} at ${currentTime}</p>
+          </div>
+
+          <div class="details-grid">
+            <div>
+              <div class="detail-item">
+                <div class="detail-label">Asset ID</div>
+                <div class="detail-value">${printData._id || printData.id || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Title</div>
+                <div class="detail-value">${printData.title || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Category</div>
+                <div class="detail-value">${printData.category || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Manufacturer</div>
+                <div class="detail-value">${printData.manufacturer || "N/A"}</div>
+              </div>
+            </div>
+            <div>
+              <div class="detail-item">
+                <div class="detail-label">Customer</div>
+                <div class="detail-value">${printData.customer?.name || printData.customer || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Project</div>
+                <div class="detail-value">${printData.project?.name || printData.project_name || printData.project || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Barcode</div>
+                <div class="detail-value">${printData.barcode || "N/A"}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Area</div>
+                <div class="detail-value">${printData.area || "N/A"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="details-grid">
+            <div>
+              <div class="detail-item">
+                <div class="detail-label">Model</div>
+                <div class="detail-value">${printData.model || "N/A"}</div>
+              </div>
+            </div>
+            <div>
+              <div class="detail-item">
+                <div class="detail-label">Serial Number</div>
+                <div class="detail-value">${printData.serial_number || printData.serialNumber || "N/A"}</div>
+              </div>
+            </div>
+          </div>
+
+          ${printData.description ? `
+            <div class="section-title">Description</div>
+            <div class="description-box">
+              ${printData.description}
+            </div>
+          ` : ""}
+
+          <div class="footer">
+            <p>Generated on ${currentDate} at ${currentTime}</p>
+            <p>Asset Management System</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // -------------------------
   // FILTER
   // -------------------------
   const filteredAssets = assets.filter((asset) => {
@@ -150,6 +343,7 @@ const AssetsPage = () => {
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="px-4 py-3 text-left">Title</th>
                       <th className="px-4 py-3 text-left">Customer</th>
+                      <th className="px-4 py-3 text-left">Project</th>
                       <th className="px-4 py-3 text-left">Category</th>
                       <th className="px-4 py-3 text-left">Manufacturer</th>
                       <th className="px-4 py-3 text-left">Barcode</th>
@@ -170,6 +364,9 @@ const AssetsPage = () => {
                           {asset.customer?.name || asset.customer || "-"}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
+                          {asset.project?.name || asset.project_name || asset.project || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
                           {asset.category || "-"}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
@@ -181,6 +378,15 @@ const AssetsPage = () => {
 
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
+                            {/* PRINT */}
+                            <button
+                              onClick={() => handlePrint(asset)}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                              title="Print Asset Report"
+                            >
+                              <FaPrint size={14} />
+                            </button>
+
                             {/* EDIT (Admin + Manager) */}
                             {canEditAsset && (
                               <Link
@@ -212,6 +418,55 @@ const AssetsPage = () => {
           </div>
         </div>
       </main>
+
+      {/* PRINT PREVIEW MODAL */}
+      {showPrintPreview && printData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-lg bg-white shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Print Asset Report</h2>
+              <button
+                onClick={closePrintPreview}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Preview Content */}
+            <div className="flex-1 overflow-y-auto">
+              <iframe
+                srcDoc={generatePrintDocument()}
+                title="Asset Report Preview"
+                className="w-full h-full border-0"
+                style={{ minHeight: "600px" }}
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+              <button
+                onClick={closePrintPreview}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const printWindow = window.open("", "", "width=800,height=600");
+                  printWindow.document.write(generatePrintDocument());
+                  printWindow.document.close();
+                  printWindow.print();
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+              >
+                Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && assetToDelete && (

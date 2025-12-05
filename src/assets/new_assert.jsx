@@ -11,13 +11,14 @@ const NewAssetPage = () => {
     customerName: "",
     project: "",
     projectName: "",
-    order: "",
+    // order: "",
     title: "",
     serialNumber: "",
     barcode: "",
     model: "",
     category: "",
     manufacturer: "",
+    area: "",
     description: "",
   });
 
@@ -49,12 +50,12 @@ const NewAssetPage = () => {
             : []
         );
 
-        const ordersResponse = await apiClient.getOrders();
-        const ordersList = Array.isArray(ordersResponse.orders)
-          ? ordersResponse.orders
-          : [];
+        // const ordersResponse = await apiClient.getOrders();
+        // const ordersList = Array.isArray(ordersResponse.orders)
+        //   ? ordersResponse.orders
+        //   : [];
 
-        setOrders(ordersList);
+        // setOrders(ordersList);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
         setError("Error loading dropdown data.");
@@ -70,53 +71,69 @@ const NewAssetPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // When Order changes → Autofill Customer + Project
-    if (name === "order") {
-      const selected = orders.find((o) => o._id === value);
+    // When Project changes → Autofill Customer
+    if (name === "project") {
+      const selected = projects.find((p) => p._id === value);
 
       if (selected) {
         setFormData((prev) => ({
           ...prev,
-          order: selected._id,
-          order_number: selected._id,
+          project: selected._id,
+          projectName: selected.title || "",
           customer: selected.customer?.id || "",
           customerName: selected.customer?.name || "",
-          project: selected.project?.id || "",
-          projectName: selected.project?.name || "",
         }));
       }
       return;
     }
+
+    // When Order changes → Autofill Customer + Project
+    // if (name === "order") {
+    //   const selected = orders.find((o) => o._id === value);
+
+    //   if (selected) {
+    //     setFormData((prev) => ({
+    //       ...prev,
+    //       order: selected._id,
+    //       order_number: selected._id,
+    //       customer: selected.customer?._id || "",
+    //       customerName: selected.customer?.name || "",
+    //       project: selected.project?._id || "",
+    //       projectName: selected.project?.name || "",
+    //     }));
+    //   }
+    //   return;
+    // }
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Submit Handler
   const handleSubmit = async () => {
-    if (!formData.title || !formData.order || !formData.customer) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+    // if (!formData.title || !formData.customer || !formData.project || !formData.manufacturer || !formData.barcode || !formData.category || !formData.area) {
+    //   setError("Please fill in all required fields.");
+    //   return;
+    // }
 
-    const selectedOrder = orders.find((o) => o._id === formData.order);
-    const orderNumber = selectedOrder?.order_number || "";
+    // const selectedOrder = orders.find((o) => o._id === formData.order);
+    // const orderNumber = selectedOrder?.order_number || "";
 
-    if (!orderNumber) {
-      setError("Order number missing from selected order.");
-      return;
-    }
+    // if (!orderNumber) {
+    //   setError("Order number missing from selected order.");
+    //   return;
+    // }
 
     const payload = {
 
-      customer_id :formData.customer,
+      customer_id: formData.customer,
       customer_name: formData.customerName,
       employee_id: "",
       employee_name: "",
       project_id: formData.project,
       project_name: formData.projectName,
-      order_id: formData.order,
-      order_number: orderNumber,
-     
+      // order_id: formData.order,
+      // order_number: orderNumber,
+
       title: formData.title,
       description: formData.description,
       model: formData.model,
@@ -124,6 +141,7 @@ const NewAssetPage = () => {
       serial_number: formData.serialNumber,
       category: formData.category,
       barcode: formData.barcode,
+      area: formData.area,
     };
 
     console.log("FINAL PAYLOAD:", payload);
@@ -172,65 +190,168 @@ const NewAssetPage = () => {
             {/* FORM */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
+              {/* Customer - Auto-filled from Project */}
               <div>
-                <label className="block text-sm font-medium mb-2">Customer</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Customer <span className="text-red-600">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.customerName}
+                  disabled
                   readOnly
-                  className="w-full rounded-lg border px-4 py-2 bg-gray-100"
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none"
+                  placeholder="Auto-filled when project is selected"
                 />
               </div>
 
+              {/* Project Selection */}
               <div>
-                <label className="block text-sm font-medium mb-2">Project</label>
-                <input
-                  type="text"
-                  value={formData.projectName}
-                  readOnly
-                  className="w-full rounded-lg border px-4 py-2 bg-gray-100"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Project <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="project"
+                  value={formData.project}
+                  onChange={handleInputChange}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                >
+                  <option value="">Select a project</option>
+                  {projects.map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => navigate("/projects/new")}
+                  className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                >
+                  + Add New Project
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Order</label>
+              {/* Order Selection */}
+              {/* <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Order <span className="text-red-600">*</span>
+                </label>
                 <select
                   name="order"
                   value={formData.order}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
                 >
                   <option value="">Select an order</option>
-
                   {orders.map((order) => (
                     <option key={order._id} value={order._id}>
                       {order.order_number}
                     </option>
                   ))}
                 </select>
-
                 <button
                   type="button"
                   onClick={() => navigate("/orders/new")}
-                  className="mt-2 w-full border border-green-700 py-2 rounded-lg text-green-700 hover:bg-green-50"
+                  className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
                 >
                   + Add New Order
                 </button>
-              </div>
+              </div> */}
 
+              {/* Title */}
               <div>
-                <label className="block text-sm font-medium mb-2">Title</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Asset Title <span className="text-red-600">*</span>
+                </label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
+                  placeholder="Enter asset title"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
                 />
               </div>
 
+              {/* Manufacturer */}
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Manufacturer <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="manufacturer"
+                  value={formData.manufacturer}
+                  onChange={handleInputChange}
+                  placeholder="Enter manufacturer"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+
+              {/* Barcode */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Barcode <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={formData.barcode}
+                  onChange={handleInputChange}
+                  placeholder="Enter unique barcode number"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+
+              {/* Area */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Area <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleInputChange}
+                  placeholder="Enter area"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Category <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  placeholder="Enter category"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+
+              {/* Model */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Model
+                </label>
+                <input
+                  type="text"
+                  name="model"
+                  value={formData.model}
+                  onChange={handleInputChange}
+                  placeholder="Enter model"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+
+              {/* Serial Number */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Serial Number
                 </label>
                 <input
@@ -238,68 +359,26 @@ const NewAssetPage = () => {
                   name="serialNumber"
                   value={formData.serialNumber}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
+                  placeholder="Enter unique serial number"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={formData.barcode}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Model</label>
-                <input
-                  type="text"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border px-4 py-2"
-                />
-              </div>
             </div>
 
-            {/* SINGLE COLUMN FIELDS */}
+            {/* Description */}
             <div className="mt-6">
-              <label className="block text-sm font-medium mb-2">
-                Manufacturer
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Description
               </label>
-              <input
-                type="text"
-                name="manufacturer"
-                value={formData.manufacturer}
-                onChange={handleInputChange}
-                className="w-full rounded-lg border px-4 py-2"
-              />
-            </div>
-
-            <div className="mt-6">
-              <label className="block text-sm font-medium mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border px-4 py-2"
+                placeholder="Enter asset description"
                 rows={4}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors resize-none"
               />
             </div>
 
@@ -307,16 +386,17 @@ const NewAssetPage = () => {
             <div className="mt-8 flex gap-4">
               <button
                 onClick={handleSubmit}
-                className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800"
+                disabled={submitting}
+                className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Asset
+                {submitting ? "Adding..." : "Add Asset"}
               </button>
 
               <Link
                 to="/assets"
-                className="border border-gray-300 px-6 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="border-2 border-gray-300 px-6 py-2.5 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors inline-flex items-center justify-center"
               >
-                Back
+                Cancel
               </Link>
             </div>
           </div>
