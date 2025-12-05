@@ -34,7 +34,7 @@ const EditAssetPage = () => {
         const res = await apiClient.getAssetById(id)
         const asset = res.asset || res
 
-        console.log(asset)
+        // console.log(asset)
         setOriginalAsset(asset)
 
         setFormData({

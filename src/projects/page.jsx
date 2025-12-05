@@ -6,6 +6,7 @@ import { apiClient } from "../lib/api-client";
 
 const ProjectsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,11 +89,25 @@ const ProjectsPage = () => {
     setDeletedProjectName("");
   };
 
-  const filteredProjects = projects.filter(
-    (project) =>
-      project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.customer_id?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // derive status list for the filter
+  const statuses = Array.from(new Set(projects.map((p) => p.status).filter(Boolean)));
+
+  const filteredProjects = projects.filter((project) => {
+    const q = (searchTerm || "").trim().toLowerCase();
+    if (q) {
+      const matches =
+        project.title?.toLowerCase().includes(q) ||
+        project.customer_id?.toLowerCase().includes(q) ||
+        project.customer?.name?.toLowerCase().includes(q) ||
+        project.contact_name?.toLowerCase().includes(q) ||
+        project.contact_email?.toLowerCase().includes(q);
+      if (!matches) return false;
+    }
+
+    if (statusFilter && project.status !== statusFilter) return false;
+
+    return true;
+  });
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -125,13 +140,28 @@ const ProjectsPage = () => {
           {!loading && !error && (
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-200 p-4 sm:p-6">
-                <input
-                  type="text"
-                  placeholder="Search projects by title or customer ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                  <input
+                    type="text"
+                    placeholder="Search projects by title or customer ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full sm:flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="mt-3 sm:mt-0 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-700 focus:outline-none"
+                  >
+                    <option value="">All Statuses</option>
+                    {statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="overflow-x-auto">

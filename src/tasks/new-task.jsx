@@ -184,7 +184,7 @@ const NewTaskPage = () => {
         status: formData.status,
       };
 
-      console.log(payload);
+      // console.log(payload);
 
       await apiClient.createTask(payload);
       navigate("/tasks");

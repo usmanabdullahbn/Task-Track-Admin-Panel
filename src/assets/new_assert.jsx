@@ -144,8 +144,8 @@ const NewAssetPage = () => {
       area: formData.area,
     };
 
-    console.log("FINAL PAYLOAD:", payload);
-    console.log(formData);
+    // console.log("FINAL PAYLOAD:", payload);
+    // console.log(formData);
 
     try {
       setSubmitting(true);

@@ -46,7 +46,7 @@ const OrdersPage = () => {
       try {
         setLoading(true);
         const data = await apiClient.getOrders();
-        console.log(data)
+        console.log(data);
 
         setOrders(Array.isArray(data.orders) ? data.orders : []);
       } catch (err) {
@@ -72,7 +72,9 @@ const OrdersPage = () => {
 
     try {
       await apiClient.deleteOrder(selectedOrder._id);
-      setOrders((prev) => prev.filter((order) => order._id !== selectedOrder._id));
+      setOrders((prev) =>
+        prev.filter((order) => order._id !== selectedOrder._id)
+      );
       setShowConfirmModal(false);
       setShowSuccessModal(true);
     } catch (err) {
@@ -111,9 +113,15 @@ const OrdersPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar className={showConfirmModal || showSuccessModal ? "blur-sm" : ""} />
+      <Sidebar
+        className={showConfirmModal || showSuccessModal ? "blur-sm" : ""}
+      />
 
-      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showConfirmModal || showSuccessModal ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
+          showConfirmModal || showSuccessModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -168,10 +176,10 @@ const OrdersPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3">Order #</th>
-                      <th className="px-4 py-3">ERP #</th>
                       <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Project</th>
+                      <th className="px-4 py-3">Order #</th>
+                      <th className="px-4 py-3">ERP #</th>
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Created</th>
@@ -185,12 +193,13 @@ const OrdersPage = () => {
                         key={order._id}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
+                        
+                        <td className="px-4 py-3">{order.customer.name}</td>
+                        <td className="px-4 py-3">{order.project.name}</td>
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {order.order_number}
                         </td>
                         <td className="px-4 py-3">{order.erp_number || "-"}</td>
-                        <td className="px-4 py-3">{order.customer.name}</td>
-                        <td className="px-4 py-3">{order.project.name}</td>
                         <td className="px-4 py-3">
                           {order.amount?.$numberDecimal}
                         </td>
@@ -247,10 +256,16 @@ const OrdersPage = () => {
           <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
 
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">Confirm Delete</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Confirm Delete
+            </h2>
 
             <p className="mb-6 text-gray-700">
-              Are you sure you want to delete order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span>?
+              Are you sure you want to delete order{" "}
+              <span className="font-bold">
+                {selectedOrder.order_name || selectedOrder.order_number}
+              </span>
+              ?
             </p>
 
             <div className="flex justify-end gap-3">
@@ -277,10 +292,16 @@ const OrdersPage = () => {
           <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
 
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+            <h2 className="text-lg font-semibold mb-4 text-green-600">
+              Success
+            </h2>
 
             <p className="mb-6 text-gray-700">
-              Order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span> has been deleted successfully.
+              Order{" "}
+              <span className="font-bold">
+                {selectedOrder.order_name || selectedOrder.order_number}
+              </span>{" "}
+              has been deleted successfully.
             </p>
 
             <div className="flex justify-end">

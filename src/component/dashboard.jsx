@@ -19,7 +19,7 @@ const DashboardContent = () => {
         // IMPORTANT FIX ⬇️
         setStats(data.stats);
 
-        console.log("Dashboard Stats:", data.stats);
+        // console.log("Dashboard Stats:", data.stats);
       } catch (err) {
         setError(err.message || "Failed to load dashboard stats");
       } finally {

@@ -15,60 +15,43 @@ import CustomerSidebar from "./customer-sidebar";
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
-  const customer = JSON.parse(localStorage.getItem("User"))?.customer;
-
-  // const handleSignOut = () => {
-  //   try {
-  //     localStorage.removeItem("User");
-  //   } catch (e) {
-  //     // ignore
-  //   }
-  //   navigate("/login", { replace: true });
-  // };
+  const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem("User"));
+  const customer = user?.customer;
+  console.log(customer)
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!customer) return;
+      if (!customer?._id) {
+        console.log("No customer found");
+        setLoading(false);
+        return;
+      }
 
       try {
-        const [projectsRes, ordersRes] = await Promise.all([
+        setLoading(true);
+        const [projectsRes, ordersRes, assetsRes] = await Promise.all([
           apiClient.getProjectByCustomerId(customer._id),
           apiClient.getOrdersByCustomerId(customer._id),
+          apiClient.getAssetsByCustomerId(customer._id),
         ]);
 
-        const projects = projectsRes.projects || projectsRes;
-        const orders = ordersRes.orders || ordersRes;
+        console.log("Projects:", projectsRes);
+        console.log("Orders:", ordersRes);
 
-        // 🔹 Project stats
+        const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
+        const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
+        const assets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.assets || []);
+
         const totalProjects = projects.length;
         const activeProjects = projects.filter(p => p.status === "Active").length;
         const completedProjects = projects.filter(p => p.status === "Completed").length;
 
-        // 🔹 Order stats
         const totalOrders = orders.length;
         const pendingOrders = orders.filter(o => o.status === "Pending").length;
         const completedOrders = orders.filter(o => o.status === "Completed").length;
 
-        // 🔹 Task stats
-        // let allTasks = [];
-        // for (const project of projects) {
-        //   try {
-        //     const taskRes = await apiClient.getTasksByProjectId(project._id);
-        //     const tasks = taskRes.tasks || taskRes;
-        //     allTasks = allTasks.concat(tasks);
-        //   } catch (err) {
-        //     console.warn(`Failed to fetch tasks for project ${project._id}`, err);
-        //   }
-        // }
-
-        // const totalTasks = allTasks.length;
-        // const completedTasks = allTasks.filter(t => t.status === "Completed").length;
-        // const inProgressTasks = allTasks.filter(
-        //   t =>
-        //     t.status === "In Progress" ||
-        //     t.status === "Todo" ||
-        //     t.status === "On Hold"
-        // ).length;
+        const totalAssets = assets.length;
 
         setStats({
           totalProjects,
@@ -77,18 +60,26 @@ const CustomerDashboard = () => {
           totalOrders,
           pendingOrders,
           completedOrders,
-          // totalTasks,
-          // completedTasks,
-          // inProgressTasks,
-          totalAssets: 0,
+          totalAssets,
         });
       } catch (err) {
-        console.error("Failed to fetch dashboard stats", err);
+        console.error("Failed to fetch dashboard stats:", err);
+        setStats({
+          totalProjects: 0,
+          activeProjects: 0,
+          completedProjects: 0,
+          totalOrders: 0,
+          pendingOrders: 0,
+          completedOrders: 0,
+          totalAssets: 0,
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStats();
-  }, [customer]);
+  }, [customer?._id]);
 
   const statItems = [
     {
@@ -162,6 +153,17 @@ const CustomerDashboard = () => {
       icon: <FaCubes />,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+        <CustomerSidebar />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-600">Loading dashboard...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">

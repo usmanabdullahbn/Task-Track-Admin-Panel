@@ -36,7 +36,7 @@ const EditOrderPage = () => {
         const res = await apiClient.getOrderById(id);
         const order = res.order;
 
-        console.log(order);
+        // console.log(order);
         setOriginalOrder(order);
 
         setFormData({

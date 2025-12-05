@@ -35,7 +35,7 @@ const NewCustomerPage = () => {
 
     try {
       const res = await apiClient.createCustomer(formData);
-      console.log("Customer Created:", res);
+      // console.log("Customer Created:", res);
 
       // Set customer data and show modal
       setCustomerData(res);
