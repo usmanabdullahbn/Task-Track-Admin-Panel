@@ -290,11 +290,9 @@ const NewOrderPage = () => {
                     onChange={handleInputChange}
                     className="w-full border rounded-lg px-4 py-2 mt-1"
                   >
-                    <option value="Pending">Pending</option>
+                    <option value="Pending">In Process</option>
                     <option value="Confirmed">Confirmed</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
+                    <option value="Open">Open</option>
                   </select>
                 </div>
 
