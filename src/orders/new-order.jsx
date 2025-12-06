@@ -7,11 +7,15 @@ const NewOrderPage = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    assetId: "",
+    assetTitle: "",
     customerId: "",
     customerName: "",
     projectId: "",
     projectName: "",
-    orderNumber: "",
+    employeeId: "",
+    employeeName: "",
+    orderTitle: "",
     erpNumber: "",
     amount: "",
     created_at: new Date().toISOString().split("T")[0],
@@ -20,13 +24,15 @@ const NewOrderPage = () => {
 
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [allOrders, setAllOrders] = useState([]);
 
-  // Fetch customers and projects
+  // Fetch customers, projects, assets, and employees
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,6 +45,8 @@ const NewOrderPage = () => {
           : customersResponse.customers || [];
         setCustomers(customersList);
 
+        console.log("Fetched Customers:", customersList);
+
         // Projects
         const projectsResponse = await apiClient.getProjects();
         const projectsList = Array.isArray(projectsResponse.projects)
@@ -46,15 +54,31 @@ const NewOrderPage = () => {
           : [];
         setProjects(projectsList);
 
+        // Assets
+        const assetsResponse = await apiClient.getAssets();
+        const assetsList = Array.isArray(assetsResponse)
+          ? assetsResponse
+          : assetsResponse.assets || [];
+        setAssets(assetsList);
+
+        // Employees
+        const employeesResponse = await apiClient.getUsers();
+        const employeesList = Array.isArray(employeesResponse)
+          ? employeesResponse
+          : employeesResponse.Users || [];
+        setEmployees(employeesList);
+
+        console.log("Fetched Employees:", employeesList);
+
         // Orders (for duplicate checking)
-        const ordersResponse = await apiClient.getOrders();
-        const ordersList = Array.isArray(ordersResponse)
-          ? ordersResponse
-          : ordersResponse.orders || [];
-        setAllOrders(ordersList);
+        // const ordersResponse = await apiClient.getOrders();
+        // const ordersList = Array.isArray(ordersResponse)
+        //   ? ordersResponse
+        //   : ordersResponse.orders || [];
+        // setAllOrders(ordersList);
       } catch (err) {
         console.error("Failed to fetch:", err);
-        setError("Failed to load customers & projects");
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -63,20 +87,38 @@ const NewOrderPage = () => {
     fetchData();
   }, []);
 
-  // Handle Inputs (with auto-fill customer and project details)
+  // Handle Inputs (with auto-fill customer and project details from asset)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Project selection - auto-fill customer from project's customer
-    if (name === "projectId") {
-      const selected = projects.find((p) => p._id === value);
+    // Asset selection - auto-fill customer and project from asset
+    if (name === "assetId") {
+      const selected = assets.find((a) => a._id === value);
       if (selected) {
         setFormData((prev) => ({
           ...prev,
-          projectId: selected._id,
-          projectName: selected.title,
-          customerId: selected.customer?.id || "",
-          customerName: selected.customer?.name || "",
+          assetId: selected._id,
+          assetTitle: selected.title || "",
+          customerId: selected.customer.id || selected.customer?.id || "",
+          customerName: selected.customer_name || selected.customer?.name || "",
+          projectId: selected.project.id || selected.project?.id || "",
+          projectName: selected.project_name || selected.project?.name || "",
+        }));
+
+        
+      console.log("Selected Asset:", selected);
+      }
+      return;
+    }
+
+    // Employee selection - set employee id and name
+    if (name === "employeeId") {
+      const selected = employees.find((e) => e._id === value);
+      if (selected) {
+        setFormData((prev) => ({
+          ...prev,
+          employeeId: selected._id,
+          employeeName: selected.name || "",
         }));
       }
       return;
@@ -87,49 +129,28 @@ const NewOrderPage = () => {
 
   // Submit Order
   const handleSubmit = async () => {
-    if (!formData.orderNumber || !formData.customerId || !formData.projectId) {
-      setError("Order Number, Customer, and Project are required");
-      return;
-    }
-
-    // Check for duplicate order number
-    const duplicateOrderNumber = allOrders.find(
-      (order) => order.order_number === formData.orderNumber
-    );
-    if (duplicateOrderNumber) {
-      setError("Cannot add duplicate order number");
-      return;
-    }
-
-    // Check for duplicate ERP number
-    const duplicateERP = allOrders.find(
-      (order) => order.erp_number === formData.erpNumber && formData.erpNumber
-    );
-    if (duplicateERP) {
-      setError("Cannot add duplicate ERP number");
-      return;
-    }
+    // if (!formData.orderTitle || !formData.customerId || !formData.projectId || !formData.assetId) {
+    //   setError("Order Title, Asset, Customer, and Project are required");
+    //   return;
+    // }
 
     const payload = {
-      customer: {
-        id: formData.customerId,
-        name: formData.customerName,
-      },
-      employee: {
-        id: "0", // same as your projects file
-        name: "Not Assigned",
-      },
-      project: {
-        id: formData.projectId,
-        name: formData.projectName,
-      },
-
-      order_number: formData.orderNumber,
+      customer_id: formData.customerId,
+      customer_name: formData.customerName,
+      project_id: formData.projectId,
+      project_name: formData.projectName,
+      asset_id: formData.assetId,
+      asset_title: formData.assetTitle,
+      user_id: formData.employeeId || "0",
+      user_name: formData.employeeName || "Not Assigned",
+      title: formData.orderTitle,
       erp_number: formData.erpNumber,
       amount: Number(formData.amount) || 0,
       status: formData.status,
       created_at: formData.created_at,
     };
+
+    console.log("Submitting Order:", payload);
 
     try {
       setSubmitting(true);
@@ -188,74 +209,102 @@ const NewOrderPage = () => {
             {/* FORM */}
             <div className="lg:col-span-2">
               <div className="rounded-lg border bg-white p-6 shadow-sm">
-                {/* PROJECT + CUSTOMER */}
+                {/* ASSET + CUSTOMER + PROJECT */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Project */}
-                  <div>
+                  {/* Asset - Dropdown to select */}
+                  <div className="sm:col-span-2">
                     <label className="text-sm font-medium">
-                      Project <span className="text-red-600">*</span>
+                      Asset <span className="text-red-600">*</span>
                     </label>
-                    <div className="flex gap-2 mt-1">
-                      <select
-                        name="projectId"
-                        value={formData.projectId}
-                        onChange={handleInputChange}
-                        className="flex-1 border rounded-lg px-4 py-2"
-                      >
-                        <option value="">Select Project</option>
-                        {projects.map((project) => (
-                          <option key={project._id} value={project._id}>
-                            {project.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/projects/new")}
-                      className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                    <select
+                      name="assetId"
+                      value={formData.assetId}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-lg px-4 py-2 mt-1"
                     >
-                      + Add New Project
-                    </button>
+                      <option value="">Select Asset</option>
+                      {assets.map((asset) => (
+                        <option key={asset._id} value={asset._id}>
+                          {asset.title}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Customer - Read Only */}
                   <div>
-                    <label className="text-sm font-medium">Customer</label>
+                    <label className="text-sm font-medium">
+                      Customer <span className="text-red-600">*</span>
+                    </label>
                     <input
                       type="text"
                       value={formData.customerName}
                       disabled
                       readOnly
                       className="w-full border rounded-lg px-4 py-2 mt-1 bg-gray-100 text-gray-600 cursor-not-allowed"
-                      placeholder="Auto-filled from project selection"
+                      placeholder="Auto-filled from asset selection"
+                    />
+                  </div>
+
+                  {/* Project - Read Only */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Project <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.projectName}
+                      disabled
+                      readOnly
+                      className="w-full border rounded-lg px-4 py-2 mt-1 bg-gray-100 text-gray-600 cursor-not-allowed"
+                      placeholder="Auto-filled from asset selection"
                     />
                   </div>
                 </div>
 
-                {/* ORDER NUMBER & ERP */}
+                {/* ORDER TITLE & ERP */}
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-sm font-medium">Order Number</label>
+                    <label className="text-sm font-medium">
+                      Order Title <span className="text-red-600">*</span>
+                    </label>
                     <input
-                      name="orderNumber"
-                      value={formData.orderNumber}
+                      name="orderTitle"
+                      value={formData.orderTitle}
                       onChange={handleInputChange}
                       className="w-full border rounded-lg px-4 py-2 mt-1"
-                      placeholder="e.g., ORD-001"
+                      placeholder="e.g., Maintenance Order"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">ERP Number</label>
-                    <input
-                      name="erpNumber"
-                      value={formData.erpNumber}
+                    <label className="text-sm font-medium">Assign Employee</label>
+                    <select
+                      name="employeeId"
+                      value={formData.employeeId}
                       onChange={handleInputChange}
                       className="w-full border rounded-lg px-4 py-2 mt-1"
-                      placeholder="e.g., ERP-9001"
-                    />
+                    >
+                      <option value="">Select Employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee._id} value={employee._id}>
+                          {employee.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                </div>
+
+                {/* ERP NUMBER */}
+                <div className="mt-6">
+                  <label className="text-sm font-medium">ERP Number</label>
+                  <input
+                    name="erpNumber"
+                    value={formData.erpNumber}
+                    onChange={handleInputChange}
+                    className="w-full border rounded-lg px-4 py-2 mt-1"
+                    placeholder="e.g., ERP-9001"
+                  />
                 </div>
 
                 {/* AMOUNT & DATE */}
@@ -344,7 +393,7 @@ const NewOrderPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
             <h2 className="text-lg font-semibold text-green-600">Success</h2>
             <p className="mt-3 text-gray-700">
-              Order <strong>{formData.orderNumber}</strong> has been created
+              Order <strong>{formData.orderTitle}</strong> has been created
               successfully.
             </p>
 
