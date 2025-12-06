@@ -164,12 +164,17 @@ const NewOrderPage = () => {
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
 
-      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
+          showSuccessModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
-
           {/* Header */}
           <div className="mb-6 flex items-center gap-4">
-            <Link to="/orders" className="text-green-700 hover:text-green-900">← Back</Link>
+            <Link to="/orders" className="text-green-700 hover:text-green-900">
+              ← Back
+            </Link>
             <h1 className="text-2xl sm:text-3xl font-bold">Add Order</h1>
           </div>
 
@@ -180,17 +185,16 @@ const NewOrderPage = () => {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
             {/* FORM */}
             <div className="lg:col-span-2">
               <div className="rounded-lg border bg-white p-6 shadow-sm">
-
                 {/* PROJECT + CUSTOMER */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
                   {/* Project */}
                   <div>
-                    <label className="text-sm font-medium">Project <span className="text-red-600">*</span></label>
+                    <label className="text-sm font-medium">
+                      Project <span className="text-red-600">*</span>
+                    </label>
                     <div className="flex gap-2 mt-1">
                       <select
                         name="projectId"
@@ -227,7 +231,6 @@ const NewOrderPage = () => {
                       placeholder="Auto-filled from project selection"
                     />
                   </div>
-
                 </div>
 
                 {/* ORDER NUMBER & ERP */}
@@ -290,12 +293,14 @@ const NewOrderPage = () => {
                     onChange={handleInputChange}
                     className="w-full border rounded-lg px-4 py-2 mt-1"
                   >
-                    <option value="Pending">In Process</option>
-                    <option value="Confirmed">Confirmed</option>
+                    {" "}
+                    <option value="Pending">Pending</option>
+                    <option value="In Progcess">In Progcess</option>
+                    {/* <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option> */}
                     <option value="Open">Open</option>
                   </select>
                 </div>
-
 
                 {/* BUTTONS */}
                 <div className="mt-8 flex gap-4">
@@ -320,13 +325,15 @@ const NewOrderPage = () => {
             {/* INFO CARD */}
             <div>
               <div className="rounded-lg border bg-white p-6 shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-3">Order Details</h3>
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  Order Details
+                </h3>
                 <p className="text-gray-600 text-sm">
-                  Fill in all required fields to create a new order. The order will be linked to the selected customer & project.
+                  Fill in all required fields to create a new order. The order
+                  will be linked to the selected customer & project.
                 </p>
               </div>
             </div>
-
           </div>
         </div>
       </main>
@@ -337,7 +344,8 @@ const NewOrderPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
             <h2 className="text-lg font-semibold text-green-600">Success</h2>
             <p className="mt-3 text-gray-700">
-              Order <strong>{formData.orderNumber}</strong> has been created successfully.
+              Order <strong>{formData.orderNumber}</strong> has been created
+              successfully.
             </p>
 
             <div className="mt-6 flex justify-end">
@@ -351,7 +359,6 @@ const NewOrderPage = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

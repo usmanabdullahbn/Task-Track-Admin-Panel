@@ -306,8 +306,7 @@ const EditOrderPage = () => {
                 className="w-full rounded-lg border-gray-300 focus:border-green-700 focus:ring-green-700 shadow-sm px-3 py-2"
               >
                 <option value="Pending">Pending</option>
-                <option value="Confirmed">Confirmed</option>
-                <option value="Processing">Processing</option>
+                <option value="In Progcess">In Progcess</option>
                 <option value="Completed">Completed</option>
                 <option value="Cancelled">Cancelled</option>
               </select>

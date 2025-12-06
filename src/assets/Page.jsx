@@ -43,7 +43,7 @@ const AssetsPage = () => {
     const fetchAssets = async () => {
       try {
         const res = await apiClient.getAssets();
-        console.log("Assets API Response:", res);
+        // console.log("Assets API Response:", res);
 
         // Handle both array and { assets: [] } response shapes
         const assetsData = Array.isArray(res) ? res : res?.assets || [];
