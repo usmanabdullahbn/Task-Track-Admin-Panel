@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaExternalLinkAlt, FaPrint } from "react-icons/fa";
+import { FaPrint } from "react-icons/fa";
 import { apiClient } from "../../lib/api-client";
 import CustomerSidebar from "./customer-sidebar";
 

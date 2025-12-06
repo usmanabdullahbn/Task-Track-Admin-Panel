@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./customer-sidebar";
-import { FaPrint } from "react-icons/fa";
+import { FaExternalLinkAlt, FaPrint } from "react-icons/fa";
 import { apiClient } from "../../lib/api-client";
 
 const AssetsPage = () => {
@@ -178,7 +178,9 @@ const AssetsPage = () => {
             <div>
               <div class="detail-item">
                 <div class="detail-label">Asset ID</div>
-                <div class="detail-value">${printData._id || printData.id || "N/A"}</div>
+                <div class="detail-value">${
+                  printData._id || printData.id || "N/A"
+                }</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Title</div>
@@ -190,17 +192,26 @@ const AssetsPage = () => {
               </div>
               <div class="detail-item">
                 <div class="detail-label">Manufacturer</div>
-                <div class="detail-value">${printData.manufacturer || "N/A"}</div>
+                <div class="detail-value">${
+                  printData.manufacturer || "N/A"
+                }</div>
               </div>
             </div>
             <div>
               <div class="detail-item">
                 <div class="detail-label">Customer</div>
-                <div class="detail-value">${printData.customer?.name || printData.customer || "N/A"}</div>
+                <div class="detail-value">${
+                  printData.customer?.name || printData.customer || "N/A"
+                }</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Project</div>
-                <div class="detail-value">${printData.project?.name || printData.project_name || printData.project || "N/A"}</div>
+                <div class="detail-value">${
+                  printData.project?.name ||
+                  printData.project_name ||
+                  printData.project ||
+                  "N/A"
+                }</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Barcode</div>
@@ -223,17 +234,23 @@ const AssetsPage = () => {
             <div>
               <div class="detail-item">
                 <div class="detail-label">Serial Number</div>
-                <div class="detail-value">${printData.serial_number || printData.serialNumber || "N/A"}</div>
+                <div class="detail-value">${
+                  printData.serial_number || printData.serialNumber || "N/A"
+                }</div>
               </div>
             </div>
           </div>
 
-          ${printData.description ? `
+          ${
+            printData.description
+              ? `
             <div class="section-title">Description</div>
             <div class="description-box">
               ${printData.description}
             </div>
-          ` : ""}
+          `
+              : ""
+          }
 
           <div class="footer">
             <p>Generated on ${currentDate} at ${currentTime}</p>
@@ -288,7 +305,9 @@ const AssetsPage = () => {
 
             {/* Table */}
             {loading ? (
-              <p className="text-center text-gray-500 py-6">Loading assets...</p>
+              <p className="text-center text-gray-500 py-6">
+                Loading assets...
+              </p>
             ) : filteredAssets.length === 0 ? (
               <p className="text-center text-gray-500 py-6">No assets found.</p>
             ) : (
@@ -319,7 +338,10 @@ const AssetsPage = () => {
                           {asset.customer?.name || asset.customer || "-"}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
-                          {asset.project?.name || asset.project_name || asset.project || "-"}
+                          {asset.project?.name ||
+                            asset.project_name ||
+                            asset.project ||
+                            "-"}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {asset.category || "-"}
@@ -332,13 +354,25 @@ const AssetsPage = () => {
                         </td>
 
                         <td className="px-4 py-3">
-                          <button
-                            onClick={() => handlePrint(asset)}
-                            className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
-                            title="Print Asset Report"
-                          >
-                            <FaPrint size={14} />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handlePrint(order)}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
+                              title="Print order report"
+                            >
+                              <FaPrint size={14} />
+                            </button>
+                            {/* add other per-order actions here */}
+                            <button
+                              onClick={() =>
+                                navigate(`/project/${project._id}`)
+                              }
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white text-sm"
+                              title="Open project details"
+                            >
+                              <FaExternalLinkAlt size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -356,7 +390,9 @@ const AssetsPage = () => {
           <div className="rounded-lg bg-white shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-900">Print Asset Report</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                Print Asset Report
+              </h2>
               <button
                 onClick={closePrintPreview}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -385,7 +421,11 @@ const AssetsPage = () => {
               </button>
               <button
                 onClick={() => {
-                  const printWindow = window.open("", "", "width=800,height=600");
+                  const printWindow = window.open(
+                    "",
+                    "",
+                    "width=800,height=600"
+                  );
                   printWindow.document.write(generatePrintDocument());
                   printWindow.document.close();
                   printWindow.print();
