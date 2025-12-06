@@ -406,6 +406,12 @@ export const apiClient = {
     return response.json();
   },
 
+  async getTasksByOrderId(orderId) {
+    const response = await fetch(`${API_BASE_URL}/tasks/order/${orderId}`);
+    if (!response.ok) throw new Error("Failed to fetch order tasks");
+    return response.json();
+  },
+
   async createTask(taskData) {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",

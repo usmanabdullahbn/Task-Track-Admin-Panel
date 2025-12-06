@@ -18,6 +18,10 @@ const OrdersPage = () => {
   const [printData, setPrintData] = useState(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
+  // Expand order to show tasks
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [orderTasks, setOrderTasks] = useState({});
+
   // -------------------------
   // PRINT DOCUMENT GENERATOR (styled like asset report)
   // -------------------------
@@ -207,6 +211,35 @@ const OrdersPage = () => {
   };
 
   // -------------------------
+  // EXPAND/COLLAPSE ORDER TO SHOW TASKS
+  // -------------------------
+  const handleExpandOrder = async (orderId) => {
+    if (expandedOrderId === orderId) {
+      // Collapse
+      setExpandedOrderId(null);
+    } else {
+      // Expand and fetch tasks
+      setExpandedOrderId(orderId);
+      if (!orderTasks[orderId]) {
+        try {
+          const tasks = await apiClient.getTasksByOrderId(orderId);
+          const tasksList = Array.isArray(tasks) ? tasks : tasks?.tasks || [];
+          setOrderTasks((prev) => ({
+            ...prev,
+            [orderId]: tasksList,
+          }));
+        } catch (err) {
+          console.error("Failed to fetch tasks for order:", err);
+          setOrderTasks((prev) => ({
+            ...prev,
+            [orderId]: [],
+          }));
+        }
+      }
+    }
+  };
+
+  // -------------------------
   // FILTERING
   // -------------------------
   const filteredOrders = orders.filter((order) => {
@@ -307,64 +340,139 @@ const OrdersPage = () => {
 
                   <tbody>
                     {filteredOrders.map((order) => (
-                      <tr
-                        key={order._id}
-                        className="border-b border-gray-200 hover:bg-gray-50"
-                      >
-                        <td className="px-4 py-3">{order.customer.name}</td>
-                        <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {order.title || "-"}
-                        </td>
-                        <td className="px-4 py-3">{order.order_number}</td>
-                        <td className="px-4 py-3">{order.erp_number || "-"}</td>
-                        <td className="px-4 py-3">
-                          {order.amount?.$numberDecimal || "-"}
-                        </td>
-                        <td className="px-4 py-3">{order.status}</td>
+                      <React.Fragment key={order._id}>
+                        <tr
+                          className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleExpandOrder(order._id)}
+                        >
+                          <td className="px-4 py-3">{order.customer.name}</td>
+                          <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            {order.title || "-"}
+                          </td>
+                          <td className="px-4 py-3">{order.order_number}</td>
+                          <td className="px-4 py-3">{order.erp_number || "-"}</td>
+                          <td className="px-4 py-3">
+                            {order.amount?.$numberDecimal || "-"}
+                          </td>
+                          <td className="px-4 py-3">{order.status}</td>
 
-                        <td className="px-4 py-3">
-                          {order.created_at
-                            ? new Date(order.created_at).toLocaleDateString()
-                            : "-"}
-                        </td>
+                          <td className="px-4 py-3">
+                            {order.created_at
+                              ? new Date(order.created_at).toLocaleDateString()
+                              : "-"}
+                          </td>
 
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {/* PRINT BUTTON (per-order) */}
-                            <button
-                              onClick={() => {
-                                setPrintData(order);
-                                setShowPrintPreview(true);
-                              }}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
-                              title="Print order"
-                            >
-                              <FaPrint size={14} />
-                            </button>
-
-                            {/* EDIT BUTTON (Admin + Manager) */}
-                            {canEditOrder && (
-                              <Link
-                                to={`/orders/${order._id}`}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                              >
-                                <FaEdit size={14} />
-                              </Link>
-                            )}
-
-                            {/* DELETE BUTTON (Admin + Manager) */}
-                            {canDeleteOrder && (
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2">
+                              {/* PRINT BUTTON (per-order) */}
                               <button
-                                onClick={() => handleDeleteClick(order)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                onClick={() => {
+                                  setPrintData(order);
+                                  setShowPrintPreview(true);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
+                                title="Print order"
                               >
-                                <FaTrash size={14} />
+                                <FaPrint size={14} />
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+
+                              {/* EDIT BUTTON (Admin + Manager) */}
+                              {canEditOrder && (
+                                <Link
+                                  to={`/orders/${order._id}`}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                >
+                                  <FaEdit size={14} />
+                                </Link>
+                              )}
+
+                              {/* DELETE BUTTON (Admin + Manager) */}
+                              {canDeleteOrder && (
+                                <button
+                                  onClick={() => handleDeleteClick(order)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                >
+                                  <FaTrash size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* TASKS SUBLIST */}
+                        {expandedOrderId === order._id && (
+                          <tr className="border-b border-gray-200 bg-gray-50">
+                            <td colSpan="9" className="px-4 py-4">
+                              <div className="ml-4">
+                                <h4 className="font-semibold text-gray-900 mb-3">Tasks for Order: {order.order_number}</h4>
+                                {orderTasks[order._id] && orderTasks[order._id].length > 0 ? (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-sm border border-gray-200">
+                                      <thead>
+                                        <tr className="bg-gray-100 border-b border-gray-200">
+                                          <th className="px-3 py-2 text-left">Title</th>
+                                          <th className="px-3 py-2 text-left">Status</th>
+                                          <th className="px-3 py-2 text-left">Priority</th>
+                                          <th className="px-3 py-2 text-left">Assigned To</th>
+                                          <th className="px-3 py-2 text-left">Created</th>
+                                          <th className="px-3 py-2 text-center">Action</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {orderTasks[order._id].map((task) => (
+                                          <tr key={task._id} className="border-b border-gray-200 hover:bg-white">
+                                            <td className="px-3 py-2 font-medium text-gray-900">{task.title || "-"}</td>
+                                            <td className="px-3 py-2">{task.status || "-"}</td>
+                                            <td className="px-3 py-2">{task.priority || "-"}</td>
+                                            <td className="px-3 py-2">{task.assigned_to?.name || task.user_name || "-"}</td>
+                                            <td className="px-3 py-2">
+                                              {task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}
+                                            </td>
+                                            <td className="px-3 py-2 text-center">
+                                              <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                                                  title="Print task"
+                                                >
+                                                  <FaPrint size={12} />
+                                                </button>
+                                                <Link
+                                                  to={`/tasks/${task._id}`}
+                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                                  title="Edit task"
+                                                >
+                                                  <FaEdit size={12} />
+                                                </Link>
+                                                <button
+                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                                  title="Delete task"
+                                                >
+                                                  <FaTrash size={12} />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500">No tasks found for this order.</p>
+                                )}
+                                <div className="mt-4">
+                                  <Link
+                                    to={`/tasks/new?orderId=${order._id}`}
+                                    className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors inline-block"
+                                  >
+                                    + Add Task
+                                  </Link>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
