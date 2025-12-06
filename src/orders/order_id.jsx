@@ -80,7 +80,7 @@ const EditOrderPage = () => {
       setSaving(true);
 
       const payload = {
-        order_number: formData.order_number,
+        // order_number: formData.order_number,
         title: formData.title,
         erp_number: formData.erp_number,
         amount: formData.amount,
