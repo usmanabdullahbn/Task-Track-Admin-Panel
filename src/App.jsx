@@ -7,33 +7,30 @@ import CustomersPage from "./customers/page";
 import EmployeesPage from "./employees/page";
 import OrdersPage from "./orders/page";
 import ProjectsPage from "./projects/page";
-import TasksPage from "./tasks/page";
 
 // Asset pages
 import EditAssetPage from "./assets/assert_id";
 import NewAssetPage from "./assets/new_assert";
 
 // Task pages
-import EditCustomerPage from "./customers/customer_id";
-import NewCustomerPage from "./customers/new-customer";
-import NewOrderPage from "./orders/new-order";
-import EditOrderPage from "./orders/order_id";
-import NewTaskPage from "./tasks/new-task";
-import EditTaskPage from "./tasks/task_id";
-import NewProjectPage from "./projects/new-project";
-import EditProjectPage from "./projects/project_id";
-import EmployeeTimelinePage from "./employees/employees_id";
-import NewEmployeePage from "./employees/new-employees";
 import Login from "./component/LoginPage";
 import ProtectedRoute from "./component/ProtectedRoute";
+import EditCustomerPage from "./customers/customer_id";
+import NewCustomerPage from "./customers/new-customer";
+import EmployeeTimelinePage from "./employees/employees_id";
+import NewEmployeePage from "./employees/new-employees";
+import EditEmployeePage from "./employees/edit-employees";
+import NewOrderPage from "./orders/new-order";
+import EditOrderPage from "./orders/order_id";
+import NewProjectPage from "./projects/new-project";
+import EditProjectPage from "./projects/project_id";
 
 // Customer screens
 import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
-import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
-import CustomerProjectDetail from "./CustomerScreens/CustomerDash/customer-project-detail";
 import CustomerAssets from "./CustomerScreens/CustomerDash/customer-assets";
+import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
+import CustomerOrder from "./CustomerScreens/CustomerDash/customer-order";
 
-import EditEmployeePage from "./employees/edit-employees";
 
 // Optional: A simple 404 page
 const NotFoundPage = () => (
@@ -106,10 +103,10 @@ const App = () => {
           }
         />
         <Route
-          path="/customer-projects"
+          path="/customer-orders"
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
-              <CustomerProjectDetail />
+              <CustomerOrder />
             </ProtectedRoute>
           }
         />

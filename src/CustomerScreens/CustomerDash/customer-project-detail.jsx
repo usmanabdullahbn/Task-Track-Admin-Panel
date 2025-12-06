@@ -14,7 +14,7 @@ const CustomerProjectDetail = () => {
     const fetchProjectDetails = async () => {
       try {
         setLoading(true);
-        const data = await apiClient.getProjectById(projectId);
+        const data = await apiClient.getd(projectId);
         setProject(data.project || data);
         console.log("Project Details:", data);
       } catch (err) {
