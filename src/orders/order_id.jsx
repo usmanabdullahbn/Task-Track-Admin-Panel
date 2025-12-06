@@ -25,6 +25,7 @@ const EditOrderPage = () => {
     customer: "",
     project: "",
     employee: "",
+    title: "",
   });
 
   // -------------------------------------------------
@@ -41,6 +42,7 @@ const EditOrderPage = () => {
 
         setFormData({
           order_number: order.order_number || "",
+          title: order.title || "",
           erp_number: order.erp_number || "",
           amount: order.amount?.$numberDecimal || "",
           order_date: order.order_date?.substring(0, 10) || "",
@@ -79,6 +81,7 @@ const EditOrderPage = () => {
 
       const payload = {
         order_number: formData.order_number,
+        title: formData.title,
         erp_number: formData.erp_number,
         amount: formData.amount,
         order_date: formData.order_date,
@@ -155,6 +158,17 @@ const EditOrderPage = () => {
 
           {/* FORM CARD */}
           <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-md space-y-8">
+             <div>
+                <label className="block font-medium text-gray-700 mb-1">
+                  Order Number
+                </label>
+                <input
+                  name="order_number"
+                  value={formData.order_number}
+                  readOnly
+                  className="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-700 px-3 py-2"
+                />
+              </div>
             {/* GRID 1: ORDER + ERP */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
@@ -180,17 +194,18 @@ const EditOrderPage = () => {
                   className="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-700 px-3 py-2"
                 />
               </div>
+             
             </div>
 
             {/* GRID 2: ORDER + ERP */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block font-medium text-gray-700 mb-1">
-                  Order Number
+                  Order Title
                 </label>
                 <input
-                  name="order_number"
-                  value={formData.order_number}
+                  name="title"                     // <-- changed from "order_title"
+                  value={formData.title}
                   onChange={handleInput}
                   className="w-full rounded-lg border-gray-300 focus:border-green-700 focus:ring-green-700 shadow-sm px-3 py-2"
                 />

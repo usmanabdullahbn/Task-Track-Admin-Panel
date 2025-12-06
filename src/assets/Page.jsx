@@ -381,7 +381,7 @@ const AssetsPage = () => {
                             {/* PRINT */}
                             <button
                               onClick={() => handlePrint(asset)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
                               title="Print Asset Report"
                             >
                               <FaPrint size={14} />
