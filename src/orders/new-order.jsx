@@ -92,24 +92,25 @@ const NewOrderPage = () => {
     const { name, value } = e.target;
 
     // Asset selection - auto-fill customer and project from asset
-    if (name === "assetId") {
-      const selected = assets.find((a) => a._id === value);
-      if (selected) {
-        setFormData((prev) => ({
-          ...prev,
-          assetId: selected._id,
-          assetTitle: selected.title || "",
-          customerId: selected.customer.id || selected.customer?.id || "",
-          customerName: selected.customer_name || selected.customer?.name || "",
-          projectId: selected.project.id || selected.project?.id || "",
-          projectName: selected.project_name || selected.project?.name || "",
-        }));
+   if (name === "assetId") {
+  const selected = assets.find((a) => a._id === value);
 
-        
-      console.log("Selected Asset:", selected);
-      }
-      return;
-    }
+  if (selected) {
+    setFormData((prev) => ({
+      ...prev,
+      assetId: selected._id,
+      assetTitle: selected.title || "",
+      customerId: selected.customer?.id || "",
+      customerName: selected.customer?.name || "",
+      projectId: selected.project?.id || "",
+      projectName: selected.project?.name || "",
+    }));
+
+    console.log("Selected Asset:", selected); // ✅ now inside the if
+  }
+
+  return;
+}
 
     // Employee selection - set employee id and name
     if (name === "employeeId") {
@@ -135,19 +136,28 @@ const NewOrderPage = () => {
     // }
 
     const payload = {
-      customer_id: formData.customerId,
-      customer_name: formData.customerName,
-      project_id: formData.projectId,
-      project_name: formData.projectName,
-      asset_id: formData.assetId,
-      asset_title: formData.assetTitle,
-      user_id: formData.employeeId || "0",
-      user_name: formData.employeeName || "Not Assigned",
+      // order_number: "", // or generate one if needed?
       title: formData.orderTitle,
       erp_number: formData.erpNumber,
       amount: Number(formData.amount) || 0,
       status: formData.status,
       created_at: formData.created_at,
+      customer: {
+        id: formData.customerId,
+        name: formData.customerName,
+      },
+      project: {
+        id: formData.projectId,
+        name: formData.projectName,
+      },
+      asset: {
+        id: formData.assetId,
+        name: formData.assetTitle,
+      },
+      user: {
+        id: formData.employeeId || "0",
+        name: formData.employeeName || "Not Assigned",
+      },
     };
 
     console.log("Submitting Order:", payload);
