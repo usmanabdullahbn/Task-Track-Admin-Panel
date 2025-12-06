@@ -30,6 +30,7 @@ const OrdersPage = () => {
     const proj = o.project?.name || o.project?.title || o.project_name || o.project_id || "-";
     const amt = o.amount?.$numberDecimal ?? o.amount?.value ?? "-";
     const status = o.status || "-";
+    const title = o.title || "-";
     const description = o.description ? String(o.description).replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
 
     return `
@@ -78,18 +79,23 @@ const OrdersPage = () => {
 
               <div class="grid">
                 <div class="item">
+                  <div class="label">Title</div>
+                  <div class="value">${title}</div>
+                </div>
+                <div class="item">
                   <div class="label">Customer</div>
                   <div class="value">${cust}</div>
                 </div>
+
                 <div class="item">
                   <div class="label">Project</div>
                   <div class="value">${proj}</div>
                 </div>
-
                 <div class="item">
                   <div class="label">Amount</div>
                   <div class="value">${amt}</div>
                 </div>
+
                 <div class="item">
                   <div class="label">Created At</div>
                   <div class="value">${created}</div>
@@ -106,6 +112,7 @@ const OrdersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr><td>Title</td><td>${title}</td></tr>
                   <tr><td>Order #</td><td>${o.order_number || "-"}</td></tr>
                   <tr><td>ERP #</td><td>${o.erp_number || "-"}</td></tr>
                   <tr><td>Customer</td><td>${cust}</td></tr>
@@ -288,6 +295,7 @@ const OrdersPage = () => {
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Project</th>
+                      <th className="px-4 py-3">Title</th>
                       <th className="px-4 py-3">Order #</th>
                       <th className="px-4 py-3">ERP #</th>
                       <th className="px-4 py-3">Amount</th>
@@ -303,15 +311,15 @@ const OrdersPage = () => {
                         key={order._id}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
-                        
                         <td className="px-4 py-3">{order.customer.name}</td>
-                        <td className="px-4 py-3">{order.project.name}</td>
+                        <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
                         <td className="px-4 py-3 font-medium text-gray-900">
-                          {order.order_number}
+                          {order.title || "-"}
                         </td>
+                        <td className="px-4 py-3">{order.order_number}</td>
                         <td className="px-4 py-3">{order.erp_number || "-"}</td>
                         <td className="px-4 py-3">
-                          {order.amount?.$numberDecimal}
+                          {order.amount?.$numberDecimal || "-"}
                         </td>
                         <td className="px-4 py-3">{order.status}</td>
 
