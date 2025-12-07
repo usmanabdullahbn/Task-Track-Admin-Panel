@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
+import EditTaskModal from "./EditTaskModal";
 
 const OrderTasksSection = ({
   order,
@@ -19,6 +20,10 @@ const OrderTasksSection = ({
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+
+  // edit task modal state
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editTask, setEditTask] = useState(null);
 
   useEffect(() => {
     setTasksList(incoming);
@@ -52,6 +57,21 @@ const OrderTasksSection = ({
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // replace previous Link edit action with modal opener
+  const openEditModal = (task) => {
+    setEditTask(task);
+    setIsEditOpen(true);
+  };
+
+  const handleUpdatedTask = (updated) => {
+    // update local list
+    setTasksList((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+    setIsEditOpen(false);
+    setEditTask(null);
+    // notify parent if needed
+    onEditTask && onEditTask(updated);
   };
 
   return (
@@ -107,23 +127,14 @@ const OrderTasksSection = ({
                   </td>
                   <td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-2">
-                      {/* PRINT BUTTON */}
+                      {/* EDIT BUTTON (open modal) */}
                       <button
-                        onClick={() => onPrintTask && onPrintTask(task)}
-                        className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white transition"
-                        title="Print task"
-                      >
-                        <FaPrint size={12} />
-                      </button>
-
-                      {/* EDIT BUTTON */}
-                      <Link
-                        to={`/tasks/${task._id}`}
+                        onClick={(e) => { e.stopPropagation(); openEditModal(task); }}
                         className="w-7 h-7 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white transition"
                         title="Edit task"
                       >
                         <FaEdit size={12} />
-                      </Link>
+                      </button>
 
                       {/* DELETE BUTTON */}
                       <button
@@ -149,6 +160,14 @@ const OrderTasksSection = ({
       ) : (
         <p className="text-gray-500 mt-3">No tasks found for this order.</p>
       )}
+
+      {/* Edit Task Modal */}
+      <EditTaskModal
+        isOpen={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditTask(null); }}
+        task={editTask}
+        onUpdated={handleUpdatedTask}
+      />
 
       {/* Confirm Delete Modal */}
       {showConfirmDelete && taskToDelete && (
