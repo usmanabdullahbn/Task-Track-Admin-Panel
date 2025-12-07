@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
+import AddTaskModal from "./AddTaskModal";
 
 const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,17 +11,21 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Modals & selection
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskOrderId, setTaskOrderId] = useState(null); // which order the modal is creating task for
 
-  // per-order print states
+  // Print preview
   const [printData, setPrintData] = useState(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Expand order to show tasks
   const [expandedOrderId, setExpandedOrderId] = useState(null);
-  const [orderTasks, setOrderTasks] = useState({});
+  const [orderTasks, setOrderTasks] = useState({}); // { orderId: [tasks...] }
 
   // -------------------------
   // PRINT DOCUMENT GENERATOR (styled like asset report)
@@ -29,13 +34,22 @@ const OrdersPage = () => {
     if (!o) return "";
     const now = new Date();
     const generatedAt = now.toLocaleString();
-    const created = o.created_at ? new Date(o.created_at).toLocaleString() : "-";
+    const created = o.created_at
+      ? new Date(o.created_at).toLocaleString()
+      : "-";
     const cust = o.customer?.name || o.customer_name || o.customer_id || "-";
-    const proj = o.project?.name || o.project?.title || o.project_name || o.project_id || "-";
+    const proj =
+      o.project?.name ||
+      o.project?.title ||
+      o.project_name ||
+      o.project_id ||
+      "-";
     const amt = o.amount?.$numberDecimal ?? o.amount?.value ?? "-";
     const status = o.status || "-";
     const title = o.title || "-";
-    const description = o.description ? String(o.description).replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+    const description = o.description
+      ? String(o.description).replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      : "";
 
     return `
       <!doctype html>
@@ -76,7 +90,7 @@ const OrdersPage = () => {
                   <div class="meta">Generated: ${generatedAt} • Order ID: ${o._id || "-"}</div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:12px;color:${status === 'Completed' ? '#059669' : status === 'Active' ? '#0369a1' : '#b45309'};font-weight:700">${status}</div>
+                  <div style="font-size:12px;color:${status === "Completed" ? "#059669" : status === "Active" ? "#0369a1" : "#b45309"};font-weight:700">${status}</div>
                   <div style="font-size:12px;color:var(--muted);margin-top:6px">${cust}</div>
                 </div>
               </div>
@@ -162,23 +176,39 @@ const OrdersPage = () => {
   // -------------------------
   // FETCH WORK ORDERS
   // -------------------------
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await apiClient.getOrders();
-        console.log(data);
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient.getOrders();
+      // apiClient.getOrders() should return an object with .orders array
+      setOrders(Array.isArray(data?.orders) ? data.orders : []);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+      setError(err?.message || "Failed to fetch orders");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setOrders(Array.isArray(data.orders) ? data.orders : []);
-      } catch (err) {
-        setError(err.message);
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
     fetchOrders();
   }, []);
+
+  // -------------------------
+  // FETCH TASKS FOR ORDER
+  // -------------------------
+  const fetchTasksForOrder = async (orderId) => {
+    if (!orderId) return;
+    try {
+      const tasks = await apiClient.getTasksByOrderId(orderId);
+      const tasksList = Array.isArray(tasks) ? tasks : tasks?.tasks || [];
+      setOrderTasks((prev) => ({ ...prev, [orderId]: tasksList }));
+    } catch (err) {
+      console.error("Failed to fetch tasks for order:", err);
+      setOrderTasks((prev) => ({ ...prev, [orderId]: [] }));
+    }
+  };
 
   // -------------------------
   // DELETE ORDER
@@ -190,12 +220,9 @@ const OrdersPage = () => {
 
   const handleConfirmDelete = async () => {
     if (!selectedOrder) return;
-
     try {
       await apiClient.deleteOrder(selectedOrder._id);
-      setOrders((prev) =>
-        prev.filter((order) => order._id !== selectedOrder._id)
-      );
+      setOrders((prev) => prev.filter((o) => o._id !== selectedOrder._id));
       setShowConfirmModal(false);
       setShowSuccessModal(true);
     } catch (err) {
@@ -215,27 +242,81 @@ const OrdersPage = () => {
   // -------------------------
   const handleExpandOrder = async (orderId) => {
     if (expandedOrderId === orderId) {
-      // Collapse
       setExpandedOrderId(null);
     } else {
-      // Expand and fetch tasks
       setExpandedOrderId(orderId);
+      // fetch tasks if not loaded
       if (!orderTasks[orderId]) {
-        try {
-          const tasks = await apiClient.getTasksByOrderId(orderId);
-          const tasksList = Array.isArray(tasks) ? tasks : tasks?.tasks || [];
-          setOrderTasks((prev) => ({
-            ...prev,
-            [orderId]: tasksList,
-          }));
-        } catch (err) {
-          console.error("Failed to fetch tasks for order:", err);
-          setOrderTasks((prev) => ({
-            ...prev,
-            [orderId]: [],
-          }));
-        }
+        await fetchTasksForOrder(orderId);
       }
+    }
+  };
+
+  // -------------------------
+  // OPEN ADD TASK MODAL (attached to a specific order)
+  // -------------------------
+  const handleOpenAddTask = (orderId, e) => {
+    // stop event bubbling so row onClick doesn't fire
+    if (e && e.stopPropagation) e.stopPropagation();
+    setTaskOrderId(orderId);
+    setIsTaskModalOpen(true);
+  };
+
+  // -------------------------
+  // HANDLE SUBMIT FROM ADD TASK MODAL
+  // -------------------------
+  const handleTaskSubmit = async (taskData) => {
+    // taskData comes from AddTaskModal as an object; may contain file_upload (File)
+    if (!taskOrderId) {
+      console.warn("No order selected for the new task");
+      return;
+    }
+
+    try {
+      // prepare payload - use FormData if file present
+      let payloadToSend;
+      let config = {};
+
+      if (taskData.file_upload instanceof File) {
+        payloadToSend = new FormData();
+        payloadToSend.append("title", taskData.title || "");
+        payloadToSend.append("description", taskData.description || "");
+        if (taskData.plan_duration !== undefined && taskData.plan_duration !== "")
+          payloadToSend.append("plan_duration", taskData.plan_duration);
+        if (taskData.start_time) payloadToSend.append("start_time", taskData.start_time);
+        if (taskData.end_time) payloadToSend.append("end_time", taskData.end_time);
+        if (taskData.actual_start_time) payloadToSend.append("actual_start_time", taskData.actual_start_time);
+        if (taskData.actual_end_time) payloadToSend.append("actual_end_time", taskData.actual_end_time);
+        payloadToSend.append("priority", taskData.priority || "Medium");
+        payloadToSend.append("orderId", taskOrderId);
+        payloadToSend.append("file_upload", taskData.file_upload);
+        // Note: apiClient.createTask should detect FormData and set headers accordingly.
+      } else {
+        // no file - send JSON
+        payloadToSend = {
+          ...taskData,
+          orderId: taskOrderId,
+        };
+        config = { headers: { "Content-Type": "application/json" } };
+      }
+
+      // Use your apiClient to create task. Adapt if your apiClient expects a different signature.
+      // If apiClient.createTask accepts (payload, config) that's good.
+      const created = await apiClient.createTask(payloadToSend, config);
+
+      // Close modal
+      setIsTaskModalOpen(false);
+      setTaskOrderId(null);
+
+      // Refresh the tasks list for this order
+      await fetchTasksForOrder(taskOrderId);
+
+      // Optionally show a success message (you could implement toast)
+      console.log("Task created", created);
+    } catch (err) {
+      console.error("Failed to create task:", err);
+      // keep modal open or show error to user
+      alert("Failed to create task. Check console for details.");
     }
   };
 
@@ -243,19 +324,20 @@ const OrdersPage = () => {
   // FILTERING
   // -------------------------
   const filteredOrders = orders.filter((order) => {
-    const searchValue = searchTerm.toLowerCase();
+    const searchValue = (searchTerm || "").toLowerCase();
+    if (!searchValue) return true;
 
     switch (searchField) {
       case "order":
-        return order.order_number?.toLowerCase().includes(searchValue);
+        return (order.order_number || "").toLowerCase().includes(searchValue);
       case "erp":
-        return order.erp_number?.toLowerCase().includes(searchValue);
+        return (order.erp_number || "").toLowerCase().includes(searchValue);
       case "customer":
-        return order.customer_id?.toLowerCase().includes(searchValue);
+        return (order.customer_id || "").toLowerCase().includes(searchValue);
       case "project":
-        return order.project_id?.toLowerCase().includes(searchValue);
+        return (order.project_id || "").toLowerCase().includes(searchValue);
       case "amount":
-        return order.amount?.value?.toString().includes(searchTerm);
+        return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").includes(searchTerm);
       default:
         return true;
     }
@@ -263,28 +345,17 @@ const OrdersPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar
-        className={showConfirmModal || showSuccessModal ? "blur-sm" : ""}
-      />
+      <Sidebar className={showConfirmModal || showSuccessModal ? "blur-sm" : ""} />
 
-      <main
-        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
-          showConfirmModal || showSuccessModal ? "blur-sm" : ""
-        }`}
-      >
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showConfirmModal || showSuccessModal ? "blur-sm" : ""}`}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Work Orders Management
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Work Orders Management</h1>
 
             {/* ADD ORDER BUTTON */}
             {canAddOrder && (
-              <Link
-                to="/orders/new"
-                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-              >
+              <Link to="/orders/new" className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors">
                 + Add Order
               </Link>
             )}
@@ -341,27 +412,15 @@ const OrdersPage = () => {
                   <tbody>
                     {filteredOrders.map((order) => (
                       <React.Fragment key={order._id}>
-                        <tr
-                          className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleExpandOrder(order._id)}
-                        >
-                          <td className="px-4 py-3">{order.customer.name}</td>
+                        <tr className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onClick={() => handleExpandOrder(order._id)}>
+                          <td className="px-4 py-3">{order.customer?.name || "-"}</td>
                           <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
-                          <td className="px-4 py-3 font-medium text-gray-900">
-                            {order.title || "-"}
-                          </td>
-                          <td className="px-4 py-3">{order.order_number}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">{order.title || "-"}</td>
+                          <td className="px-4 py-3">{order.order_number || "-"}</td>
                           <td className="px-4 py-3">{order.erp_number || "-"}</td>
-                          <td className="px-4 py-3">
-                            {order.amount?.$numberDecimal || "-"}
-                          </td>
-                          <td className="px-4 py-3">{order.status}</td>
-
-                          <td className="px-4 py-3">
-                            {order.created_at
-                              ? new Date(order.created_at).toLocaleDateString()
-                              : "-"}
-                          </td>
+                          <td className="px-4 py-3">{order.amount?.$numberDecimal ?? order.amount?.value ?? "-"}</td>
+                          <td className="px-4 py-3">{order.status || "-"}</td>
+                          <td className="px-4 py-3">{order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</td>
 
                           <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-2">
@@ -379,20 +438,14 @@ const OrdersPage = () => {
 
                               {/* EDIT BUTTON (Admin + Manager) */}
                               {canEditOrder && (
-                                <Link
-                                  to={`/orders/${order._id}`}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                                >
+                                <Link to={`/orders/${order._id}`} className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white">
                                   <FaEdit size={14} />
                                 </Link>
                               )}
 
                               {/* DELETE BUTTON (Admin + Manager) */}
                               {canDeleteOrder && (
-                                <button
-                                  onClick={() => handleDeleteClick(order)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                                >
+                                <button onClick={() => handleDeleteClick(order)} className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white">
                                   <FaTrash size={14} />
                                 </button>
                               )}
@@ -405,9 +458,20 @@ const OrdersPage = () => {
                           <tr className="border-b border-gray-200 bg-gray-50">
                             <td colSpan="9" className="px-4 py-4">
                               <div className="ml-4">
-                                <h4 className="font-semibold text-gray-900 mb-3">Tasks for Order: {order.order_number}</h4>
-                                {orderTasks[order._id] && orderTasks[order._id].length > 0 ? (
-                                  <div className="overflow-x-auto">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-gray-900 mb-3">Tasks for Order: {order.order_number || order._id}</h4>
+
+                                  {/* Add Task button - stopPropagation handled in handler */}
+                                  <button
+                                    onClick={(e) => handleOpenAddTask(order._id, e)}
+                                    className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+                                  >
+                                    + Add Task
+                                  </button>
+                                </div>
+
+                                {Array.isArray(orderTasks[order._id]) && orderTasks[order._id].length > 0 ? (
+                                  <div className="overflow-x-auto mt-3">
                                     <table className="w-full text-sm border border-gray-200">
                                       <thead>
                                         <tr className="bg-gray-100 border-b border-gray-200">
@@ -426,28 +490,16 @@ const OrdersPage = () => {
                                             <td className="px-3 py-2">{task.status || "-"}</td>
                                             <td className="px-3 py-2">{task.priority || "-"}</td>
                                             <td className="px-3 py-2">{task.assigned_to?.name || task.user_name || "-"}</td>
-                                            <td className="px-3 py-2">
-                                              {task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}
-                                            </td>
+                                            <td className="px-3 py-2">{task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}</td>
                                             <td className="px-3 py-2 text-center">
                                               <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
-                                                  title="Print task"
-                                                >
+                                                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white" title="Print task">
                                                   <FaPrint size={12} />
                                                 </button>
-                                                <Link
-                                                  to={`/tasks/${task._id}`}
-                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                                                  title="Edit task"
-                                                >
+                                                <Link to={`/tasks/${task._id}`} className="w-7 h-7 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white" title="Edit task">
                                                   <FaEdit size={12} />
                                                 </Link>
-                                                <button
-                                                  className="w-7 h-7 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                                                  title="Delete task"
-                                                >
+                                                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white" title="Delete task">
                                                   <FaTrash size={12} />
                                                 </button>
                                               </div>
@@ -458,16 +510,8 @@ const OrdersPage = () => {
                                     </table>
                                   </div>
                                 ) : (
-                                  <p className="text-gray-500">No tasks found for this order.</p>
+                                  <p className="text-gray-500 mt-3">No tasks found for this order.</p>
                                 )}
-                                <div className="mt-4">
-                                  <Link
-                                    to={`/tasks/new?orderId=${order._id}`}
-                                    className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors inline-block"
-                                  >
-                                    + Add Task
-                                  </Link>
-                                </div>
                               </div>
                             </td>
                           </tr>
@@ -479,9 +523,7 @@ const OrdersPage = () => {
               </div>
 
               {filteredOrders.length === 0 && (
-                <p className="text-center text-gray-500 py-6 sm:text-base">
-                  No orders found.
-                </p>
+                <p className="text-center text-gray-500 py-6 sm:text-base">No orders found.</p>
               )}
             </div>
           )}
@@ -491,34 +533,16 @@ const OrdersPage = () => {
       {/* CONFIRM DELETE MODAL */}
       {showConfirmModal && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
-
+          <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">
-              Confirm Delete
-            </h2>
-
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">Confirm Delete</h2>
             <p className="mb-6 text-gray-700">
               Are you sure you want to delete order{" "}
-              <span className="font-bold">
-                {selectedOrder.order_name || selectedOrder.order_number}
-              </span>
-              ?
+              <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span>?
             </p>
-
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
+              <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+              <button onClick={handleConfirmDelete} className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors">Delete</button>
             </div>
           </div>
         </div>
@@ -527,28 +551,14 @@ const OrdersPage = () => {
       {/* SUCCESS DELETE MODAL */}
       {showSuccessModal && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
-
+          <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">
-              Success
-            </h2>
-
+            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
             <p className="mb-6 text-gray-700">
-              Order{" "}
-              <span className="font-bold">
-                {selectedOrder.order_name || selectedOrder.order_number}
-              </span>{" "}
-              has been deleted successfully.
+              Order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span> has been deleted successfully.
             </p>
-
             <div className="flex justify-end">
-              <button
-                onClick={handleCloseSuccessModal}
-                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800 transition-colors"
-              >
-                OK
-              </button>
+              <button onClick={handleCloseSuccessModal} className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800 transition-colors">OK</button>
             </div>
           </div>
         </div>
@@ -557,8 +567,7 @@ const OrdersPage = () => {
       {/* PRINT PREVIEW (per-order) */}
       {showPrintPreview && printData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
-
+          <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-2 z-50">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Print Order</h2>
@@ -566,11 +575,7 @@ const OrdersPage = () => {
             </div>
 
             <div className="h-[70vh] overflow-auto border p-2">
-              <iframe
-                title="Order Print Preview"
-                srcDoc={generatePrintDocument(printData)}
-                style={{ width: "100%", height: "100%", border: 0 }}
-              />
+              <iframe title="Order Print Preview" srcDoc={generatePrintDocument(printData)} style={{ width: "100%", height: "100%", border: 0 }} />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -585,6 +590,16 @@ const OrdersPage = () => {
           </div>
         </div>
       )}
+
+      {/* ADD TASK MODAL (mounted at page level so overlay works) */}
+      <AddTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setTaskOrderId(null);
+        }}
+        onSubmit={handleTaskSubmit}
+      />
     </div>
   );
 };
