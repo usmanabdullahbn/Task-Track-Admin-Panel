@@ -124,7 +124,6 @@ const NewAssetPage = () => {
     // }
 
     const payload = {
-
       customer_id: formData.customer,
       customer_name: formData.customerName,
       employee_id: "",
@@ -186,10 +185,8 @@ const NewAssetPage = () => {
           )}
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-4xl">
-
             {/* FORM */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
               {/* Customer - Auto-filled from Project */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -363,8 +360,6 @@ const NewAssetPage = () => {
                   className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
                 />
               </div>
-
-
             </div>
 
             {/* Description */}
@@ -380,6 +375,31 @@ const NewAssetPage = () => {
                 rows={4}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors resize-none"
               />
+            </div>
+
+            {/* File Upload (Multiple) */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Upload Files
+              </label>
+
+              <input
+                type="file"
+                multiple
+                name="files"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  console.log("Selected Files:", files);
+                }}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
+               text-gray-900 file:bg-green-700 file:text-white 
+               file:border-none file:px-4 file:py-2 file:mr-4 
+               file:rounded-md file:cursor-pointer
+               hover:file:bg-green-800 transition cursor-pointer"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                You can select multiple files.
+              </p>
             </div>
 
             {/* ACTION BUTTONS */}
@@ -411,7 +431,8 @@ const NewAssetPage = () => {
               Success
             </h2>
             <p className="mb-6">
-              Asset <strong>{formData.title}</strong> has been added successfully.
+              Asset <strong>{formData.title}</strong> has been added
+              successfully.
             </p>
 
             <button
