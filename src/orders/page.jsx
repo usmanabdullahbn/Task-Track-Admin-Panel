@@ -4,6 +4,7 @@ import Sidebar from "../component/sidebar";
 import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 import AddTaskModal from "./AddTaskModal";
+import OrderTasksSection from "./OrderTasksSection";
 
 const OrdersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -162,25 +163,17 @@ const OrdersPage = () => {
   };
 
   const role = getUserRole();
-
-  // -------------------------
-  // PERMISSIONS BASED ON AUTH MATRIX
-  // -------------------------
-  const canAddOrder =
-    role === "admin" || role === "manager" || role === "supervisor";
-
+  const canAddOrder = role === "admin" || role === "manager" || role === "supervisor";
   const canEditOrder = role === "admin" || role === "manager";
-
   const canDeleteOrder = role === "admin" || role === "manager";
 
   // -------------------------
-  // FETCH WORK ORDERS
+  // FETCH ORDERS
   // -------------------------
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const data = await apiClient.getOrders();
-      // apiClient.getOrders() should return an object with .orders array
       setOrders(Array.isArray(data?.orders) ? data.orders : []);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
@@ -255,9 +248,7 @@ const OrdersPage = () => {
   // -------------------------
   // OPEN ADD TASK MODAL (attached to a specific order)
   // -------------------------
-  const handleOpenAddTask = (orderId, e) => {
-    // stop event bubbling so row onClick doesn't fire
-    if (e && e.stopPropagation) e.stopPropagation();
+  const handleOpenAddTask = (orderId) => {
     setTaskOrderId(orderId);
     setIsTaskModalOpen(true);
   };
@@ -288,6 +279,7 @@ const OrdersPage = () => {
         if (taskData.actual_start_time) payloadToSend.append("actual_start_time", taskData.actual_start_time);
         if (taskData.actual_end_time) payloadToSend.append("actual_end_time", taskData.actual_end_time);
         payloadToSend.append("priority", taskData.priority || "Medium");
+        payloadToSend.append("status", taskData.status || "Todo");
         payloadToSend.append("orderId", taskOrderId);
         payloadToSend.append("file_upload", taskData.file_upload);
         // Note: apiClient.createTask should detect FormData and set headers accordingly.
@@ -318,6 +310,16 @@ const OrdersPage = () => {
       // keep modal open or show error to user
       alert("Failed to create task. Check console for details.");
     }
+  };
+
+  const handleDeleteTask = (taskId) => {
+    console.log("Delete task:", taskId);
+    // Implement delete task logic
+  };
+
+  const handlePrintTask = (task) => {
+    console.log("Print task:", task);
+    // Implement print task logic
   };
 
   // -------------------------
@@ -397,11 +399,11 @@ const OrdersPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3">Customer</th>
-                      <th className="px-4 py-3">Project</th>
                       <th className="px-4 py-3">Title</th>
                       <th className="px-4 py-3">Order #</th>
-                      <th className="px-4 py-3">ERP #</th>
+                      <th className="px-4 py-3">Customer</th>
+                      <th className="px-4 py-3">Project</th>
+                      {/* <th className="px-4 py-3">ERP #</th> */}
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Created</th>
@@ -413,11 +415,11 @@ const OrdersPage = () => {
                     {filteredOrders.map((order) => (
                       <React.Fragment key={order._id}>
                         <tr className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onClick={() => handleExpandOrder(order._id)}>
-                          <td className="px-4 py-3">{order.customer?.name || "-"}</td>
-                          <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
                           <td className="px-4 py-3 font-medium text-gray-900">{order.title || "-"}</td>
                           <td className="px-4 py-3">{order.order_number || "-"}</td>
-                          <td className="px-4 py-3">{order.erp_number || "-"}</td>
+                          <td className="px-4 py-3">{order.customer?.name || "-"}</td>
+                          <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
+                          {/* <td className="px-4 py-3">{order.erp_number || "-"}</td> */}
                           <td className="px-4 py-3">{order.amount?.$numberDecimal ?? order.amount?.value ?? "-"}</td>
                           <td className="px-4 py-3">{order.status || "-"}</td>
                           <td className="px-4 py-3">{order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</td>
@@ -453,66 +455,18 @@ const OrdersPage = () => {
                           </td>
                         </tr>
 
-                        {/* TASKS SUBLIST */}
+                        {/* TASKS SUBLIST - USE NEW COMPONENT */}
                         {expandedOrderId === order._id && (
                           <tr className="border-b border-gray-200 bg-gray-50">
                             <td colSpan="9" className="px-4 py-4">
-                              <div className="ml-4">
-                                <div className="flex items-center justify-between">
-                                  <h4 className="font-semibold text-gray-900 mb-3">Tasks for Order: {order.order_number || order._id}</h4>
-
-                                  {/* Add Task button - stopPropagation handled in handler */}
-                                  <button
-                                    onClick={(e) => handleOpenAddTask(order._id, e)}
-                                    className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-                                  >
-                                    + Add Task
-                                  </button>
-                                </div>
-
-                                {Array.isArray(orderTasks[order._id]) && orderTasks[order._id].length > 0 ? (
-                                  <div className="overflow-x-auto mt-3">
-                                    <table className="w-full text-sm border border-gray-200">
-                                      <thead>
-                                        <tr className="bg-gray-100 border-b border-gray-200">
-                                          <th className="px-3 py-2 text-left">Title</th>
-                                          <th className="px-3 py-2 text-left">Status</th>
-                                          <th className="px-3 py-2 text-left">Priority</th>
-                                          <th className="px-3 py-2 text-left">Assigned To</th>
-                                          <th className="px-3 py-2 text-left">Created</th>
-                                          <th className="px-3 py-2 text-center">Action</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {orderTasks[order._id].map((task) => (
-                                          <tr key={task._id} className="border-b border-gray-200 hover:bg-white">
-                                            <td className="px-3 py-2 font-medium text-gray-900">{task.title || "-"}</td>
-                                            <td className="px-3 py-2">{task.status || "-"}</td>
-                                            <td className="px-3 py-2">{task.priority || "-"}</td>
-                                            <td className="px-3 py-2">{task.assigned_to?.name || task.user_name || "-"}</td>
-                                            <td className="px-3 py-2">{task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}</td>
-                                            <td className="px-3 py-2 text-center">
-                                              <div className="flex items-center justify-center gap-2">
-                                                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white" title="Print task">
-                                                  <FaPrint size={12} />
-                                                </button>
-                                                <Link to={`/tasks/${task._id}`} className="w-7 h-7 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white" title="Edit task">
-                                                  <FaEdit size={12} />
-                                                </Link>
-                                                <button className="w-7 h-7 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white" title="Delete task">
-                                                  <FaTrash size={12} />
-                                                </button>
-                                              </div>
-                                            </td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500 mt-3">No tasks found for this order.</p>
-                                )}
-                              </div>
+                              <OrderTasksSection
+                                order={order}
+                                orderTasks={orderTasks}
+                                onAddTask={handleOpenAddTask}
+                                onEditTask={(taskId) => console.log("Edit:", taskId)}
+                                onDeleteTask={handleDeleteTask}
+                                onPrintTask={handlePrintTask}
+                              />
                             </td>
                           </tr>
                         )}
@@ -594,6 +548,7 @@ const OrdersPage = () => {
       {/* ADD TASK MODAL (mounted at page level so overlay works) */}
       <AddTaskModal
         isOpen={isTaskModalOpen}
+        orderId={taskOrderId}
         onClose={() => {
           setIsTaskModalOpen(false);
           setTaskOrderId(null);
