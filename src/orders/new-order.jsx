@@ -7,8 +7,6 @@ const NewOrderPage = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    assetId: "",
-    assetTitle: "",
     customerId: "",
     customerName: "",
     projectId: "",
@@ -24,15 +22,12 @@ const NewOrderPage = () => {
 
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [assets, setAssets] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [allOrders, setAllOrders] = useState([]);
 
-  // Fetch customers, projects, assets, and employees
+  // Fetch customers, projects, and employees
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,13 +48,6 @@ const NewOrderPage = () => {
           ? projectsResponse.projects
           : [];
         setProjects(projectsList);
-
-        // Assets
-        const assetsResponse = await apiClient.getAssets();
-        const assetsList = Array.isArray(assetsResponse)
-          ? assetsResponse
-          : assetsResponse.assets || [];
-        setAssets(assetsList);
 
         // Employees
         const employeesResponse = await apiClient.getUsers();
@@ -87,32 +75,45 @@ const NewOrderPage = () => {
     fetchData();
   }, []);
 
-  // Handle Inputs (with auto-fill customer and project details from asset)
+  // Handle Inputs - Customer selection with dependent project filtering
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Asset selection - auto-fill customer and project from asset
-   if (name === "assetId") {
-  const selected = assets.find((a) => a._id === value);
+    // Customer selection - filter projects for this customer
+    if (name === "customerId") {
+      const selectedCustomer = customers.find((c) => c._id === value);
+      if (selectedCustomer) {
+        // Filter projects for this customer
+        const filtered = projects.filter(
+          (p) => p.customer?._id === value
+        );
+        setFilteredProjects(filtered);
 
-  if (selected) {
-    setFormData((prev) => ({
-      ...prev,
-      assetId: selected._id,
-      assetTitle: selected.title || "",
-      customerId: selected.customer?.id || "",
-      customerName: selected.customer?.name || "",
-      projectId: selected.project?.id || "",
-      projectName: selected.project?.name || "",
-    }));
+        setFormData((prev) => ({
+          ...prev,
+          customerId: value,
+          customerName: selectedCustomer.name || "",
+          projectId: "", // Reset project selection
+          projectName: "",
+        }));
+      }
+      return;
+    }
 
-    console.log("Selected Asset:", selected); // ✅ now inside the if
-  }
+    // Project selection
+    if (name === "projectId") {
+      const selectedProject = filteredProjects.find((p) => p._id === value);
+      if (selectedProject) {
+        setFormData((prev) => ({
+          ...prev,
+          projectId: value,
+          projectName: selectedProject.name || "",
+        }));
+      }
+      return;
+    }
 
-  return;
-}
-
-    // Employee selection - set employee id and name
+    // Employee selection
     if (name === "employeeId") {
       const selected = employees.find((e) => e._id === value);
       if (selected) {
@@ -128,59 +129,6 @@ const NewOrderPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit Order
-  const handleSubmit = async () => {
-    // if (!formData.orderTitle || !formData.customerId || !formData.projectId || !formData.assetId) {
-    //   setError("Order Title, Asset, Customer, and Project are required");
-    //   return;
-    // }
-
-    const payload = {
-      // order_number: "", // or generate one if needed?
-      title: formData.orderTitle,
-      erp_number: formData.erpNumber,
-      amount: Number(formData.amount) || 0,
-      status: formData.status,
-      created_at: formData.created_at,
-      customer: {
-        id: formData.customerId,
-        name: formData.customerName,
-      },
-      project: {
-        id: formData.projectId,
-        name: formData.projectName,
-      },
-      asset: {
-        id: formData.assetId,
-        name: formData.assetTitle,
-      },
-      user: {
-        id: formData.employeeId || "0",
-        name: formData.employeeName || "Not Assigned",
-      },
-    };
-
-    console.log("Submitting Order:", payload);
-
-    try {
-      setSubmitting(true);
-      setError("");
-
-      await apiClient.createOrder(payload);
-
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.log(err);
-      setError(err.message || "Failed to create order");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const closeModal = () => {
-    setShowSuccessModal(false);
-    navigate("/orders");
-  };
 
   if (loading) {
     return (
@@ -193,12 +141,11 @@ const NewOrderPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
+      <Sidebar  />
 
       <main
-        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
-          showSuccessModal ? "blur-sm" : ""
-        }`}
+        // className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""
+        //   }`}
       >
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
@@ -221,7 +168,8 @@ const NewOrderPage = () => {
               <div className="rounded-lg border bg-white p-6 shadow-sm">
                 {/* ASSET + CUSTOMER + PROJECT */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Asset - Dropdown to select */}
+
+                  {/* Asset - Dropdown to select
                   <div className="sm:col-span-2">
                     <label className="text-sm font-medium">
                       Asset <span className="text-red-600">*</span>
@@ -239,36 +187,51 @@ const NewOrderPage = () => {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </div> */}
 
-                  {/* Customer - Read Only */}
+                  {/* Customer - Dropdown */}
                   <div>
                     <label className="text-sm font-medium">
                       Customer <span className="text-red-600">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.customerName}
-                      disabled
-                      readOnly
-                      className="w-full border rounded-lg px-4 py-2 mt-1 bg-gray-100 text-gray-600 cursor-not-allowed"
-                      placeholder="Auto-filled from asset selection"
-                    />
+                    <select
+                      name="customerId"
+                      value={formData.customerId}
+                      onChange={handleInputChange}
+                      className="w-full border rounded-lg px-4 py-2 mt-1"
+                    >
+                      <option value="">Select Customer</option>
+                      {customers.map((customer) => (
+                        <option key={customer._id} value={customer._id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  {/* Project - Read Only */}
+                  {/* Project - Dependent Dropdown */}
                   <div>
                     <label className="text-sm font-medium">
                       Project <span className="text-red-600">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.projectName}
-                      disabled
-                      readOnly
-                      className="w-full border rounded-lg px-4 py-2 mt-1 bg-gray-100 text-gray-600 cursor-not-allowed"
-                      placeholder="Auto-filled from asset selection"
-                    />
+                    <select
+                      name="projectId"
+                      value={formData.projectId}
+                      onChange={handleInputChange}
+                      disabled={!formData.customerId}
+                      className="w-full border rounded-lg px-4 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {!formData.customerId
+                          ? "Select customer first"
+                          : "Select Project"}
+                      </option>
+                      {filteredProjects.map((project) => (
+                        <option key={project._id} value={project._id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -364,11 +327,11 @@ const NewOrderPage = () => {
                 {/* BUTTONS */}
                 <div className="mt-8 flex gap-4">
                   <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 disabled:opacity-60"
+                    onClick={() => navigate("/assets/add-with-tasks", { state: { orderData: formData } })}
+                    disabled={!formData.customerId || !formData.projectId}
+                    className="bg-green-700 text-white px-6 py-2 rounded-lg hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {submitting ? "Adding..." : "Add Order"}
+                    Add Assets
                   </button>
 
                   <Link
@@ -396,28 +359,6 @@ const NewOrderPage = () => {
           </div>
         </div>
       </main>
-
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
-            <h2 className="text-lg font-semibold text-green-600">Success</h2>
-            <p className="mt-3 text-gray-700">
-              Order <strong>{formData.orderTitle}</strong> has been created
-              successfully.
-            </p>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

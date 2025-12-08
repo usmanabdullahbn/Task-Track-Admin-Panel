@@ -11,6 +11,7 @@ import ProjectsPage from "./projects/page";
 // Asset pages
 import EditAssetPage from "./assets/assert_id";
 import NewAssetPage from "./assets/new_assert";
+import AddAssetsPage from "./assets/add-assets-with-tasks";
 
 // Task pages
 import Login from "./component/LoginPage";
@@ -228,7 +229,7 @@ const App = () => {
           path="/assets/new"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <NewAssetPage />
+              <AddAssetsPage />
             </ProtectedRoute>
           }
         />
