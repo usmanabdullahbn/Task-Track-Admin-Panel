@@ -118,7 +118,7 @@ const OrderTasksSection = ({
                   <td className="px-3 py-2">{task.status || "-"}</td>
                   <td className="px-3 py-2">{task.priority || "-"}</td>
                   <td className="px-3 py-2">
-                    {task.assigned_to?.name || task.user_name || "-"}
+                    {task.assigned_to?.name || task.user.name || "-"}
                   </td>
                   <td className="px-3 py-2">
                     {task.created_at
