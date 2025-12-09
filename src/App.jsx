@@ -11,26 +11,26 @@ import ProjectsPage from "./projects/page";
 // Asset pages
 import EditAssetPage from "./assets/assert_id";
 import NewAssetPage from "./assets/new_assert";
-import AddAssetsPage from "./assets/add-assets-with-tasks";
 
 // Task pages
 import Login from "./component/LoginPage";
 import ProtectedRoute from "./component/ProtectedRoute";
 import EditCustomerPage from "./customers/customer_id";
 import NewCustomerPage from "./customers/new-customer";
+import EditEmployeePage from "./employees/edit-employees";
 import EmployeeTimelinePage from "./employees/employees_id";
 import NewEmployeePage from "./employees/new-employees";
-import EditEmployeePage from "./employees/edit-employees";
 import NewOrderPage from "./orders/new-order";
 import EditOrderPage from "./orders/order_id";
 import NewProjectPage from "./projects/new-project";
 import EditProjectPage from "./projects/project_id";
 
 // Customer screens
-import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 import CustomerAssets from "./CustomerScreens/CustomerDash/customer-assets";
-import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
+import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard";
 import CustomerOrder from "./CustomerScreens/CustomerDash/customer-order";
+import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
+import AddAssetsPage from "./orders/add-assets-with-tasks";
 
 
 // Optional: A simple 404 page
@@ -194,6 +194,14 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <NewOrderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/new/add-assert"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AddAssetsPage />
             </ProtectedRoute>
           }
         />
