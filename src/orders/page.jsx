@@ -88,10 +88,18 @@ const OrdersPage = () => {
               <div class="header">
                 <div>
                   <div class="title">Order ${o.order_number || o._id}</div>
-                  <div class="meta">Generated: ${generatedAt} • Order ID: ${o._id || "-"}</div>
+                  <div class="meta">Generated: ${generatedAt} • Order ID: ${
+      o._id || "-"
+    }</div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:12px;color:${status === "Completed" ? "#059669" : status === "Active" ? "#0369a1" : "#b45309"};font-weight:700">${status}</div>
+                  <div style="font-size:12px;color:${
+                    status === "Completed"
+                      ? "#059669"
+                      : status === "Active"
+                      ? "#0369a1"
+                      : "#b45309"
+                  };font-weight:700">${status}</div>
                   <div style="font-size:12px;color:var(--muted);margin-top:6px">${cust}</div>
                 </div>
               </div>
@@ -121,7 +129,11 @@ const OrdersPage = () => {
                 </div>
               </div>
 
-              ${description ? `<div class="desc"><strong>Description</strong><div style="margin-top:8px">${description}</div></div>` : ""}
+              ${
+                description
+                  ? `<div class="desc"><strong>Description</strong><div style="margin-top:8px">${description}</div></div>`
+                  : ""
+              }
 
               <table>
                 <thead>
@@ -163,7 +175,8 @@ const OrdersPage = () => {
   };
 
   const role = getUserRole();
-  const canAddOrder = role === "admin" || role === "manager" || role === "supervisor";
+  const canAddOrder =
+    role === "admin" || role === "manager" || role === "supervisor";
   const canEditOrder = role === "admin" || role === "manager";
   const canDeleteOrder = role === "admin" || role === "manager";
 
@@ -272,12 +285,19 @@ const OrdersPage = () => {
         payloadToSend = new FormData();
         payloadToSend.append("title", taskData.title || "");
         payloadToSend.append("description", taskData.description || "");
-        if (taskData.plan_duration !== undefined && taskData.plan_duration !== "")
+        if (
+          taskData.plan_duration !== undefined &&
+          taskData.plan_duration !== ""
+        )
           payloadToSend.append("plan_duration", taskData.plan_duration);
-        if (taskData.start_time) payloadToSend.append("start_time", taskData.start_time);
-        if (taskData.end_time) payloadToSend.append("end_time", taskData.end_time);
-        if (taskData.actual_start_time) payloadToSend.append("actual_start_time", taskData.actual_start_time);
-        if (taskData.actual_end_time) payloadToSend.append("actual_end_time", taskData.actual_end_time);
+        if (taskData.start_time)
+          payloadToSend.append("start_time", taskData.start_time);
+        if (taskData.end_time)
+          payloadToSend.append("end_time", taskData.end_time);
+        if (taskData.actual_start_time)
+          payloadToSend.append("actual_start_time", taskData.actual_start_time);
+        if (taskData.actual_end_time)
+          payloadToSend.append("actual_end_time", taskData.actual_end_time);
         payloadToSend.append("priority", taskData.priority || "Medium");
         payloadToSend.append("status", taskData.status || "Todo");
         payloadToSend.append("orderId", taskOrderId);
@@ -339,7 +359,11 @@ const OrdersPage = () => {
       case "project":
         return (order.project_id || "").toLowerCase().includes(searchValue);
       case "amount":
-        return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").includes(searchTerm);
+        return String(
+          order.amount?.value ?? order.amount?.$numberDecimal ?? ""
+        ).includes(searchTerm);
+      case "status":
+        return (order.status || "").toLowerCase().includes(searchValue);
       default:
         return true;
     }
@@ -347,17 +371,28 @@ const OrdersPage = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <Sidebar className={showConfirmModal || showSuccessModal ? "blur-sm" : ""} />
+      <Sidebar
+        className={showConfirmModal || showSuccessModal ? "blur-sm" : ""}
+      />
 
-      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showConfirmModal || showSuccessModal ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
+          showConfirmModal || showSuccessModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Work Orders Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Work Orders Management
+            </h1>
 
             {/* ADD ORDER BUTTON */}
             {canAddOrder && (
-              <Link to="/orders/new" className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors">
+              <Link
+                to="/orders/new"
+                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+              >
                 + Add Order
               </Link>
             )}
@@ -372,25 +407,70 @@ const OrdersPage = () => {
               {/* SEARCH SECTION */}
               <div className="border-b border-gray-200 p-4 sm:p-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {[
-                    { field: "order", placeholder: "Search Order #" },
-                    { field: "erp", placeholder: "Search ERP #" },
-                    { field: "customer", placeholder: "Search Customer ID" },
-                    { field: "project", placeholder: "Search Project ID" },
-                    { field: "amount", placeholder: "Search Amount" },
-                  ].map(({ field, placeholder }) => (
-                    <input
-                      key={field}
-                      type="text"
-                      placeholder={placeholder}
-                      value={searchField === field ? searchTerm : ""}
-                      onChange={(e) => {
-                        setSearchField(field);
-                        setSearchTerm(e.target.value);
-                      }}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  ))}
+                  {/* Order # */}
+                  <input
+                    type="text"
+                    placeholder="Search Order #"
+                    value={searchField === "order" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("order");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  {/* ERP # */}
+                  <input
+                    type="text"
+                    placeholder="Search ERP #"
+                    value={searchField === "erp" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("erp");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  {/* Customer ID / name */}
+                  <input
+                    type="text"
+                    placeholder="Search Customer ID"
+                    value={searchField === "customer" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("customer");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  {/* Project ID / name */}
+                  <input
+                    type="text"
+                    placeholder="Search Project ID"
+                    value={searchField === "project" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("project");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  {/* Status dropdown (replaces Amount) */}
+                  <select
+                    value={searchField === "status" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("status");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Open">Open</option>
+                    <option value="Active">Active</option>
+                  </select>
                 </div>
               </div>
 
@@ -414,17 +494,39 @@ const OrdersPage = () => {
                   <tbody>
                     {filteredOrders.map((order) => (
                       <React.Fragment key={order._id}>
-                        <tr className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onClick={() => handleExpandOrder(order._id)}>
-                          <td className="px-4 py-3 font-medium text-gray-900">{order.title || "-"}</td>
-                          <td className="px-4 py-3">{order.order_number || "-"}</td>
-                          <td className="px-4 py-3">{order.customer?.name || "-"}</td>
-                          <td className="px-4 py-3">{order.project?.name || order.project?.title || "-"}</td>
+                        <tr
+                          className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleExpandOrder(order._id)}
+                        >
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            {order.title || "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.order_number || "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.customer?.name || "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.project?.name || order.project?.title || "-"}
+                          </td>
                           {/* <td className="px-4 py-3">{order.erp_number || "-"}</td> */}
-                          <td className="px-4 py-3">{order.amount?.$numberDecimal ?? order.amount?.value ?? "-"}</td>
+                          <td className="px-4 py-3">
+                            {order.amount?.$numberDecimal ??
+                              order.amount?.value ??
+                              "-"}
+                          </td>
                           <td className="px-4 py-3">{order.status || "-"}</td>
-                          <td className="px-4 py-3">{order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</td>
+                          <td className="px-4 py-3">
+                            {order.created_at
+                              ? new Date(order.created_at).toLocaleDateString()
+                              : "-"}
+                          </td>
 
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <td
+                            className="px-4 py-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <div className="flex items-center gap-2">
                               {/* PRINT BUTTON (per-order) */}
                               <button
@@ -440,14 +542,20 @@ const OrdersPage = () => {
 
                               {/* EDIT BUTTON (Admin + Manager) */}
                               {canEditOrder && (
-                                <Link to={`/orders/${order._id}`} className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white">
+                                <Link
+                                  to={`/orders/${order._id}`}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                >
                                   <FaEdit size={14} />
                                 </Link>
                               )}
 
                               {/* DELETE BUTTON (Admin + Manager) */}
                               {canDeleteOrder && (
-                                <button onClick={() => handleDeleteClick(order)} className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white">
+                                <button
+                                  onClick={() => handleDeleteClick(order)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                >
                                   <FaTrash size={14} />
                                 </button>
                               )}
@@ -463,7 +571,9 @@ const OrdersPage = () => {
                                 order={order}
                                 orderTasks={orderTasks}
                                 onAddTask={handleOpenAddTask}
-                                onEditTask={(taskId) => console.log("Edit:", taskId)}
+                                onEditTask={(taskId) =>
+                                  console.log("Edit:", taskId)
+                                }
                                 onDeleteTask={handleDeleteTask}
                                 onPrintTask={handlePrintTask}
                               />
@@ -477,7 +587,9 @@ const OrdersPage = () => {
               </div>
 
               {filteredOrders.length === 0 && (
-                <p className="text-center text-gray-500 py-6 sm:text-base">No orders found.</p>
+                <p className="text-center text-gray-500 py-6 sm:text-base">
+                  No orders found.
+                </p>
               )}
             </div>
           )}
@@ -489,14 +601,29 @@ const OrdersPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">Confirm Delete</h2>
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Confirm Delete
+            </h2>
             <p className="mb-6 text-gray-700">
               Are you sure you want to delete order{" "}
-              <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span>?
+              <span className="font-bold">
+                {selectedOrder.order_name || selectedOrder.order_number}
+              </span>
+              ?
             </p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-              <button onClick={handleConfirmDelete} className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors">Delete</button>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -507,12 +634,23 @@ const OrdersPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+            <h2 className="text-lg font-semibold mb-4 text-green-600">
+              Success
+            </h2>
             <p className="mb-6 text-gray-700">
-              Order <span className="font-bold">{selectedOrder.order_name || selectedOrder.order_number}</span> has been deleted successfully.
+              Order{" "}
+              <span className="font-bold">
+                {selectedOrder.order_name || selectedOrder.order_number}
+              </span>{" "}
+              has been deleted successfully.
             </p>
             <div className="flex justify-end">
-              <button onClick={handleCloseSuccessModal} className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800 transition-colors">OK</button>
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-4 py-2 rounded bg-green-700 text-white hover:bg-green-800 transition-colors"
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>
@@ -524,22 +662,49 @@ const OrdersPage = () => {
           <div className="absolute inset-0 backdrop-blur-sm z-40" />
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-2 z-50">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Print Order</h2>
-              <button onClick={() => { setShowPrintPreview(false); setPrintData(null); }} className="text-2xl text-gray-500">×</button>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Print Order
+              </h2>
+              <button
+                onClick={() => {
+                  setShowPrintPreview(false);
+                  setPrintData(null);
+                }}
+                className="text-2xl text-gray-500"
+              >
+                ×
+              </button>
             </div>
 
             <div className="h-[70vh] overflow-auto border p-2">
-              <iframe title="Order Print Preview" srcDoc={generatePrintDocument(printData)} style={{ width: "100%", height: "100%", border: 0 }} />
+              <iframe
+                title="Order Print Preview"
+                srcDoc={generatePrintDocument(printData)}
+                style={{ width: "100%", height: "100%", border: 0 }}
+              />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => { setShowPrintPreview(false); setPrintData(null); }} className="px-4 py-2 rounded bg-gray-100 text-gray-700">Close</button>
-              <button onClick={() => {
-                const w = window.open("", "_blank", "noopener,noreferrer");
-                w.document.write(generatePrintDocument(printData));
-                w.document.close();
-                w.print();
-              }} className="px-4 py-2 rounded bg-blue-600 text-white">Print</button>
+              <button
+                onClick={() => {
+                  setShowPrintPreview(false);
+                  setPrintData(null);
+                }}
+                className="px-4 py-2 rounded bg-gray-100 text-gray-700"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const w = window.open("", "_blank", "noopener,noreferrer");
+                  w.document.write(generatePrintDocument(printData));
+                  w.document.close();
+                  w.print();
+                }}
+                className="px-4 py-2 rounded bg-blue-600 text-white"
+              >
+                Print
+              </button>
             </div>
           </div>
         </div>

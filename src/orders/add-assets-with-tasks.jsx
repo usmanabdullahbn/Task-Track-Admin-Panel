@@ -95,6 +95,12 @@ const AddAssetsPage = () => {
       description: "",
       priority: "Medium",
       status: "Pending",
+      // new fields
+      assignedTo: "",
+      startTime: "",
+      endTime: "",
+      remarks: "",
+      attachment: null,
     };
 
     const updated = [...assets];
@@ -192,10 +198,19 @@ const AddAssetsPage = () => {
             priority: task.priority,
             status: task.status,
             asset_id: assetId,
+            // include new fields (attachment handled as filename here)
+            assigned_to: task.assignedTo || "",
+            start_time: task.startTime ? new Date(task.startTime).toISOString() : null,
+            end_time: task.endTime ? new Date(task.endTime).toISOString() : null,
+            remarks: task.remarks || "",
+            attachment_name: task.attachment ? task.attachment.name : "",
           };
 
           console.log(`Creating Task ${j + 1}:`, taskPayload);
           await apiClient.createTask(taskPayload);
+
+          // NOTE: If your backend expects multipart upload for attachments,
+          // you should call a dedicated upload endpoint here with task.attachment.
         }
       }
 
@@ -469,6 +484,112 @@ const AddAssetsPage = () => {
                                     </option>
                                     <option value="Completed">Completed</option>
                                   </select>
+                                </div>
+
+                                {/* Assigned To */}
+                                <div>
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">
+                                    Assigned to
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={task.assignedTo || ""}
+                                    onChange={(e) =>
+                                      updateTask(
+                                        activeAssetIdx,
+                                        taskIdx,
+                                        "assignedTo",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Assignee name or email"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                  />
+                                </div>
+
+                                {/* Start Time */}
+                                <div>
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">
+                                    Start time
+                                  </label>
+                                  <input
+                                    type="datetime-local"
+                                    value={task.startTime || ""}
+                                    onChange={(e) =>
+                                      updateTask(
+                                        activeAssetIdx,
+                                        taskIdx,
+                                        "startTime",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                  />
+                                </div>
+
+                                {/* End Time */}
+                                <div>
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">
+                                    End time
+                                  </label>
+                                  <input
+                                    type="datetime-local"
+                                    value={task.endTime || ""}
+                                    onChange={(e) =>
+                                      updateTask(
+                                        activeAssetIdx,
+                                        taskIdx,
+                                        "endTime",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                  />
+                                </div>
+
+                                {/* Remarks */}
+                                <div className="sm:col-span-2">
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">
+                                    Remarks
+                                  </label>
+                                  <textarea
+                                    value={task.remarks || ""}
+                                    onChange={(e) =>
+                                      updateTask(
+                                        activeAssetIdx,
+                                        taskIdx,
+                                        "remarks",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Any additional notes..."
+                                    rows="2"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
+                                  />
+                                </div>
+
+                                {/* Attachment */}
+                                <div className="sm:col-span-2">
+                                  <label className="text-xs font-medium text-gray-600 block mb-1">
+                                    Attachment
+                                  </label>
+                                  <input
+                                    type="file"
+                                    onChange={(e) =>
+                                      updateTask(
+                                        activeAssetIdx,
+                                        taskIdx,
+                                        "attachment",
+                                        e.target.files[0] || null
+                                      )
+                                    }
+                                    className="w-full text-sm text-gray-900"
+                                  />
+                                  {task.attachment && (
+                                    <p className="mt-2 text-xs text-gray-600">
+                                      Selected: {task.attachment.name}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </div>
