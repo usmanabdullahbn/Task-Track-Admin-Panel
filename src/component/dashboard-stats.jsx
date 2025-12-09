@@ -9,8 +9,11 @@ import {
   FaSpinner,
   FaClock,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const DashboardStats = ({ stats = {} }) => {
+  const navigate = useNavigate();
+
   const statItems = [
     {
       label: "Total Employees",
@@ -23,6 +26,12 @@ const DashboardStats = ({ stats = {} }) => {
       value: stats.totalCustomers ?? 0,
       color: "bg-green-50 border-green-200 text-green-600",
       icon: <FaUserTie />,
+    },
+    {
+      label: "Total Assets",
+      value: stats.totalAssets ?? 0,
+      color: "bg-gray-50 border-gray-200 text-gray-700",
+      icon: <FaCubes />,
     },
     {
       label: "Total Projects",
@@ -78,34 +87,56 @@ const DashboardStats = ({ stats = {} }) => {
       color: "bg-purple-50 border-purple-200 text-purple-600",
       icon: <FaSpinner />,
     },
-    {
-      label: "Total Assets",
-      value: stats.totalAssets ?? 0,
-      color: "bg-gray-50 border-gray-200 text-gray-700",
-      icon: <FaCubes />,
-    },
   ];
+
+  // map specific stat labels to routes
+  const routeMap = {
+    "Total Employees": "/employees",
+    "Total Customers": "/customers",
+    "Total Assets": "/assets",
+    "Total Projects": "/projects",
+    "Total Projects": "/projects",
+    "Total Orders": "/orders",
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-      {statItems.map((stat) => (
-        <div
-          key={stat.label}
-          className={`rounded-xl border p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow ${stat.color}`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`text-2xl ${stat.color.split(" ")[2]}`}>
-              {stat.icon}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">
-                {stat.value}
-              </p>
+      {statItems.map((stat) => {
+        const route = routeMap[stat.label];
+        return (
+          <div
+            key={stat.label}
+            onClick={route ? () => navigate(route) : undefined}
+            onKeyDown={
+              route
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(route);
+                    }
+                  }
+                : undefined
+            }
+            role={route ? "button" : undefined}
+            tabIndex={route ? 0 : undefined}
+            className={`rounded-xl border p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow ${stat.color} ${
+              route ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-300" : ""
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`text-2xl ${stat.color.split(" ")[2]}`}>
+                {stat.icon}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

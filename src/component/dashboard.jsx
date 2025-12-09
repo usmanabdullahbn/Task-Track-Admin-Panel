@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import DashboardStats from "./dashboard-stats";
 import { apiClient } from "../lib/api-client";
+import banner from "../images/SGI_Logo_biling.png"
 
 const DashboardContent = () => {
   const [stats, setStats] = useState(null);
@@ -38,16 +39,13 @@ const DashboardContent = () => {
       {/* Main content area */}
       <main className="flex-1 overflow-y-auto pt-20 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
-          {/* Page Header */}
-          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Dashboard
-              </h1>
-              <p className="mt-1 sm:mt-2 text-sm text-gray-600">
-                Welcome back, Admin
-              </p>
-            </div>
+          {/* REPLACED: Banner instead of Dashboard title and subtitle */}
+          <div className="mb-6 sm:mb-8 flex items-center justify-center">
+            <img
+              src={banner}
+              alt="Company banner"
+              className="h-16 sm:h-20 md:h-24 object-contain"
+            />
           </div>
 
           {/* Loading */}
