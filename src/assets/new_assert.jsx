@@ -30,32 +30,20 @@ const NewAssetPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Fetch dropdown data
+  // Fetch customers on mount (projects will be loaded when a customer is selected)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoadingData(true);
 
         const customersResponse = await apiClient.getCustomers();
-        setCustomers(
-          Array.isArray(customersResponse)
-            ? customersResponse
-            : customersResponse.customers || []
-        );
+        const customersList = Array.isArray(customersResponse)
+          ? customersResponse
+          : customersResponse.customers || [];
+        setCustomers(customersList);
 
-        const projectsResponse = await apiClient.getProjects();
-        setProjects(
-          Array.isArray(projectsResponse.projects)
-            ? projectsResponse.projects
-            : []
-        );
-
-        // const ordersResponse = await apiClient.getOrders();
-        // const ordersList = Array.isArray(ordersResponse.orders)
-        //   ? ordersResponse.orders
-        //   : [];
-
-        // setOrders(ordersList);
+        // Do not fetch all projects here. Projects will be fetched per-customer.
+        setProjects([]);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
         setError("Error loading dropdown data.");
@@ -71,58 +59,69 @@ const NewAssetPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // When Project changes → Autofill Customer
-    if (name === "project") {
-      const selected = projects.find((p) => p._id === value);
+    // When Customer changes → load projects for that customer
+    if (name === "customer") {
+      const selected = customers.find((c) => c._id === value) || {};
+      setFormData((prev) => ({
+        ...prev,
+        customer: value,
+        customerName: selected.name || "",
+        // clear project selection when customer changes
+        project: "",
+        projectName: "",
+      }));
 
-      if (selected) {
-        setFormData((prev) => ({
-          ...prev,
-          project: selected._id,
-          projectName: selected.title || "",
-          customer: selected.customer?.id || "",
-          customerName: selected.customer?.name || "",
-        }));
-      }
+      // fetch projects for selected customer
+      (async () => {
+        try {
+          setLoadingData(true);
+          setError("");
+
+          // try common apiClient method names (server might export either)
+          let projectsResponse;
+          if (typeof apiClient.getProjectsByCustomerId === "function") {
+            projectsResponse = await apiClient.getProjectsByCustomerId(value);
+          } else if (typeof apiClient.getProjectByCustomerId === "function") {
+            projectsResponse = await apiClient.getProjectByCustomerId(value);
+          } else {
+            // fallback to getProjects and filter client-side (least preferred)
+            const all = await apiClient.getProjects();
+            projectsResponse = all;
+          }
+
+          const list =
+            Array.isArray(projectsResponse)
+              ? projectsResponse
+              : projectsResponse.projects || [];
+          setProjects(list);
+        } catch (err) {
+          console.error("Failed to load projects for customer:", err);
+          setProjects([]);
+          setError("Error loading projects for selected customer.");
+        } finally {
+          setLoadingData(false);
+        }
+      })();
+
       return;
     }
 
-    // When Order changes → Autofill Customer + Project
-    // if (name === "order") {
-    //   const selected = orders.find((o) => o._id === value);
-
-    //   if (selected) {
-    //     setFormData((prev) => ({
-    //       ...prev,
-    //       order: selected._id,
-    //       order_number: selected._id,
-    //       customer: selected.customer?._id || "",
-    //       customerName: selected.customer?.name || "",
-    //       project: selected.project?._id || "",
-    //       projectName: selected.project?.name || "",
-    //     }));
-    //   }
-    //   return;
-    // }
+    // When Project changes → set project fields (do not override selected customer)
+    if (name === "project") {
+      const selected = projects.find((p) => p._id === value) || {};
+      setFormData((prev) => ({
+        ...prev,
+        project: value,
+        projectName: selected.title || "",
+      }));
+      return;
+    }
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Submit Handler
   const handleSubmit = async () => {
-    // if (!formData.title || !formData.customer || !formData.project || !formData.manufacturer || !formData.barcode || !formData.category || !formData.area) {
-    //   setError("Please fill in all required fields.");
-    //   return;
-    // }
-
-    // const selectedOrder = orders.find((o) => o._id === formData.order);
-    // const orderNumber = selectedOrder?.order_number || "";
-
-    // if (!orderNumber) {
-    //   setError("Order number missing from selected order.");
-    //   return;
-    // }
-
     const payload = {
       customer_id: formData.customer,
       customer_name: formData.customerName,
@@ -142,9 +141,6 @@ const NewAssetPage = () => {
       barcode: formData.barcode,
       area: formData.area,
     };
-
-    // console.log("FINAL PAYLOAD:", payload);
-    // console.log(formData);
 
     try {
       setSubmitting(true);
@@ -187,22 +183,34 @@ const NewAssetPage = () => {
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-4xl">
             {/* FORM */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Customer - Auto-filled from Project */}
+              {/* Customer - now a select to load projects for selected customer */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Customer <span className="text-red-600">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={formData.customerName}
-                  disabled
-                  readOnly
-                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none"
-                  placeholder="Auto-filled when project is selected"
-                />
+                <select
+                  name="customer"
+                  value={formData.customer}
+                  onChange={handleInputChange}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                >
+                  <option value="">Select a customer</option>
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name || c.title || c._id}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => navigate("/customers/new")}
+                  className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                >
+                  + Add New Customer
+                </button>
               </div>
 
-              {/* Project Selection */}
+              {/* Project Selection (projects filtered by selected customer) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Project <span className="text-red-600">*</span>
@@ -212,8 +220,15 @@ const NewAssetPage = () => {
                   value={formData.project}
                   onChange={handleInputChange}
                   className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                  disabled={!formData.customer || loadingData}
                 >
-                  <option value="">Select a project</option>
+                  <option value="">
+                    {formData.customer
+                      ? loadingData
+                        ? "Loading projects..."
+                        : "Select a project"
+                      : "Select a customer first"}
+                  </option>
                   {projects.map((project) => (
                     <option key={project._id} value={project._id}>
                       {project.title}
@@ -228,33 +243,6 @@ const NewAssetPage = () => {
                   + Add New Project
                 </button>
               </div>
-
-              {/* Order Selection */}
-              {/* <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Order <span className="text-red-600">*</span>
-                </label>
-                <select
-                  name="order"
-                  value={formData.order}
-                  onChange={handleInputChange}
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
-                >
-                  <option value="">Select an order</option>
-                  {orders.map((order) => (
-                    <option key={order._id} value={order._id}>
-                      {order.order_number}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => navigate("/orders/new")}
-                  className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
-                >
-                  + Add New Order
-                </button>
-              </div> */}
 
               {/* Title */}
               <div>
