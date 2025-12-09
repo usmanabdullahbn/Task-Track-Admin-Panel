@@ -229,7 +229,7 @@ const App = () => {
           path="/assets/new"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <AddAssetsPage />
+              <NewAssetPage />
             </ProtectedRoute>
           }
         />
