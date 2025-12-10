@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "http://localhost:4000/api";
+// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -336,16 +336,17 @@ export const apiClient = {
     return response.json();
   },
 
-  async getAssetsByCustomerId(customerId) {
+  async c(customerId) {
     const response = await fetch(
       `${API_BASE_URL}/assets/customer/${customerId}`
     );
     if (!response.ok) throw new Error("Failed to fetch customer assets");
     return response.json();
   },
+  
 
-  async getAssetsByProjectId(projectId) {
-    const response = await fetch(`${API_BASE_URL}/assets/project/${projectId}`);
+  async getAssetByCustomerId(customerId) {
+    const response = await fetch(`${API_BASE_URL}/assets/customer/${customerId}`);
     if (!response.ok) throw new Error("Failed to fetch customer assets");
     return response.json();
   },

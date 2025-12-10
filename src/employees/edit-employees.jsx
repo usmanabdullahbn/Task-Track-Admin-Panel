@@ -119,7 +119,7 @@ const EditEmployeePage = () => {
               ← Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Edit Employee
+              Edit User
             </h1>
           </div>
 

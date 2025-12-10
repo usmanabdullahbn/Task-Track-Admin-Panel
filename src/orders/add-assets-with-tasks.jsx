@@ -9,11 +9,19 @@ const AddAssetsPage = () => {
 
   // Get order context from navigation state
   const orderContext = location.state?.orderData || {
+    id: "",
+    title: "",
     customerId: "",
     customerName: "",
     projectId: "",
     projectName: "",
+    // ensure nested shapes exist for safer access
+    customer: { id: "", name: "" },
+    project: { id: "", name: "" },
   };
+
+  // Debugging: Log the order context data
+  console.log("Order Context:", orderContext);
 
   // ============= STATE =============
   const [assets, setAssets] = useState([]); // Array of assets with tasks
@@ -30,10 +38,62 @@ const AddAssetsPage = () => {
       try {
         setLoading(true);
 
-        const assetsResponse = await apiClient.getAssets();
+        const customerId =
+          orderContext.customer?.id ||
+          orderContext.customer?._id ||
+          orderContext.customerId ||
+          "";
+        const projectId =
+          orderContext.project?.id ||
+          orderContext.project?._id ||
+          orderContext.projectId ||
+          "";
+
+        console.log("Fetching assets for customerId:", customerId, "projectId:", projectId);
+
+        let assetsResponse;
+
+        // Prefer fetching assets by customer id (requested change)
+        if (customerId) {
+          try {
+            assetsResponse = await apiClient.getAssetsByCustomerId(customerId);
+          } catch (err) {
+            console.warn("apiClient.getAssetsByCustomerId failed, falling back to filtering all assets", err);
+            const all = await apiClient.getAssets();
+            const list = Array.isArray(all) ? all : all.assets || [];
+            assetsResponse = list.filter((a) => {
+              return (
+                a.customer_id === customerId ||
+                a.customer?._id === customerId ||
+                a.customer?.id === customerId
+              );
+            });
+          }
+        } else if (projectId) {
+          // fallback to project-based fetch if no customer id available
+          try {
+            assetsResponse = await apiClient.getAssetsByProjectId(projectId);
+          } catch (err) {
+            console.warn("apiClient.getAssetsByProjectId failed, falling back to filtering all assets", err);
+            const all = await apiClient.getAssets();
+            const list = Array.isArray(all) ? all : all.assets || [];
+            assetsResponse = list.filter((a) => {
+              return (
+                a.project_id === projectId ||
+                a.project?._id === projectId ||
+                a.project?.id === projectId ||
+                a.projectId === projectId
+              );
+            });
+          }
+        } else {
+          assetsResponse = await apiClient.getAssets();
+        }
+
         const assetsList = Array.isArray(assetsResponse)
           ? assetsResponse
           : assetsResponse.assets || [];
+        console.log("Assets fetched:", assetsList.length);
         setAllAssets(assetsList);
       } catch (err) {
         console.error("Failed to fetch assets:", err);
@@ -44,7 +104,8 @@ const AddAssetsPage = () => {
     };
 
     fetchData();
-  }, []);
+  // refetch when customer id (preferred) or project id changes
+  }, [orderContext.customer?.id, orderContext.customerId, orderContext.project?.id, orderContext.projectId]);
 
   // ============= ASSET & TASK HANDLERS =============
   const addAsset = () => {
@@ -170,10 +231,11 @@ const AddAssetsPage = () => {
         const asset = assets[i];
 
         const assetPayload = {
-          customer_id: orderContext.customerId,
-          customer_name: orderContext.customerName,
-          project_id: orderContext.projectId,
-          project_name: orderContext.projectName,
+          order_id: orderContext.id,
+          customer_id: orderContext.customer?.id || orderContext.customerId,
+          customer_name: orderContext.customer?.name || orderContext.customerName,
+          project_id: orderContext.project?.id || orderContext.projectId,
+          project_name: orderContext.project?.name || orderContext.projectName,
           title: asset.assetTitle,
           description: "",
           model: "",
@@ -254,20 +316,38 @@ const AddAssetsPage = () => {
           </div>
 
           {/* ORDER CONTEXT CARD */}
-          {orderContext.customerId && (
+          {(orderContext.id || orderContext.customer?.id || orderContext.customerId) && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h2 className="font-semibold text-blue-900 mb-2">Order Context</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
+                  <p className="text-blue-700">Order ID</p>
+                  <p className="font-medium text-gray-900">
+                    {orderContext.id}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-blue-700">Order Title</p>
+                  <p className="font-medium text-gray-900">
+                    {orderContext.title}
+                  </p>
+                </div>
+                <div>
                   <p className="text-blue-700">Customer</p>
                   <p className="font-medium text-gray-900">
-                    {orderContext.customerName}
+                    {/* show customer title/name */}
+                    {orderContext.customer?.name ||
+                      orderContext.customer?.title ||
+                      orderContext.customerName}
                   </p>
                 </div>
                 <div>
                   <p className="text-blue-700">Project</p>
                   <p className="font-medium text-gray-900">
-                    {orderContext.projectName}
+                    {/* show project title/name */}
+                    {orderContext.project?.name ||
+                      orderContext.project?.title ||
+                      orderContext.projectName}
                   </p>
                 </div>
               </div>

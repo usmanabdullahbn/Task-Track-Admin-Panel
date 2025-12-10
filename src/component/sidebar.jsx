@@ -10,7 +10,7 @@ const defaultMenuItems = [
   { label: "Assets", href: "/assets" },
   { label: "Orders", href: "/orders" },
   // { label: "Tasks", href: "/tasks" },
-  { label: "Employees", href: "/employees" },
+  { label: "User", href: "/employees" },
 ];
 
 const Sidebar = ({ items }) => {

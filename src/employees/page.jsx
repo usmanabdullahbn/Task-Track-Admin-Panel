@@ -118,7 +118,7 @@ const EmployeesPage = () => {
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Account Opertations
+              Users
             </h1>
 
             {/* ADD EMPLOYEE BUTTON — ONLY ADMIN */}
@@ -127,7 +127,7 @@ const EmployeesPage = () => {
                 to="/employees/new"
                 className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
               >
-                + Add Employee
+                + Add User
               </Link>
             )}
           </div>
