@@ -22,6 +22,7 @@ import EmployeeTimelinePage from "./employees/employees_id";
 import NewEmployeePage from "./employees/new-employees";
 import NewOrderPage from "./orders/new-order";
 import EditOrderPage from "./orders/order_id";
+import OrderDetailsPage from "./orders/order-details";
 import NewProjectPage from "./projects/new-project";
 import EditProjectPage from "./projects/project_id";
 
@@ -202,6 +203,14 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AddAssetsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/details/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <OrderDetailsPage />
             </ProtectedRoute>
           }
         />

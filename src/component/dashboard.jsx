@@ -3,6 +3,8 @@ import Sidebar from "./sidebar";
 import DashboardStats from "./dashboard-stats";
 import { apiClient } from "../lib/api-client";
 import banner from "../images/SGI_Logo_biling.png"
+import Logo1 from './logo 1.png';
+import Logo2 from './logo 2.png';
 
 const DashboardContent = () => {
   const [stats, setStats] = useState(null);
@@ -39,12 +41,17 @@ const DashboardContent = () => {
       {/* Main content area */}
       <main className="flex-1 overflow-y-auto pt-20 md:pt-0">
         <div className="p-4 sm:p-6 md:p-8">
-          {/* REPLACED: Banner instead of Dashboard title and subtitle */}
-          <div className="mb-6 sm:mb-8 flex items-center justify-center">
+          {/* Logo container with space between */}
+          <div className="mb-6 sm:mb-8 flex items-center justify-between bg-white p-4 rounded shadow">
             <img
-              src={banner}
-              alt="Company banner"
-              className="h-16 sm:h-20 md:h-24 object-contain"
+              src={Logo1}
+              alt="Logo 1"
+              className="h-13 sm:h-10 md:h-20 object-contain"
+            />
+            <img
+              src={Logo2}
+              alt="Logo 2"
+              className="h-13 sm:h-20 md:h-20 object-contain"
             />
           </div>
 

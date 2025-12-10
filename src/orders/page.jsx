@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 import AddTaskModal from "./AddTaskModal";
-import OrderTasksSection from "./OrderTasksSection";
 
 const OrdersPage = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("order");
   const [orders, setOrders] = useState([]);
@@ -493,94 +493,75 @@ const OrdersPage = () => {
 
                   <tbody>
                     {filteredOrders.map((order) => (
-                      <React.Fragment key={order._id}>
-                        <tr
-                          className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleExpandOrder(order._id)}
+                      <tr
+                        key={order._id}
+                        className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => navigate(`/orders/details/${order._id}`)}
+                      >
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {order.title || "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {order.order_number || "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {order.customer?.name || "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {order.project?.name || order.project?.title || "-"}
+                        </td>
+                        {/* <td className="px-4 py-3">{order.erp_number || "-"}</td> */}
+                        <td className="px-4 py-3">
+                          {order.amount?.$numberDecimal ??
+                            order.amount?.value ??
+                            "-"}
+                        </td>
+                        <td className="px-4 py-3">{order.status || "-"}</td>
+                        <td className="px-4 py-3">
+                          {order.created_at
+                            ? new Date(order.created_at).toLocaleDateString()
+                            : "-"}
+                        </td>
+
+                        <td
+                          className="px-4 py-3"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <td className="px-4 py-3 font-medium text-gray-900">
-                            {order.title || "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            {order.order_number || "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            {order.customer?.name || "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            {order.project?.name || order.project?.title || "-"}
-                          </td>
-                          {/* <td className="px-4 py-3">{order.erp_number || "-"}</td> */}
-                          <td className="px-4 py-3">
-                            {order.amount?.$numberDecimal ??
-                              order.amount?.value ??
-                              "-"}
-                          </td>
-                          <td className="px-4 py-3">{order.status || "-"}</td>
-                          <td className="px-4 py-3">
-                            {order.created_at
-                              ? new Date(order.created_at).toLocaleDateString()
-                              : "-"}
-                          </td>
+                          <div className="flex items-center gap-2">
+                            {/* PRINT BUTTON (per-order) */}
+                            <button
+                              onClick={() => {
+                                setPrintData(order);
+                                setShowPrintPreview(true);
+                              }}
+                              className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
+                              title="Print order"
+                            >
+                              <FaPrint size={14} />
+                            </button>
 
-                          <td
-                            className="px-4 py-3"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="flex items-center gap-2">
-                              {/* PRINT BUTTON (per-order) */}
-                              <button
-                                onClick={() => {
-                                  setPrintData(order);
-                                  setShowPrintPreview(true);
-                                }}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
-                                title="Print order"
+                            {/* EDIT BUTTON (Admin + Manager) */}
+                            {canEditOrder && (
+                              <Link
+                                to={`/orders/${order._id}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
                               >
-                                <FaPrint size={14} />
+                                <FaEdit size={14} />
+                              </Link>
+                            )}
+
+                            {/* DELETE BUTTON (Admin + Manager) */}
+                            {canDeleteOrder && (
+                              <button
+                                onClick={() => handleDeleteClick(order)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                              >
+                                <FaTrash size={14} />
                               </button>
-
-                              {/* EDIT BUTTON (Admin + Manager) */}
-                              {canEditOrder && (
-                                <Link
-                                  to={`/orders/${order._id}`}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                                >
-                                  <FaEdit size={14} />
-                                </Link>
-                              )}
-
-                              {/* DELETE BUTTON (Admin + Manager) */}
-                              {canDeleteOrder && (
-                                <button
-                                  onClick={() => handleDeleteClick(order)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                                >
-                                  <FaTrash size={14} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* TASKS SUBLIST - USE NEW COMPONENT */}
-                        {expandedOrderId === order._id && (
-                          <tr className="border-b border-gray-200 bg-gray-50">
-                            <td colSpan="9" className="px-4 py-4">
-                              <OrderTasksSection
-                                order={order}
-                                orderTasks={orderTasks}
-                                onAddTask={handleOpenAddTask}
-                                onEditTask={(taskId) =>
-                                  console.log("Edit:", taskId)
-                                }
-                                onDeleteTask={handleDeleteTask}
-                                onPrintTask={handlePrintTask}
-                              />
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
