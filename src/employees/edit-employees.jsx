@@ -12,7 +12,7 @@ const EditEmployeePage = () => {
     designation: "",
     email: "",
     phone: "",
-    role: "worker",
+    role: "employee",
   });
 
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ const EditEmployeePage = () => {
         designation: emp.designation || "",
         email: emp.email || "",
         phone: emp.phone || "",
-        role: emp.role || "worker",
+        role: emp.role || "employee",
       });
     } catch (err) {
       setError("Failed to load employee data");
@@ -64,11 +64,16 @@ const EditEmployeePage = () => {
     const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/;
 
     if (!formData.name.trim()) return setError("Please provide a name");
-    if (!formData.designation.trim()) return setError("Please provide a designation");
-    if (!emailRe.test(formData.email)) return setError("Please provide a valid email");
+    if (!formData.designation.trim())
+      return setError("Please provide a designation");
+    if (!emailRe.test(formData.email))
+      return setError("Please provide a valid email");
 
     try {
-      const payload = { ...formData, role: String(formData.role).toLowerCase() };
+      const payload = {
+        ...formData,
+        role: String(formData.role).toLowerCase(),
+      };
 
       await apiClient.updateUser(id, payload);
 
@@ -100,10 +105,17 @@ const EditEmployeePage = () => {
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
 
-      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
+          showSuccessModal ? "blur-sm" : ""
+        }`}
+      >
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <Link to="/employees" className="text-green-700 hover:text-green-900">
+            <Link
+              to="/employees"
+              className="text-green-700 hover:text-green-900"
+            >
               ← Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -112,11 +124,12 @@ const EditEmployeePage = () => {
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-3xl">
-
             {/* Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Name
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -128,7 +141,9 @@ const EditEmployeePage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Designation
+                </label>
                 <input
                   type="text"
                   name="designation"
@@ -143,7 +158,9 @@ const EditEmployeePage = () => {
             {/* Row 2 */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -155,7 +172,9 @@ const EditEmployeePage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone
+                </label>
                 <input
                   type="text"
                   name="phone"
@@ -169,7 +188,9 @@ const EditEmployeePage = () => {
 
             {/* Role */}
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
               <select
                 name="role"
                 value={formData.role}
@@ -179,7 +200,8 @@ const EditEmployeePage = () => {
                 <option value="admin">Admin</option>
                 <option value="manager">Manager</option>
                 <option value="supervisor">Supervisor</option>
-                <option value="worker">Worker</option>
+                <option value="technician">Technician</option>
+                <option value="employee">Employee</option>
               </select>
             </div>
 
@@ -203,7 +225,6 @@ const EditEmployeePage = () => {
                 Cancel
               </Link>
             </div>
-
           </div>
         </div>
       </main>
@@ -214,10 +235,13 @@ const EditEmployeePage = () => {
           <div className="absolute inset-0 backdrop-blur-sm z-40"></div>
 
           <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">Success</h2>
+            <h2 className="text-lg font-semibold mb-4 text-green-600">
+              Success
+            </h2>
 
             <p className="mb-6 text-gray-700">
-              Employee <span className="font-bold">{employeeName}</span> has been edited successfully
+              Employee <span className="font-bold">{employeeName}</span> has
+              been edited successfully
             </p>
 
             <div className="flex justify-end">

@@ -9,7 +9,7 @@ const NewEmployeePage = () => {
     designation: "",
     email: "",
     phone: "",
-    role: "worker",
+    role: "employee",
   })
 
   const [submitting, setSubmitting] = useState(false)
@@ -135,7 +135,8 @@ const NewEmployeePage = () => {
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
                   <option value="supervisor">Supervisor</option>
-                  <option value="worker">Worker</option>
+                  <option value="technician">Technician</option>
+                  <option value="employee">Employee</option>
                 </select>
               </div>
             </div>

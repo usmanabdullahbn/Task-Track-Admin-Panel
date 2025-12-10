@@ -118,7 +118,7 @@ const EmployeesPage = () => {
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Employees
+              Account Opertations
             </h1>
 
             {/* ADD EMPLOYEE BUTTON — ONLY ADMIN */}
