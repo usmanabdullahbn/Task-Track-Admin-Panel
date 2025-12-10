@@ -114,6 +114,75 @@ const NewOrderPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Create order via apiClient.createOrder and then navigate to Add Assets
+  const handleCreateOrder = async () => {
+    // Basic validation - make amount required
+    if (!formData.customerId || !formData.projectId || !formData.orderTitle || !formData.amount) {
+      setError("Please select customer, project, provide an order title, and enter an amount.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // Prepare payload - include only relevant fields expected by backend
+      const payload = {
+        customer: {
+          id: formData.customerId,
+          name: formData.customerName,
+        },
+        project: {
+          id: formData.projectId,
+          name: formData.projectName,
+        },
+        title: formData.orderTitle,
+        erpNumber: formData.erpNumber,
+        amount: formData.amount,
+        created_at: formData.created_at,
+        status: formData.status,
+      };
+
+      const response = await apiClient.createOrder(payload);
+
+      // Accept common response shapes
+      const createdOrder =
+        (response && (response.order || response.data || response)) || null;
+
+      if (!createdOrder) {
+        throw new Error("Unexpected response from createOrder");
+      }
+
+      // Prepare order data to pass to next page
+      const orderDataToPass = {
+        id: createdOrder._id || createdOrder.id,
+        title: createdOrder.title || formData.orderTitle,
+        customer: {
+          id: formData.customerId,
+          name: formData.customerName,
+        },
+        project: {
+          id: formData.projectId,
+          name: formData.projectName,
+        },
+        erpNumber: createdOrder.erpNumber,
+        amount: createdOrder.amount,
+        created_at: createdOrder.created_at,
+        status: createdOrder.status,
+      };
+
+      // Navigate to add-assets page with created order
+      navigate("/orders/new/add-assert", { state: { orderData: orderDataToPass } });
+    } catch (err) {
+      console.error("Failed to create order:", err);
+      setError(
+        err?.message || "Failed to create order. Please try again later."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50">
@@ -236,7 +305,7 @@ const NewOrderPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Amount
+                      Amount <span className="text-red-600">*</span>
                     </label>
                     <input
                       type="number"
@@ -282,15 +351,13 @@ const NewOrderPage = () => {
                 {/* BUTTONS */}
                 <div className="flex gap-4">
                   <button
-                    onClick={() =>
-                      navigate("/orders/new/add-assert", {
-                        state: { orderData: formData },
-                      })
+                    onClick={handleCreateOrder}
+                    disabled={
+                      !formData.customerId || !formData.projectId || !formData.orderTitle || !formData.amount || loading
                     }
-                    disabled={!formData.customerId || !formData.projectId}
                     className="bg-green-700 text-white px-6 py-2.5 rounded-lg hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed font-semibold transition-colors"
                   >
-                    Add Assets
+                    {loading ? "Creating..." : "Add Assets"}
                   </button>
 
                   <Link

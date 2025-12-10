@@ -84,7 +84,7 @@ const NewEmployeePage = () => {
             <Link to="/employees" className="text-green-700 hover:text-green-900">
               ← Back
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add Employee</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add User</h1>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm max-w-3xl">
