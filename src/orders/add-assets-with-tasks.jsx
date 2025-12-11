@@ -27,6 +27,7 @@ const AddAssetsPage = () => {
   const [assets, setAssets] = useState([]); // Array of assets with tasks
   const [activeAssetIdx, setActiveAssetIdx] = useState(null); // Currently active asset tab
   const [allAssets, setAllAssets] = useState([]); // Available assets for dropdown
+  const [allUsers, setAllUsers] = useState([]); // Available users for assignee dropdown
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +38,44 @@ const AddAssetsPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // fetch users - debug & normalize response
+        try {
+          const usersResp = await apiClient.getUsers();
+          console.log("getUsers response:", usersResp);
+
+          // attempt several common shapes
+          let usersList = [];
+          if (Array.isArray(usersResp)) usersList = usersResp;
+          else if (Array.isArray(usersResp.users)) usersList = usersResp.users;
+          else if (Array.isArray(usersResp.data)) usersList = usersResp.data;
+          else if (Array.isArray(usersResp.data?.users))
+            usersList = usersResp.data.users;
+          else if (Array.isArray(usersResp.results))
+            usersList = usersResp.results;
+          else if (Array.isArray(usersResp.data?.results))
+            usersList = usersResp.data.results;
+
+          // final fallback: try to find nested array
+          if (usersList.length === 0) {
+            const maybeArray = Object.values(usersResp).find((v) =>
+              Array.isArray(v)
+            );
+            if (Array.isArray(maybeArray)) usersList = maybeArray;
+          }
+
+          // normalize minimal fields so dropdown can render
+          usersList = usersList.map((u) => ({
+            _id: u._id || u.id || u._id_str || "",
+            id: u.id || u._id || "",
+            name: u.name || u.fullName || u.full_name || u.email || "(no-name)",
+            raw: u,
+          }));
+
+          console.log("Normalized users:", usersList);
+          setAllUsers(usersList);
+        } catch (uErr) {
+          console.warn("Failed to fetch users", uErr);
+        }
 
         const customerId =
           orderContext.customer?.id ||
@@ -49,7 +88,12 @@ const AddAssetsPage = () => {
           orderContext.projectId ||
           "";
 
-        console.log("Fetching assets for customerId:", customerId, "projectId:", projectId);
+        console.log(
+          "Fetching assets for customerId:",
+          customerId,
+          "projectId:",
+          projectId
+        );
 
         let assetsResponse;
 
@@ -58,7 +102,10 @@ const AddAssetsPage = () => {
           try {
             assetsResponse = await apiClient.getAssetsByCustomerId(customerId);
           } catch (err) {
-            console.warn("apiClient.getAssetsByCustomerId failed, falling back to filtering all assets", err);
+            console.warn(
+              "apiClient.getAssetsByCustomerId failed, falling back to filtering all assets",
+              err
+            );
             const all = await apiClient.getAssets();
             const list = Array.isArray(all) ? all : all.assets || [];
             assetsResponse = list.filter((a) => {
@@ -74,7 +121,10 @@ const AddAssetsPage = () => {
           try {
             assetsResponse = await apiClient.getAssetsByProjectId(projectId);
           } catch (err) {
-            console.warn("apiClient.getAssetsByProjectId failed, falling back to filtering all assets", err);
+            console.warn(
+              "apiClient.getAssetsByProjectId failed, falling back to filtering all assets",
+              err
+            );
             const all = await apiClient.getAssets();
             const list = Array.isArray(all) ? all : all.assets || [];
             assetsResponse = list.filter((a) => {
@@ -104,8 +154,13 @@ const AddAssetsPage = () => {
     };
 
     fetchData();
-  // refetch when customer id (preferred) or project id changes
-  }, [orderContext.customer?.id, orderContext.customerId, orderContext.project?.id, orderContext.projectId]);
+    // refetch when customer id (preferred) or project id changes
+  }, [
+    orderContext.customer?.id,
+    orderContext.customerId,
+    orderContext.project?.id,
+    orderContext.projectId,
+  ]);
 
   // ============= ASSET & TASK HANDLERS =============
   const addAsset = () => {
@@ -198,16 +253,16 @@ const AddAssetsPage = () => {
 
       if (assets[i].tasks.length === 0) {
         setError(
-          `Asset ${i + 1} (${assets[i].assetTitle}): Please add at least one task`
+          `Asset ${i + 1} (${
+            assets[i].assetTitle
+          }): Please add at least one task`
         );
         return false;
       }
 
       for (let j = 0; j < assets[i].tasks.length; j++) {
         if (!assets[i].tasks[j].title) {
-          setError(
-            `Asset ${i + 1}, Task ${j + 1}: Task title is required`
-          );
+          setError(`Asset ${i + 1}, Task ${j + 1}: Task title is required`);
           return false;
         }
       }
@@ -226,54 +281,135 @@ const AddAssetsPage = () => {
       setSubmitting(true);
       setError("");
 
-      // Create assets and tasks
+      // try to get current user info if apiClient provides it (optional)
+      let currentUser = {};
+      try {
+        if (typeof apiClient.getCurrentUser === "function") {
+          const u = await apiClient.getCurrentUser();
+          currentUser = u || {};
+        }
+      } catch (e) {
+        // ignore - use empty user
+        console.warn("getCurrentUser failed", e);
+      }
+
+      // helper to compute plan_duration in minutes (string) if start/end provided
+      const computePlanDuration = (start, end) => {
+        if (!start || !end) return "";
+        try {
+          const s = new Date(start);
+          const e = new Date(end);
+          const diffMin = Math.max(0, Math.round((e - s) / 60000));
+          return String(diffMin); // backend expects string in your example
+        } catch {
+          return "";
+        }
+      };
+
+      // For each asset: create asset only if user didn't choose an existing one.
+      // For tasks: create them concurrently per asset using Promise.all to allow multiple tasks at once.
       for (let i = 0; i < assets.length; i++) {
         const asset = assets[i];
 
-        const assetPayload = {
-          order_id: orderContext.id,
-          customer_id: orderContext.customer?.id || orderContext.customerId,
-          customer_name: orderContext.customer?.name || orderContext.customerName,
-          project_id: orderContext.project?.id || orderContext.projectId,
-          project_name: orderContext.project?.name || orderContext.projectName,
-          title: asset.assetTitle,
-          description: "",
-          model: "",
-          manufacturer: "",
-          serial_number: "",
-          category: "",
-          barcode: "",
-          area: "",
-        };
+        // Determine whether to use existing selected asset or create a new one
+        let assetId = asset.assetId || "";
+        let assetName = asset.assetTitle || "";
 
-        console.log(`Creating Asset ${i + 1}:`, assetPayload);
-        const createdAsset = await apiClient.createAsset(assetPayload);
-        const assetId = createdAsset._id || createdAsset.id;
+        if (!assetId) {
+          // create new asset on backend
+          const assetPayload = {
+            order_id: orderContext.id,
+            customer_id: orderContext.customer?.id || orderContext.customerId,
+            customer_name:
+              orderContext.customer?.name || orderContext.customerName,
+            project_id: orderContext.project?.id || orderContext.projectId,
+            project_name:
+              orderContext.project?.name || orderContext.projectName,
+            title: asset.assetTitle,
+            description: "",
+            model: "",
+            manufacturer: "",
+            serial_number: "",
+            category: "",
+            barcode: "",
+            area: "",
+          };
 
-        // Create tasks for this asset
-        for (let j = 0; j < asset.tasks.length; j++) {
-          const task = asset.tasks[j];
+          const createdAsset = await apiClient.createAsset(assetPayload);
+          assetId = createdAsset?._id || createdAsset?.id || assetId;
+          assetName = createdAsset?.title || assetName;
+        } else {
+          // if user selected existing asset, keep its name if available from allAssets
+          const existing = allAssets.find(
+            (a) => a._id === assetId || a.id === assetId
+          );
+          assetName = existing?.title || assetName;
+        }
+
+        // create tasks for this asset concurrently
+        const taskPromises = asset.tasks.map((task) => {
+          const plan_duration = computePlanDuration(
+            task.startTime,
+            task.endTime
+          );
+
+          // find assigned user details from allUsers
+          const assignedUser = allUsers.find(
+            (u) => (u._id || u.id) === task.assignedTo
+          );
 
           const taskPayload = {
             title: task.title,
             description: task.description,
-            priority: task.priority,
-            status: task.status,
-            asset_id: assetId,
-            // include new fields (attachment handled as filename here)
-            assigned_to: task.assignedTo || "",
-            start_time: task.startTime ? new Date(task.startTime).toISOString() : null,
-            end_time: task.endTime ? new Date(task.endTime).toISOString() : null,
+            priority: task.priority || "Medium",
+            status: task.status || "Todo",
+            plan_duration: plan_duration,
+
+            order: {
+              id: orderContext.id,
+              title: orderContext.title,
+            },
+
+            customer: {
+              id: orderContext.customer?.id || orderContext.customerId,
+              name: orderContext.customer?.name || orderContext.customerName,
+            },
+
+            user: {
+              id:
+                assignedUser?._id || assignedUser?.id || task.assignedTo || "",
+              name: assignedUser?.name || assignedUser?.fullName || "",
+            },
+
+            project: {
+              id: orderContext.project?.id || orderContext.projectId,
+              name: orderContext.project?.name || orderContext.projectName,
+            },
+
+            // FIXED HERE 👇
+            asset: {
+              id: assetId,
+              name: assetName,
+            },
+
+            start_time: task.startTime
+              ? new Date(task.startTime).toISOString()
+              : null,
+            end_time: task.endTime
+              ? new Date(task.endTime).toISOString()
+              : null,
+
             remarks: task.remarks || "",
             attachment_name: task.attachment ? task.attachment.name : "",
           };
 
-          console.log(`Creating Task ${j + 1}:`, taskPayload);
-          await apiClient.createTask(taskPayload);
+          console.log(taskPayload);
 
-          // NOTE: If your backend expects multipart upload for attachments,
-          // you should call a dedicated upload endpoint here with task.attachment.
-        }
+          return apiClient.createTask(taskPayload);
+        });
+
+        // wait for all tasks of this asset to be created
+        await Promise.all(taskPromises);
       }
 
       setShowSuccessModal(true);
@@ -288,7 +424,7 @@ const AddAssetsPage = () => {
 
   const closeModal = () => {
     setShowSuccessModal(false);
-    navigate("/assets");
+    navigate("/orders");
   };
 
   // ============= RENDER =============
@@ -312,19 +448,23 @@ const AddAssetsPage = () => {
             <Link to="/orders" className="text-green-700 hover:text-green-900">
               ← Back
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold">Add Assets & Tasks</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Add Assets & Tasks
+            </h1>
           </div>
 
           {/* ORDER CONTEXT CARD */}
-          {(orderContext.id || orderContext.customer?.id || orderContext.customerId) && (
+          {(orderContext.id ||
+            orderContext.customer?.id ||
+            orderContext.customerId) && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h2 className="font-semibold text-blue-900 mb-2">Order Context</h2>
+              <h2 className="font-semibold text-blue-900 mb-2">
+                Order Context
+              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-blue-700">Order ID</p>
-                  <p className="font-medium text-gray-900">
-                    {orderContext.id}
-                  </p>
+                  <p className="font-medium text-gray-900">{orderContext.id}</p>
                 </div>
                 <div>
                   <p className="text-blue-700">Order Title</p>
@@ -378,7 +518,8 @@ const AddAssetsPage = () => {
               <div className="p-8 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
                 <p className="text-gray-500 mb-3">No assets added yet</p>
                 <p className="text-sm text-gray-400">
-                  Click "Add Asset" button to get started. Each asset can have multiple tasks.
+                  Click "Add Asset" button to get started. Each asset can have
+                  multiple tasks.
                 </p>
               </div>
             ) : (
@@ -479,7 +620,8 @@ const AddAssetsPage = () => {
                                 {/* Task Title */}
                                 <div className="sm:col-span-2">
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Task Title <span className="text-red-600">*</span>
+                                    Task Title{" "}
+                                    <span className="text-red-600">*</span>
                                   </label>
                                   <input
                                     type="text"
@@ -558,7 +700,7 @@ const AddAssetsPage = () => {
                                     }
                                     className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                   >
-                                    <option value="Pending">Pending</option>
+                                    <option value="Todo">Todo</option>
                                     <option value="In Progress">
                                       In Progress
                                     </option>
@@ -571,8 +713,7 @@ const AddAssetsPage = () => {
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
                                     Assigned to
                                   </label>
-                                  <input
-                                    type="text"
+                                  <select
                                     value={task.assignedTo || ""}
                                     onChange={(e) =>
                                       updateTask(
@@ -582,9 +723,18 @@ const AddAssetsPage = () => {
                                         e.target.value
                                       )
                                     }
-                                    placeholder="Assignee name or email"
                                     className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                  />
+                                  >
+                                    <option value="">Unassigned</option>
+                                    {allUsers.map((u) => (
+                                      <option
+                                        key={u._id || u.id}
+                                        value={u._id || u.id}
+                                      >
+                                        {u.name || u.fullName || u.email}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
 
                                 {/* Start Time */}
@@ -737,15 +887,17 @@ const AddAssetsPage = () => {
             <p className="text-gray-700 mb-6">
               {assets.length} asset{assets.length !== 1 ? "s" : ""} with{" "}
               {assets.reduce((sum, a) => sum + a.tasks.length, 0)} task
-              {assets.reduce((sum, a) => sum + a.tasks.length, 1) !== 1 ? "s" : ""} created
-              successfully.
+              {assets.reduce((sum, a) => sum + a.tasks.length, 1) !== 1
+                ? "s"
+                : ""}{" "}
+              created successfully.
             </p>
 
             <button
               onClick={closeModal}
               className="w-full bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 font-medium"
             >
-              Go to Assets
+              Go to Orders
             </button>
           </div>
         </div>
