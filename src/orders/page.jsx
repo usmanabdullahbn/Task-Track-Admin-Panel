@@ -692,7 +692,7 @@ const OrdersPage = () => {
       )}
 
       {/* ADD TASK MODAL (mounted at page level so overlay works) */}
-      <AddTaskModal
+      {/* <AddTaskModal
         isOpen={isTaskModalOpen}
         orderId={taskOrderId}
         onClose={() => {
@@ -700,7 +700,7 @@ const OrdersPage = () => {
           setTaskOrderId(null);
         }}
         onSubmit={handleTaskSubmit}
-      />
+      /> */}
     </div>
   );
 };

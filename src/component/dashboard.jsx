@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
-import Sidebar from "./sidebar";
-import DashboardStats from "./dashboard-stats";
+import React,{ useEffect, useState } from "react";
 import { apiClient } from "../lib/api-client";
-import banner from "../images/SGI_Logo_biling.png"
-import Logo1 from './logo 1.png';
-import Logo2 from './logo 2.png';
+import DashboardStats from "./dashboard-stats";
+import Logo1 from '../images/logo 1.png';
+import Logo2 from '../images/logo 2.png';
+import Sidebar from "./sidebar";
 
 const DashboardContent = () => {
   const [stats, setStats] = useState(null);
