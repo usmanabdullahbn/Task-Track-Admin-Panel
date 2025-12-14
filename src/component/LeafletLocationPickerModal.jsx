@@ -1,28 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // Fix for default markers in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 const containerStyle = {
-  width: '100%',
-  height: '400px'
+  width: "100%",
+  height: "400px",
 };
 
-const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, onSelectLocation }) => {
+const LeafletLocationPickerModal = ({
+  isOpen,
+  initialLat,
+  initialLng,
+  onClose,
+  onSelectLocation,
+}) => {
   const [selectedLocation, setSelectedLocation] = useState({
     lat: initialLat,
-    lng: initialLng
+    lng: initialLng,
   });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState('');
+  const [searchError, setSearchError] = useState("");
 
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -33,18 +42,24 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
 
     // Initialize map only once
     if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([selectedLocation.lat, selectedLocation.lng], 15);
+      mapInstance.current = L.map(mapRef.current).setView(
+        [selectedLocation.lat, selectedLocation.lng],
+        15
+      );
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
         maxZoom: 19,
       }).addTo(mapInstance.current);
 
       // Add initial marker
-      markerRef.current = L.marker([selectedLocation.lat, selectedLocation.lng]).addTo(mapInstance.current);
+      markerRef.current = L.marker([
+        selectedLocation.lat,
+        selectedLocation.lng,
+      ]).addTo(mapInstance.current);
 
       // Handle map clicks
-      mapInstance.current.on('click', (e) => {
+      mapInstance.current.on("click", (e) => {
         const { lat, lng } = e.latlng;
         setSelectedLocation({ lat, lng });
 
@@ -68,7 +83,10 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
   useEffect(() => {
     if (markerRef.current && mapInstance.current) {
       markerRef.current.setLatLng([selectedLocation.lat, selectedLocation.lng]);
-      mapInstance.current.setView([selectedLocation.lat, selectedLocation.lng], 15);
+      mapInstance.current.setView(
+        [selectedLocation.lat, selectedLocation.lng],
+        15
+      );
     }
   }, [selectedLocation]);
 
@@ -76,16 +94,18 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
     if (!searchQuery.trim()) return;
 
     setSearchLoading(true);
-    setSearchError('');
+    setSearchError("");
 
     try {
       // Using Nominatim API (OpenStreetMap's geocoding service)
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          searchQuery
+        )}&limit=1`
       );
 
       if (!response.ok) {
-        throw new Error('Search failed');
+        throw new Error("Search failed");
       }
 
       const data = await response.json();
@@ -103,18 +123,18 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
           mapInstance.current.setView([lat, lng], 15);
         }
       } else {
-        setSearchError('Location not found. Try a different search term.');
+        setSearchError("Location not found. Try a different search term.");
       }
     } catch (error) {
-      console.error('Geocoding error:', error);
-      setSearchError('Search failed. Please try again.');
+      console.error("Geocoding error:", error);
+      setSearchError("Search failed. Please try again.");
     } finally {
       setSearchLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
@@ -122,7 +142,7 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
   const handleConfirm = () => {
     onSelectLocation({
       latitude: selectedLocation.lat,
-      longitude: selectedLocation.lng
+      longitude: selectedLocation.lng,
     });
     onClose();
   };
@@ -130,8 +150,10 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex: 9999 }}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -139,10 +161,13 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
       />
 
       {/* Modal */}
-      <div className="relative z-[10000] bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+      <div
+        className="relative  bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
+        style={{ zIndex: 9999 }}
+      >
         <div className="p-6">
           <h2 className="text-xl font-semibold mb-4">Pick Location</h2>
-          
+
           {/* Search Section */}
           <div className="mb-4">
             <div className="flex gap-2">
@@ -166,7 +191,7 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
                     Searching...
                   </>
                 ) : (
-                  'Search'
+                  "Search"
                 )}
               </button>
             </div>
@@ -174,15 +199,21 @@ const LeafletLocationPickerModal = ({ isOpen, initialLat, initialLng, onClose, o
               <p className="mt-2 text-sm text-red-600">{searchError}</p>
             )}
           </div>
-          
+
           <div className="mb-4">
-            <div ref={mapRef} style={containerStyle} className="rounded-lg border border-gray-300" />
+            <div
+              ref={mapRef}
+              style={containerStyle}
+              className="rounded-lg border border-gray-300"
+            />
           </div>
 
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">
-              <strong>Selected Location:</strong><br />
-              Latitude: {selectedLocation.lat.toFixed(6)}<br />
+              <strong>Selected Location:</strong>
+              <br />
+              Latitude: {selectedLocation.lat.toFixed(6)}
+              <br />
               Longitude: {selectedLocation.lng.toFixed(6)}
             </p>
           </div>
