@@ -4,6 +4,7 @@ import MapComponent from "../component/map";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
 import { toast } from "react-toastify";
+import LocationPickerModal from "../component/LeafletLocationPickerModal";
 
 const NewProjectPage = () => {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const NewProjectPage = () => {
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   // Fetch customers on component mount
   useEffect(() => {
@@ -326,6 +328,13 @@ const NewProjectPage = () => {
                 lng={parseFloat(formData.longitude)}
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setShowLocationPicker(true)}
+              className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            >
+              Pick Location on Map
+            </button>
           </div>
 
         </div>
@@ -355,7 +364,20 @@ const NewProjectPage = () => {
           </div>
         </div>
       )}
-  </div>
+      <LocationPickerModal
+        isOpen={showLocationPicker}
+        initialLat={parseFloat(formData.latitude)}
+        initialLng={parseFloat(formData.longitude)}
+        onClose={() => setShowLocationPicker(false)}
+        onSelectLocation={({ latitude, longitude }) => {
+          setFormData(prev => ({
+            ...prev,
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
+          }))
+        }}
+      />
+    </div>
 );
 
 }

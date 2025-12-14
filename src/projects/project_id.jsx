@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../component/sidebar";
+import MapComponent from "../component/map";
+import LeafletLocationPickerModal from "../component/LeafletLocationPickerModal";
 import { apiClient } from "../lib/api-client";
 
 const EditProjectPage = () => {
@@ -23,6 +25,7 @@ const EditProjectPage = () => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   // Fetch project data and customers
   useEffect(() => {
@@ -44,7 +47,7 @@ const EditProjectPage = () => {
           contactName: projectData.contact_name || "",
           contactPhone: projectData.contact_phone || "",
           contactEmail: projectData.contact_email || "",
-          contactEmail: projectData.status || "",
+          status: projectData.status || "",
         });
 
         // Fetch customers list
@@ -265,7 +268,7 @@ const EditProjectPage = () => {
 
                   <select
                     name="status"
-                    value={formData.longitude || ""}
+                    value={formData.status || ""}
                     onChange={handleInputChange}
                     className="w-full rounded-lg border-gray-300 focus:border-green-700 focus:ring-green-700 shadow-sm px-3 py-2"
                   >
@@ -296,11 +299,21 @@ const EditProjectPage = () => {
               </div>
             </div>
 
-            {/* Map Section (Placeholder) */}
+            {/* Map Section */}
             <div className="lg:col-span-1">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm h-96">
-                {/* Map comes here */}
+                <MapComponent
+                  lat={parseFloat(formData.latitude) || 31.3700}
+                  lng={parseFloat(formData.longitude) || 74.2200}
+                />
               </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(true)}
+                className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                Pick Location on Map
+              </button>
             </div>
           </div>
         </div>
@@ -332,6 +345,20 @@ const EditProjectPage = () => {
           </div>
         </div>
       )}
+
+      <LeafletLocationPickerModal
+        isOpen={showLocationPicker}
+        initialLat={parseFloat(formData.latitude)}
+        initialLng={parseFloat(formData.longitude)}
+        onClose={() => setShowLocationPicker(false)}
+        onSelectLocation={({ latitude, longitude }) => {
+          setFormData(prev => ({
+            ...prev,
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
+          }))
+        }}
+      />
     </div>
   );
 };
