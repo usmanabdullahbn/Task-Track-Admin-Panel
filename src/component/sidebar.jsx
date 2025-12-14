@@ -9,8 +9,9 @@ const defaultMenuItems = [
   { label: "Projects", href: "/projects" },
   { label: "Assets", href: "/assets" },
   { label: "Orders", href: "/orders" },
-  // { label: "Tasks", href: "/tasks" },
   { label: "User", href: "/employees" },
+  { label: "Schedule", href: "/schedule" },
+  // { label: "Tasks", href: "/tasks" },
 ];
 
 const Sidebar = ({ items }) => {

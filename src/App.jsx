@@ -7,6 +7,7 @@ import CustomersPage from "./customers/page";
 import EmployeesPage from "./employees/page";
 import OrdersPage from "./orders/page";
 import ProjectsPage from "./projects/page";
+import SchedulePage from "./schedule/schedule";
 
 // Asset pages
 import EditAssetPage from "./assets/assert_id";
@@ -167,6 +168,14 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <EmployeesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/schedule"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <SchedulePage />
             </ProtectedRoute>
           }
         />
