@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { apiClient } from "../lib/api-client";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaClock } from "react-icons/fa";
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
@@ -203,6 +203,17 @@ const EmployeesPage = () => {
                               >
                                 <FaTrash size={14} />
                               </button>
+                            )}
+
+                            {/* TIMELINE — ONLY ADMIN */}
+                            {canEditEmployee && (
+                              <Link
+                                // to={`/employees/timeline/${employee._id}`}
+                                to={`/employees-timeline/5`}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                              >
+                                <FaClock size={14} />
+                              </Link>
                             )}
                           </div>
                         </td>

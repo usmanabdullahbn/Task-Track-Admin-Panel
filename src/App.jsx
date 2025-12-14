@@ -295,7 +295,7 @@ const App = () => {
           }
         />
         <Route
-          path="/employees/timeline/:id"
+          path="/employees-timeline/:id"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <EmployeeTimelinePage />
