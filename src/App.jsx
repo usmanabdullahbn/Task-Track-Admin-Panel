@@ -7,7 +7,6 @@ import CustomersPage from "./customers/page";
 import EmployeesPage from "./employees/page";
 import OrdersPage from "./orders/page";
 import ProjectsPage from "./projects/page";
-import SchedulePage from "./schedule/schedule";
 import EmployeeDayTimelinePage from "./component/EmployeeDayTimelinePage";
 
 
@@ -35,6 +34,7 @@ import CustomerDashboard from "./CustomerScreens/CustomerDash/customer-dashboard
 import CustomerOrder from "./CustomerScreens/CustomerDash/customer-order";
 import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
 import AddAssetsPage from "./orders/add-assets-with-tasks";
+import SchedulePage from "./Schedule/schedule";
 
 
 // Optional: A simple 404 page
