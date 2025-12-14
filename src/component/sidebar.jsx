@@ -11,6 +11,7 @@ const defaultMenuItems = [
   { label: "Orders", href: "/orders" },
   { label: "User", href: "/employees" },
   { label: "Schedule", href: "/schedule" },
+  { label: "Timeline", href: "/timeline" },
   // { label: "Tasks", href: "/tasks" },
 ];
 

@@ -8,6 +8,8 @@ import EmployeesPage from "./employees/page";
 import OrdersPage from "./orders/page";
 import ProjectsPage from "./projects/page";
 import SchedulePage from "./schedule/schedule";
+import EmployeeDayTimelinePage from "./component/EmployeeDayTimelinePage";
+
 
 // Asset pages
 import EditAssetPage from "./assets/assert_id";
@@ -176,6 +178,14 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <SchedulePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/timeline"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EmployeeDayTimelinePage />
             </ProtectedRoute>
           }
         />
