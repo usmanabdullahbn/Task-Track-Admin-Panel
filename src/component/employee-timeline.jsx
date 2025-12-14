@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from "react";
 
 // Lazy-load the map component (like Next.js dynamic import)
-const MapComponent = lazy(() => import("./EmployeeMapComponent"));
+const MapComponent = lazy(() => import("./employee-map"));
 
 const EmployeeTimeline = ({ employee, date }) => {
   return (

@@ -281,6 +281,75 @@ export const tasks = [
 ];
 
 
+export const employeeTimeline = [
+  {
+    id: "1",
+    employeeId: "1", // John Doe
+    date: "2025-10-01",
+    task: "Install Equipment",
+    customer: "ABC Traders",
+    project: "Retail Expansion",
+    startTime: "09:00",
+    endTime: "13:00",
+    status: "Completed",
+  },
+  {
+    id: "2",
+    employeeId: "1",
+    date: "2025-10-02",
+    task: "System Configuration",
+    customer: "ABC Traders",
+    project: "Retail Expansion",
+    startTime: "10:00",
+    endTime: "13:00",
+    status: "Completed",
+  },
+  {
+    id: "3",
+    employeeId: "2", // Jane Smith
+    date: "2025-10-03",
+    task: "Project Planning",
+    customer: "XYZ Corporation",
+    project: "Warehouse Setup",
+    startTime: "09:00",
+    endTime: "12:00",
+    status: "Completed",
+  },
+  {
+    id: "4",
+    employeeId: "3", // Ahmed Khan
+    date: "2025-10-04",
+    task: "Software Development",
+    customer: "Iota Beverages",
+    project: "Beverage Bottling SCADA",
+    startTime: "10:00",
+    endTime: "17:00",
+    status: "In Progress",
+  },
+  {
+    id: "5",
+    employeeId: "4", // Sara Ali
+    date: "2025-10-05",
+    task: "UI Design Review",
+    customer: "ABC Traders",
+    project: "Retail Expansion",
+    startTime: "11:00",
+    endTime: "15:00",
+    status: "Pending",
+  },
+  {
+    id: "6",
+    employeeId: "5", // Muhammad Rizwan
+    date: "2025-10-06",
+    task: "Server Maintenance",
+    customer: "XYZ Corporation",
+    project: "Warehouse Setup",
+    startTime: "08:00",
+    endTime: "12:00",
+    status: "Completed",
+  },
+];
+
 export const employees = [
   {
     id: "1",
@@ -295,5 +364,26 @@ export const employees = [
     email: "jane@bitsberg.com",
     phone: "0321-9876543",
     position: "Project Manager",
+  },
+  {
+    id: "3",
+    name: "Ahmed Khan",
+    email: "ahmed@bitsberg.com",
+    phone: "0312-4567890",
+    position: "Software Engineer",
+  },
+  {
+    id: "4",
+    name: "Sara Ali",
+    email: "sara@bitsberg.com",
+    phone: "0333-1234567",
+    position: "UI/UX Designer",
+  },
+  {
+    id: "5",
+    name: "Muhammad Rizwan",
+    email: "rizwan@bitsberg.com",
+    phone: "0345-9876543",
+    position: "System Administrator",
   },
 ]

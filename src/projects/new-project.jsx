@@ -145,7 +145,7 @@ const NewProjectPage = () => {
                   </label>
                   <select
                     name="customerName"
-                    value={formData.customerName}
+                    value={formData.customerId}
                     onChange={handleInputChange}
                     disabled={loadingCustomers}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
