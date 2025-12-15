@@ -9,91 +9,80 @@ import {
   FaSpinner,
   FaTrash,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
-/* ===============================
-   Dashboard Stats
-================================ */
 const DashboardStats = ({ stats = {} }) => {
+  const navigate = useNavigate();
+
+  const topRoutes = {
+    "Total Employees": "/employees",
+    "Total Customers": "/customers",
+    "Total Assets": "/assets",
+    "Total Projects": "/projects",
+  };
+
+  const orderRoutes = {
+    "Completed Orders": "/orders?status=completed",
+    "Pending Orders": "/orders?status=pending",
+    "In Progress Orders": "/orders?status=in-progress",
+    "Cancelled Orders": "/orders?status=cancelled",
+  };
+
+  const taskRoutes = {
+    "Completed Tasks": "/tasks?status=completed",
+    "Pending Tasks": "/tasks?status=pending",
+    "In Progress Tasks": "/tasks?status=in-progress",
+    "Cancelled Tasks": "/tasks?status=cancelled",
+  };
+
   return (
     <div className="space-y-10">
       {/* ===== TOP SUMMARY ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <TopCard
-          title="Total Employees"
-          value={stats.totalEmployees ?? 0}
-          icon={<FaUserTie />}
-        />
-        <TopCard
-          title="Total Customers"
-          value={stats.totalCustomers ?? 0}
-          icon={<FaUsers />}
-        />
-        <TopCard
-          title="Total Assets"
-          value={stats.totalAssets ?? 0}
-          icon={<FaCubes />}
-        />
-        <TopCard
-          title="Total Projects"
-          value={stats.totalProjects ?? 0}
-          icon={<FaProjectDiagram />}
-        />
+        {[
+          { title: "Total Employees", value: stats.totalEmployees, icon: <FaUserTie /> },
+          { title: "Total Customers", value: stats.totalCustomers, icon: <FaUsers /> },
+          { title: "Total Assets", value: stats.totalAssets, icon: <FaCubes /> },
+          { title: "Total Projects", value: stats.totalProjects, icon: <FaProjectDiagram /> },
+        ].map((item) => (
+          <TopCard
+            key={item.title}
+            {...item}
+            onClick={() => navigate(topRoutes[item.title])}
+          />
+        ))}
       </div>
 
       {/* ===== WORK ORDERS ===== */}
       <Section title={`Total work orders  ${stats.totalOrders ?? 0}`}>
-        <StatusCard
-          title="Completed Orders"
-          value={stats.completedOrders ?? 0}
-          color="green"
-          icon={<FaCheckCircle />}
-        />
-        <StatusCard
-          title="Pending Orders"
-          value={stats.pendingOrders ?? 0}
-          color="yellow"
-          icon={<FaClock />}
-        />
-        <StatusCard
-          title="In Progress Orders"
-          value={stats.inProgressOrders ?? 0}
-          color="purple"
-          icon={<FaSpinner />}
-        />
-        <StatusCard
-          title="Cancelled Orders"
-          value={stats.cancelledOrders ?? 0}
-          color="red"
-          icon={<FaTrash />}
-        />
+        {[
+          { title: "Completed Orders", value: stats.completedOrders, color: "green", icon: <FaCheckCircle /> },
+          { title: "Pending Orders", value: stats.pendingOrders, color: "yellow", icon: <FaClock /> },
+          { title: "In Progress Orders", value: stats.inProgressOrders, color: "purple", icon: <FaSpinner /> },
+          { title: "Cancelled Orders", value: stats.cancelledOrders, color: "red", icon: <FaTrash /> },
+        ].map((item) => (
+          <StatusCard
+            key={item.title}
+            {...item}
+            onClick={() => navigate(orderRoutes[item.title])}
+          />
+        ))}
       </Section>
 
       {/* ===== TASKS ===== */}
       <Section title={`Total Task  ${stats.totalTasks ?? 0}`}>
-        <StatusCard
-          title="Completed Tasks"
-          value={stats.completedTasks ?? 0}
-          color="green"
-          icon={<FaCheckCircle />}
-        />
-        <StatusCard
-          title="Pending Tasks"
-          value={stats.pendingTasks ?? 0}
-          color="yellow"
-          icon={<FaClock />}
-        />
-        <StatusCard
-          title="In Progress Tasks"
-          value={stats.inProgressTasks ?? 0}
-          color="purple"
-          icon={<FaSpinner />}
-        />
-        <StatusCard
-          title="Cancelled Tasks"
-          value={stats.cancelledTasks ?? 0}
-          color="red"
-          icon={<FaTrash />}
-        />
+        {[
+          { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
+          { title: "Pending Tasks", value: stats.pendingTasks, color: "yellow", icon: <FaClock /> },
+          { title: "In Progress Tasks", value: stats.inProgressTasks, color: "purple", icon: <FaSpinner /> },
+          { title: "Cancelled Tasks", value: stats.cancelledTasks, color: "red", icon: <FaTrash /> },
+        ].map((item) => (
+          <StatusCard
+            key={item.title}
+            {...item}
+            onClick={() => navigate(taskRoutes[item.title])}
+          />
+        ))}
       </Section>
     </div>
   );
@@ -105,13 +94,20 @@ export default DashboardStats;
    Components
 ================================ */
 
-const TopCard = ({ title, value, icon }) => (
-  <div className="rounded-xl border bg-gray-100 p-5 shadow-sm">
+const TopCard = ({ title, value = 0, icon, onClick }) => (
+  <div
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => e.key === "Enter" && onClick()}
+    className="rounded-xl border bg-white p-5 shadow-sm cursor-pointer
+               hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-green-300"
+  >
     <div className="flex items-center gap-3">
       <div className="text-xl text-gray-600">{icon}</div>
       <div>
         <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
+        <p className="text-2xl font-semibold text-gray-900">{value ?? 0}</p>
       </div>
     </div>
   </div>
@@ -133,8 +129,16 @@ const colorMap = {
   red: "bg-red-50 border-red-200 text-red-600",
 };
 
-const StatusCard = ({ title, value, icon, color }) => (
-  <div className={`rounded-xl border p-5 ${colorMap[color]}`}>
+const StatusCard = ({ title, value = 0, icon, color, onClick }) => (
+  <div
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => e.key === "Enter" && onClick()}
+    className={`rounded-xl border p-5 cursor-pointer
+      hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-green-300
+      ${colorMap[color]}`}
+  >
     <div className="flex items-center gap-3">
       <div className="text-xl">{icon}</div>
       <div>
