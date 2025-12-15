@@ -313,14 +313,14 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/employees-timeline/:id"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <EmployeeTimelinePage />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* 404 fallback */}
         <Route path="*" element={<NotFoundPage />} />

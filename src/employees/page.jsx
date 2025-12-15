@@ -209,7 +209,7 @@ const EmployeesPage = () => {
                             {canEditEmployee && (
                               <Link
                                 // to={`/employees/timeline/${employee._id}`}
-                                to={`/employees-timeline/5`}
+                                to={`/timeline`}
                                 className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
                               >
                                 <FaClock size={14} />
