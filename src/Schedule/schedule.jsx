@@ -7,7 +7,7 @@ const SchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("month"); // "month", "week", or "day"
+  const [viewMode, setViewMode] = useState("week"); // "month", "week", or "day"
   const [displayMode, setDisplayMode] = useState("grid"); // "grid" or "list"
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -75,7 +75,8 @@ const SchedulePage = () => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.getTasks();
+        // const response = await apiClient.getTasks();
+        const response = null; // Temporarily set to null to test dummy data
         console.log("getTasks response:", response);
         
         let allTasks = [];
