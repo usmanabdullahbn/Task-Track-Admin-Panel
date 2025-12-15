@@ -6,20 +6,12 @@ import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa
 const SchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("week"); // "month", "week", or "day"
   const [displayMode, setDisplayMode] = useState("grid"); // "grid" or "list"
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState("all");
-
-  // Dummy employees
-  const dummyEmployees = [
-    { id: "all", name: "All Employees" },
-    { id: "john-doe", name: "John Doe" },
-    { id: "jane-smith", name: "Jane Smith" },
-    { id: "bob-johnson", name: "Bob Johnson" },
-    { id: "alice-brown", name: "Alice Brown" },
-  ];
 
   // Generate dummy tasks
   const generateDummyTasks = () => {
@@ -43,7 +35,7 @@ const SchedulePage = () => {
 
     const statuses = ["Todo", "In Progress", "Completed", "On Hold"];
     const priorities = ["Low", "Medium", "High"];
-    const employees = dummyEmployees.filter(emp => emp.id !== "all");
+    const employees = employees.length > 0 ? employees : dummyEmployees.filter(emp => emp.id !== "all");
     const dummyTasks = [];
 
     // Create tasks for random days in the current month
@@ -72,7 +64,7 @@ const SchedulePage = () => {
         description: `This is a dummy task for testing purposes`,
         status: randomStatus,
         priority: randomPriority,
-        employee: randomEmployee,
+        user: randomEmployee,
         start_time: taskDate.toISOString(),
         end_time: new Date(taskDate.getTime() + 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
@@ -83,22 +75,39 @@ const SchedulePage = () => {
     return dummyTasks;
   };
 
-  // Fetch all tasks on component mount
+  // Fetch all tasks and employees on component mount
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // const response = await apiClient.getTasks();
-        const response = null; // Temporarily set to null to test dummy data
-        console.log("getTasks response:", response);
+        
+        // Fetch employees
+        const employeesResponse = await apiClient.getUsers();
+        console.log("getUsers response:", employeesResponse);
+        let allEmployees = [];
+        if (Array.isArray(employeesResponse)) {
+          allEmployees = employeesResponse;
+        } else if (Array.isArray(employeesResponse.Users)) {
+          allEmployees = employeesResponse.Users;
+        } else if (Array.isArray(employeesResponse.users)) {
+          allEmployees = employeesResponse.users;
+        } else if (Array.isArray(employeesResponse.data)) {
+          allEmployees = employeesResponse.data;
+        }
+        setEmployees(allEmployees);
+        console.log("Total employees loaded:", allEmployees.length, allEmployees);
+        
+        // Fetch tasks
+        const tasksResponse = await apiClient.getTasks();
+        console.log("getTasks response:", tasksResponse);
         
         let allTasks = [];
-        if (Array.isArray(response)) {
-          allTasks = response;
-        } else if (Array.isArray(response.tasks)) {
-          allTasks = response.tasks;
-        } else if (Array.isArray(response.data)) {
-          allTasks = response.data;
+        if (Array.isArray(tasksResponse)) {
+          allTasks = tasksResponse;
+        } else if (Array.isArray(tasksResponse.tasks)) {
+          allTasks = tasksResponse.tasks;
+        } else if (Array.isArray(tasksResponse.data)) {
+          allTasks = tasksResponse.data;
         }
         
         // If no tasks from API, use dummy tasks for development
@@ -110,15 +119,16 @@ const SchedulePage = () => {
         setTasks(allTasks);
         console.log("Total tasks loaded:", allTasks.length, allTasks);
       } catch (err) {
-        console.error("Failed to fetch tasks:", err);
+        console.error("Failed to fetch data:", err);
         // Use dummy tasks on error
         setTasks(generateDummyTasks());
+        setEmployees([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTasks();
+    fetchData();
   }, [currentDate]);
 
   // Get days in month
@@ -141,13 +151,14 @@ const SchedulePage = () => {
       day
     );
     
-    const dateStr = targetDate.toISOString().split("T")[0];
+    const dateStr = targetDate.toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
 
     const filtered = tasks.filter((task) => {
       if (!task.start_time) return false;
-      const taskDate = new Date(task.start_time).toISOString().split("T")[0];
+      const taskDateObj = new Date(task.start_time);
+      const taskDate = taskDateObj.toLocaleDateString('en-CA'); // Local date
       const dateMatch = taskDate === dateStr;
-      const employeeMatch = selectedEmployee === "all" || task.employee?.id === selectedEmployee;
+      const employeeMatch = selectedEmployee === "all" || task.user?.id === selectedEmployee || task.user?._id === selectedEmployee;
       return dateMatch && employeeMatch;
     });
 
@@ -404,8 +415,9 @@ const SchedulePage = () => {
                 onChange={(e) => setSelectedEmployee(e.target.value)}
                 className="px-3 py-1.5 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition cursor-pointer"
               >
-                {dummyEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
+                <option value="all">All Employees</option>
+                {employees.map((emp) => (
+                  <option key={emp._id || emp.id} value={emp._id || emp.id}>
                     {emp.name}
                   </option>
                 ))}
@@ -517,7 +529,7 @@ const SchedulePage = () => {
                               <div
                                 key={task._id}
                                 className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                                title={`${task.title} - ${task.employee?.name || 'Unknown'}`}
+                                title={`${task.title} - ${task.user?.name || 'Unknown'}`}
                               >
                                 <div className="flex items-start gap-1">
                                   <span className="text-orange-500 mt-0.5">●</span>
@@ -529,7 +541,7 @@ const SchedulePage = () => {
                                       {formatTime(task.start_time)}
                                     </p>
                                     <p className="text-orange-600 text-xs">
-                                      {task.employee?.name || 'Unknown'}
+                                      {task.user?.name || 'Unknown'}
                                     </p>
                                   </div>
                                 </div>
@@ -582,7 +594,7 @@ const SchedulePage = () => {
                           <div
                             key={task._id}
                             className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                            title={`${task.title} - ${task.employee?.name || 'Unknown'}`}
+                            title={`${task.title} - ${task.user?.name || 'Unknown'}`}
                           >
                             <div className="flex items-start gap-1">
                               <span className="text-orange-500 mt-0.5">●</span>
@@ -594,7 +606,7 @@ const SchedulePage = () => {
                                   {formatTime(task.start_time)}
                                 </p>
                                 <p className="text-orange-600 text-xs">
-                                  {task.employee?.name || 'Unknown'}
+                                  {task.user?.name || 'Unknown'}
                                 </p>
                               </div>
                             </div>
@@ -637,7 +649,7 @@ const SchedulePage = () => {
                               {task.description}
                             </p>
                             <p className="text-sm text-orange-600 mt-2">
-                              Assigned to: {task.employee?.name || 'Unknown'}
+                              Assigned to: {task.user?.name || 'Unknown'}
                             </p>
                             <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
                               <div>

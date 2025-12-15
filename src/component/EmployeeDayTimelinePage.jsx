@@ -39,16 +39,22 @@ const dummyEmployees = [
         lat: 24.8719,
         lng: 67.0569,
         title: "Install Equipment – ABC Traders",
+        start_time: "09:00",
+        end_time: "11:00",
       },
       {
         lat: 24.8934,
         lng: 67.0286,
         title: "System Configuration – XYZ Corp",
+        start_time: "11:30",
+        end_time: "13:00",
       },
       {
         lat: 24.9051,
         lng: 67.0822,
         title: "Maintenance – Iota Beverages",
+        start_time: "14:00",
+        end_time: "16:00",
       },
     ],
   },
@@ -66,11 +72,15 @@ const dummyEmployees = [
         lat: 24.8800,
         lng: 67.0500,
         title: "Network Setup – Tech Solutions",
+        start_time: "10:00",
+        end_time: "12:00",
       },
       {
         lat: 24.8900,
         lng: 67.0300,
         title: "Software Update – Global Inc",
+        start_time: "13:00",
+        end_time: "15:00",
       },
     ],
   },
@@ -88,16 +98,22 @@ const dummyEmployees = [
         lat: 24.8700,
         lng: 67.0600,
         title: "Hardware Repair – Quick Fix",
+        start_time: "08:00",
+        end_time: "10:00",
       },
       {
         lat: 24.9000,
         lng: 67.0400,
         title: "Training Session – EduCorp",
+        start_time: "10:30",
+        end_time: "12:30",
       },
       {
         lat: 24.9100,
         lng: 67.0700,
         title: "Audit Check – Secure Ltd",
+        start_time: "14:00",
+        end_time: "16:00",
       },
     ],
   },
@@ -127,7 +143,7 @@ const EmployeeDayTimelinePage = () => {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Day Wise Timeline
+                Employee Timeline
               </h1>
               <p className="text-sm text-gray-600">
                 {selectedEmployee.name} — {selectedDate}
@@ -194,6 +210,8 @@ const EmployeeDayTimelinePage = () => {
                     <strong>Task {index + 1}</strong>
                     <br />
                     {task.title}
+                    <br />
+                    <small>{task.start_time} - {task.end_time}</small>
                   </Popup>
                 </Marker>
               ))}
@@ -230,9 +248,14 @@ const EmployeeDayTimelinePage = () => {
                   <span className="h-6 w-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs">
                     {index + 1}
                   </span>
-                  <span className="text-sm text-gray-700">
-                    {task.title}
-                  </span>
+                  <div className="flex-1">
+                    <span className="text-sm text-gray-700 font-medium">
+                      {task.title}
+                    </span>
+                    <p className="text-xs text-gray-500">
+                      {task.start_time} - {task.end_time}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ol>
