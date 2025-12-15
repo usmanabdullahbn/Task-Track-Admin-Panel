@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
@@ -7,8 +7,10 @@ import AddTaskModal from "./AddTaskModal";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("order");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -183,11 +185,18 @@ const OrdersPage = () => {
   // -------------------------
   // FETCH ORDERS
   // -------------------------
-  const fetchOrders = async () => {
+  const fetchOrders = async (status = "all") => {
     try {
       setLoading(true);
       const data = await apiClient.getOrders();
-      setOrders(Array.isArray(data?.orders) ? data.orders : []);
+      let ordersList = Array.isArray(data?.orders) ? data.orders : [];
+
+      // Filter by status if specified
+      if (status !== "all") {
+        ordersList = ordersList.filter(order => order.status?.toLowerCase() === status.toLowerCase());
+      }
+
+      setOrders(ordersList);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
       setError(err?.message || "Failed to fetch orders");
@@ -198,8 +207,29 @@ const OrdersPage = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    const statusParam = searchParams.get("status");
+    if (statusParam) {
+      setSearchField("status");
+      setSearchTerm(statusParam);
+      setStatusFilter(statusParam);
+      fetchOrders(statusParam);
+    } else {
+      setStatusFilter("all");
+      fetchOrders("all");
+    }
+  }, [searchParams]);
+
+  // Handle status filter change
+  const handleStatusFilterChange = (newStatus) => {
+    setSearchField("status");
+    setSearchTerm(newStatus);
+    setStatusFilter(newStatus);
+    if (newStatus === "all" || newStatus === "") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ status: newStatus });
+    }
+  };
 
   // -------------------------
   // FETCH TASKS FOR ORDER
@@ -459,17 +489,25 @@ const OrdersPage = () => {
                   <select
                     value={searchField === "status" ? searchTerm : ""}
                     onChange={(e) => {
-                      setSearchField("status");
-                      setSearchTerm(e.target.value);
+                      if (e.target.value) {
+                        handleStatusFilterChange(e.target.value);
+                      } else {
+                        // Clear status filter
+                        setSearchField("order");
+                        setSearchTerm("");
+                        setStatusFilter("all");
+                        setSearchParams({});
+                      }
                     }}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   >
                     <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Open">Open</option>
-                    <option value="Active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="open">Open</option>
+                    <option value="active">Active</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
