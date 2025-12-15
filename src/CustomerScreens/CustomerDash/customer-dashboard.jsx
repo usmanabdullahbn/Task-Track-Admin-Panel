@@ -33,7 +33,7 @@ const CustomerDashboard = () => {
         const [projectsRes, ordersRes, assetsRes] = await Promise.all([
           apiClient.getProjectByCustomerId(customer._id),
           apiClient.getOrdersByCustomerId(customer._id),
-          apiClient.getAssetsByCustomerId(customer._id),
+          apiClient.getAssetByCustomerId(customer._id),
         ]);
 
         console.log("Projects:", projectsRes);

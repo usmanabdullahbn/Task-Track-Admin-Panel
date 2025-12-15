@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { FaPrint } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { FaPrint, FaExternalLinkAlt } from "react-icons/fa";
 import { apiClient } from "../../lib/api-client";
 import CustomerSidebar from "./customer-sidebar";
 
 const CustomerOrder = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("order");
   const [orders, setOrders] = useState([]);
@@ -66,13 +68,6 @@ const CustomerOrder = () => {
     switch (searchField) {
       case "order":
         return (order.order_number || "").toLowerCase().includes(searchValue);
-      case "erp":
-        return (order.erp_number || "").toLowerCase().includes(searchValue);
-      case "customer":
-        return (order.customer?.name || order.customer_id || "")
-          .toString()
-          .toLowerCase()
-          .includes(searchValue);
       case "project":
         return (
           order.project?.title ||
@@ -235,19 +230,11 @@ const CustomerOrder = () => {
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               {/* SEARCH SECTION */}
               <div className="border-b border-gray-200 p-4 sm:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4">
                   {[
                     {
                       field: "order",
                       placeholder: "Search Order #",
-                    },
-                    {
-                      field: "erp",
-                      placeholder: "Search ERP #",
-                    },
-                    {
-                      field: "customer",
-                      placeholder: "Search Customer",
                     },
                     {
                       field: "project",
@@ -278,10 +265,8 @@ const CustomerOrder = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Project</th>
                       <th className="px-4 py-3">Order #</th>
-                      <th className="px-4 py-3">ERP #</th>
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Created</th>
@@ -296,12 +281,6 @@ const CustomerOrder = () => {
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
                         <td className="px-4 py-3">
-                          {order.customer?.name ||
-                            order.customer_name ||
-                            order.customer_id ||
-                            "-"}
-                        </td>
-                        <td className="px-4 py-3">
                           {order.project?.title ||
                             order.project?.name ||
                             order.project_name ||
@@ -311,7 +290,6 @@ const CustomerOrder = () => {
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {order.order_number || "-"}
                         </td>
-                        <td className="px-4 py-3">{order.erp_number || "-"}</td>
                         <td className="px-4 py-3">
                           {order.amount?.$numberDecimal ??
                             order.amount?.value ??
@@ -337,7 +315,7 @@ const CustomerOrder = () => {
                             {/* add other per-order actions here */}
                             <button
                               onClick={() =>
-                                navigate(`/project/${project._id}`)
+                                navigate(`/customer/project/${order.project?._id}`)
                               }
                               className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white text-sm"
                               title="Open project details"

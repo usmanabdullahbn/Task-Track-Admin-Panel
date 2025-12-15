@@ -37,7 +37,7 @@ const AssetsPage = () => {
           return;
         }
 
-        const res = await apiClient.getAssetsByCustomerId(customerId);
+        const res = await apiClient.getAssetByCustomerId(customerId);
         console.log("Assets API Response:", res);
 
         // Handle both array and { assets: [] } response shapes
@@ -267,13 +267,11 @@ const AssetsPage = () => {
   // -------------------------
   const filteredAssets = assets.filter((asset) => {
     const title = asset.title || "";
-    const customer = asset.customer?.name || asset.customer || "";
     const barcode = asset.barcode || "";
     const search = (searchTerm || "").toLowerCase();
 
     return (
       title.toLowerCase().includes(search) ||
-      customer.toLowerCase().includes(search) ||
       barcode.toLowerCase().includes(search)
     );
   });
@@ -296,7 +294,7 @@ const AssetsPage = () => {
             <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
                 type="text"
-                placeholder="Search assets by title, customer, or barcode..."
+                placeholder="Search assets by title or barcode..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
@@ -316,7 +314,6 @@ const AssetsPage = () => {
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="px-4 py-3 text-left">Title</th>
-                      <th className="px-4 py-3 text-left">Customer</th>
                       <th className="px-4 py-3 text-left">Project</th>
                       <th className="px-4 py-3 text-left">Category</th>
                       <th className="px-4 py-3 text-left">Manufacturer</th>
@@ -333,9 +330,6 @@ const AssetsPage = () => {
                       >
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {asset.title}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.customer?.name || asset.customer || "-"}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {asset.project?.name ||
