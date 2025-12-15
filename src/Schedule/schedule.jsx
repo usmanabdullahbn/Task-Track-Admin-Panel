@@ -10,6 +10,16 @@ const SchedulePage = () => {
   const [viewMode, setViewMode] = useState("week"); // "month", "week", or "day"
   const [displayMode, setDisplayMode] = useState("grid"); // "grid" or "list"
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState("all");
+
+  // Dummy employees
+  const dummyEmployees = [
+    { id: "all", name: "All Employees" },
+    { id: "john-doe", name: "John Doe" },
+    { id: "jane-smith", name: "Jane Smith" },
+    { id: "bob-johnson", name: "Bob Johnson" },
+    { id: "alice-brown", name: "Alice Brown" },
+  ];
 
   // Generate dummy tasks
   const generateDummyTasks = () => {
@@ -33,6 +43,7 @@ const SchedulePage = () => {
 
     const statuses = ["Todo", "In Progress", "Completed", "On Hold"];
     const priorities = ["Low", "Medium", "High"];
+    const employees = dummyEmployees.filter(emp => emp.id !== "all");
     const dummyTasks = [];
 
     // Create tasks for random days in the current month
@@ -45,6 +56,7 @@ const SchedulePage = () => {
       const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
       const randomPriority =
         priorities[Math.floor(Math.random() * priorities.length)];
+      const randomEmployee = employees[Math.floor(Math.random() * employees.length)];
 
       const taskDate = new Date(
         currentDate.getFullYear(),
@@ -60,6 +72,7 @@ const SchedulePage = () => {
         description: `This is a dummy task for testing purposes`,
         status: randomStatus,
         priority: randomPriority,
+        employee: randomEmployee,
         start_time: taskDate.toISOString(),
         end_time: new Date(taskDate.getTime() + 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
@@ -106,7 +119,7 @@ const SchedulePage = () => {
     };
 
     fetchTasks();
-  }, []);
+  }, [currentDate]);
 
   // Get days in month
   const getDaysInMonth = (date) => {
@@ -133,7 +146,9 @@ const SchedulePage = () => {
     const filtered = tasks.filter((task) => {
       if (!task.start_time) return false;
       const taskDate = new Date(task.start_time).toISOString().split("T")[0];
-      return taskDate === dateStr;
+      const dateMatch = taskDate === dateStr;
+      const employeeMatch = selectedEmployee === "all" || task.employee?.id === selectedEmployee;
+      return dateMatch && employeeMatch;
     });
 
     return filtered.sort((a, b) => {
@@ -383,6 +398,19 @@ const SchedulePage = () => {
 
             {/* Right Section: View Mode, Display Mode, Today Button */}
             <div className="flex items-center gap-3">
+              {/* Employee Filter */}
+              <select
+                value={selectedEmployee}
+                onChange={(e) => setSelectedEmployee(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition cursor-pointer"
+              >
+                {dummyEmployees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </option>
+                ))}
+              </select>
+
               {/* View Mode Dropdown */}
               <select
                 value={viewMode}
@@ -489,7 +517,7 @@ const SchedulePage = () => {
                               <div
                                 key={task._id}
                                 className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                                title={task.title}
+                                title={`${task.title} - ${task.employee?.name || 'Unknown'}`}
                               >
                                 <div className="flex items-start gap-1">
                                   <span className="text-orange-500 mt-0.5">●</span>
@@ -499,6 +527,9 @@ const SchedulePage = () => {
                                     </p>
                                     <p className="text-orange-700">
                                       {formatTime(task.start_time)}
+                                    </p>
+                                    <p className="text-orange-600 text-xs">
+                                      {task.employee?.name || 'Unknown'}
                                     </p>
                                   </div>
                                 </div>
@@ -551,7 +582,7 @@ const SchedulePage = () => {
                           <div
                             key={task._id}
                             className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                            title={task.title}
+                            title={`${task.title} - ${task.employee?.name || 'Unknown'}`}
                           >
                             <div className="flex items-start gap-1">
                               <span className="text-orange-500 mt-0.5">●</span>
@@ -561,6 +592,9 @@ const SchedulePage = () => {
                                 </p>
                                 <p className="text-orange-700">
                                   {formatTime(task.start_time)}
+                                </p>
+                                <p className="text-orange-600 text-xs">
+                                  {task.employee?.name || 'Unknown'}
                                 </p>
                               </div>
                             </div>
@@ -601,6 +635,9 @@ const SchedulePage = () => {
                             </h4>
                             <p className="text-sm text-gray-600 mt-1">
                               {task.description}
+                            </p>
+                            <p className="text-sm text-orange-600 mt-2">
+                              Assigned to: {task.employee?.name || 'Unknown'}
                             </p>
                             <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
                               <div>

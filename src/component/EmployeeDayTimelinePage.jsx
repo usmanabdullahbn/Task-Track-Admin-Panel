@@ -105,6 +105,7 @@ const dummyEmployees = [
 
 const EmployeeDayTimelinePage = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(1)
+  const [selectedDate, setSelectedDate] = useState("2025-10-09")
   const selectedEmployee = dummyEmployees.find(emp => emp.id === selectedEmployeeId)
 
   const routePath = [
@@ -129,10 +130,22 @@ const EmployeeDayTimelinePage = () => {
                 Day Wise Timeline
               </h1>
               <p className="text-sm text-gray-600">
-                {selectedEmployee.name} — {selectedEmployee.date}
+                {selectedEmployee.name} — {selectedDate}
               </p>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="date-filter" className="text-sm font-medium text-gray-700">
+                  Date:
+                </label>
+                <input
+                  id="date-filter"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
               <select
                 value={selectedEmployeeId}
                 onChange={(e) => setSelectedEmployeeId(Number(e.target.value))}
