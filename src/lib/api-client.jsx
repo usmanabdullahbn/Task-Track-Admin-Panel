@@ -343,7 +343,7 @@ export const apiClient = {
     if (!response.ok) throw new Error("Failed to fetch customer assets");
     return response.json();
   },
-  
+
 
   async getAssetByCustomerId(customerId) {
     const response = await fetch(`${API_BASE_URL}/assets/customer/${customerId}`);
@@ -419,10 +419,10 @@ export const apiClient = {
     if (params.limit) queryParams.append('limit', params.limit);
     if (params.status) queryParams.append('status', params.status);
     if (params.priority) queryParams.append('priority', params.priority);
-    
+
     const queryString = queryParams.toString();
     const url = `${API_BASE_URL}/tasks/user/${userId}${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch user tasks");
     return response.json();

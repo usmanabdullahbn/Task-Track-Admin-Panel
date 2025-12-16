@@ -11,6 +11,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../lib/api-client";
 import CustomerSidebar from "./customer-sidebar";
+import Logo1 from "../../images/logo 1.png";
+import Logo2 from "../../images/logo 2.png";
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -18,7 +20,6 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem("User"));
   const customer = user?.customer;
-  // console.log(customer)
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,9 +36,6 @@ const CustomerDashboard = () => {
           apiClient.getOrdersByCustomerId(customer._id),
           apiClient.getAssetByCustomerId(customer._id),
         ]);
-
-        console.log("Projects:", projectsRes);
-        console.log("Orders:", ordersRes);
 
         const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
         const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
@@ -81,78 +79,21 @@ const CustomerDashboard = () => {
     fetchStats();
   }, [customer?._id]);
 
-  const statItems = [
-    {
-      label: "Total Projects",
-      value: stats.totalProjects ?? 0,
-      color: "from-purple-50 to-purple-100 border-purple-200",
-      iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
-      icon: <FaProjectDiagram />,
-    },
-    {
-      label: "Active Projects",
-      value: stats.activeProjects ?? 0,
-      color: "from-indigo-50 to-indigo-100 border-indigo-200",
-      iconBg: "bg-indigo-100 text-indigo-600 ring-indigo-200",
-      icon: <FaSpinner />,
-    },
-    {
-      label: "Completed Projects",
-      value: stats.completedProjects ?? 0,
-      color: "from-teal-50 to-teal-100 border-teal-200",
-      iconBg: "bg-teal-100 text-teal-600 ring-teal-200",
-      icon: <FaCheckCircle />,
-    },
-    {
-      label: "Total Orders",
-      value: stats.totalOrders ?? 0,
-      color: "from-orange-50 to-orange-100 border-orange-200",
-      iconBg: "bg-orange-100 text-orange-600 ring-orange-200",
-      icon: <FaShoppingCart />,
-    },
-    {
-      label: "Pending Orders",
-      value: stats.pendingOrders ?? 0,
-      color: "from-yellow-50 to-yellow-100 border-yellow-200",
-      iconBg: "bg-yellow-100 text-yellow-600 ring-yellow-200",
-      icon: <FaClock />,
-    },
-    {
-      label: "Completed Orders",
-      value: stats.completedOrders ?? 0,
-      color: "from-green-50 to-green-100 border-green-200",
-      iconBg: "bg-green-100 text-green-600 ring-green-200",
-      icon: <FaCheckCircle />,
-    },
-    // {
-    //   label: "Total Tasks",
-    //   value: stats.totalTasks ?? 0,
-    //   color: "from-blue-50 to-blue-100 border-blue-200",
-    //   iconBg: "bg-blue-100 text-blue-600 ring-blue-200",
-    //   icon: <FaTasks />,
-    // },
-    // {
-    //   label: "Completed Tasks",
-    //   value: stats.completedTasks ?? 0,
-    //   color: "from-green-50 to-green-100 border-green-200",
-    //   iconBg: "bg-green-100 text-green-600 ring-green-200",
-    //   icon: <FaCheckCircle />,
-    // },
-    // {
-    //   label: "In Progress Tasks",
-    //   value: stats.inProgressTasks ?? 0,
-    //   color: "from-purple-50 to-purple-100 border-purple-200",
-    //   iconBg: "bg-purple-100 text-purple-600 ring-purple-200",
-    //   icon: <FaSpinner />,
-    // },
-    {
-      label: "Total Assets",
-      value: stats.totalAssets ?? 0,
-      color: "from-gray-50 to-gray-100 border-gray-200",
-      iconBg: "bg-gray-200 text-gray-700 ring-gray-300",
-      icon: <FaCubes />,
-    },
-  ];
+  const topRoutes = {
+    "Total Projects": "/customer-projects",
+    "Total Orders": "/customer-orders",
+    "Total Assets": "/customer-assets",
+  };
+
+  const orderRoutes = {
+    "Completed Orders": "/customer-orders",
+    "Pending Orders": "/customer-orders",
+  };
+
+  const projectRoutes = {
+    "Active Projects": "/customer-projects",
+    "Completed Projects": "/customer-projects",
+  };
 
   if (loading) {
     return (
@@ -166,45 +107,67 @@ const CustomerDashboard = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
       <CustomerSidebar />
-      <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* Header With Logout */}
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Customer Dashboard</h2>
-            {/* <button
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-            >
-              Logout
-            </button> */}
+      <main className="flex-1 overflow-y-auto pt-20 md:pt-0">
+        <div className="p-4 sm:p-6 md:p-8">
+          {/* Header Logos */}
+          <div className="mb-6 flex items-center justify-between rounded-lg bg-white p-4 shadow-sm">
+            <img
+              src={Logo1}
+              alt="Company Logo"
+              className="h-10 md:h-16 object-contain"
+            />
+            <img
+              src={Logo2}
+              alt="Brand Logo"
+              className="h-10 md:h-16 object-contain"
+            />
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-            {statItems.map((stat) => (
-              <div
-                key={stat.label}
-                className={`w-full max-w-xs rounded-xl border p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${stat.color}`}
-              >
-                <div className="flex items-center gap-5">
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ring-4 ring-opacity-30 ${stat.iconBg}`}
-                  >
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      {stat.label}
-                    </p>
-                    <p className="mt-1 text-3xl font-extrabold text-gray-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-10">
+            {/* ===== TOP SUMMARY ===== */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { title: "Total Projects", value: stats.totalProjects, icon: <FaProjectDiagram /> },
+                { title: "Total Orders", value: stats.totalOrders, icon: <FaShoppingCart /> },
+                { title: "Total Assets", value: stats.totalAssets, icon: <FaCubes /> },
+              ].map((item) => (
+                <TopCard
+                  key={item.title}
+                  {...item}
+                  onClick={() => navigate(topRoutes[item.title])}
+                />
+              ))}
+            </div>
+
+            {/* ===== PROJECTS ===== */}
+            <Section title={`Total Projects  ${stats.totalProjects ?? 0}`}>
+              {[
+                { title: "Active Projects", value: stats.activeProjects, color: "purple", icon: <FaSpinner /> },
+                { title: "Completed Projects", value: stats.completedProjects, color: "green", icon: <FaCheckCircle /> },
+              ].map((item) => (
+                <StatusCard
+                  key={item.title}
+                  {...item}
+                  onClick={() => navigate(projectRoutes[item.title])}
+                />
+              ))}
+            </Section>
+
+            {/* ===== ORDERS ===== */}
+            <Section title={`Total Orders  ${stats.totalOrders ?? 0}`}>
+              {[
+                { title: "Completed Orders", value: stats.completedOrders, color: "green", icon: <FaCheckCircle /> },
+                { title: "Pending Orders", value: stats.pendingOrders, color: "yellow", icon: <FaClock /> },
+              ].map((item) => (
+                <StatusCard
+                  key={item.title}
+                  {...item}
+                  onClick={() => navigate(orderRoutes[item.title])}
+                />
+              ))}
+            </Section>
           </div>
         </div>
       </main>
@@ -213,3 +176,62 @@ const CustomerDashboard = () => {
 };
 
 export default CustomerDashboard;
+
+/* ===============================
+   Components
+================================ */
+
+const TopCard = ({ title, value = 0, icon, onClick }) => (
+  <div
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => e.key === "Enter" && onClick()}
+    className="rounded-xl border bg-white p-5 shadow-sm cursor-pointer
+               hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-green-300"
+  >
+    <div className="flex items-center gap-3">
+      <div className="text-xl text-gray-600">{icon}</div>
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-2xl font-semibold text-gray-900">{value ?? 0}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const Section = ({ title, children }) => (
+  <div>
+    <h2 className="mb-4 text-lg font-semibold text-gray-900">{title}</h2>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {children}
+    </div>
+  </div>
+);
+
+const colorMap = {
+  green: "bg-green-50 border-green-200 text-green-600",
+  yellow: "bg-yellow-50 border-yellow-200 text-yellow-600",
+  purple: "bg-purple-50 border-purple-200 text-purple-600",
+  red: "bg-red-50 border-red-200 text-red-600",
+};
+
+const StatusCard = ({ title, value = 0, icon, color, onClick }) => (
+  <div
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => e.key === "Enter" && onClick()}
+    className={`rounded-xl border p-5 cursor-pointer
+      hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-green-300
+      ${colorMap[color]}`}
+  >
+    <div className="flex items-center gap-3">
+      <div className="text-xl">{icon}</div>
+      <div>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-2xl font-semibold text-gray-900">{value}</p>
+      </div>
+    </div>
+  </div>
+);

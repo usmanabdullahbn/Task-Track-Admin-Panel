@@ -31,11 +31,11 @@ const CustomerSidebar = () => {
         {/* Top bar for mobile with hamburger + signout */}
         <div
           className={`fixed top-0 left-0 right-0 z-50 -mb-2 flex items-center justify-between p-4 border-b-2 md:hidden transition-colors duration-300 
-    ${isOpen ? "bg-blue-700 border-none" : "bg-gray-50 border-gray-200"}`}
+    ${isOpen ? "bg-green-700 border-none" : "bg-gray-50 border-gray-200"}`}
         >
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="bg-blue-700 text-white px-4 py-3 rounded-lg text-lg font-bold"
+            className="bg-green-700 text-white px-4 py-3 rounded-lg text-lg font-bold"
           >
             {isOpen ? "✕" : "☰"}
           </button>
@@ -51,7 +51,7 @@ const CustomerSidebar = () => {
 
         {/* Mobile menu */}
         {isOpen && (
-          <aside className="fixed inset-0 z-40 bg-blue-700 text-white pt-20 px-4 md:hidden">
+          <aside className="fixed inset-0 z-40 bg-green-700 text-white pt-20 px-4 md:hidden">
             <nav className="space-y-1">
               {customerMenuItems.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -60,11 +60,10 @@ const CustomerSidebar = () => {
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsOpen(false)}
-                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "text-blue-50 hover:bg-blue-600"
-                    }`}
+                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
+                      ? "bg-green-600 text-white"
+                      : "text-green-50 hover:bg-green-600"
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -72,12 +71,12 @@ const CustomerSidebar = () => {
               })}
             </nav>
 
-            <div className="mt-8 border-t border-blue-600 pt-4">
-              <p className="text-xs text-blue-100">
+            <div className="mt-8 border-t border-green-600 pt-4">
+              <p className="text-xs text-green-100">
                 © 2025 Bitsberg Technologies
               </p>
-              <p className="text-xs text-blue-100">All rights reserved.</p>
-              <p className="mt-2 text-xs text-blue-200">Version 1.0.0</p>
+              <p className="text-xs text-green-100">All rights reserved.</p>
+              <p className="mt-2 text-xs text-green-200">Version 1.0.0</p>
             </div>
           </aside>
         )}
@@ -87,7 +86,7 @@ const CustomerSidebar = () => {
 
   // Desktop sidebar with customer-specific styling (blue theme)
   return (
-    <aside className="w-64 bg-blue-700 text-white shadow-lg relative flex flex-col justify-between">
+    <aside className="w-64 bg-green-700 text-white shadow-lg relative flex flex-col justify-between">
       <div>
         <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Customer Panel</h1>
@@ -100,11 +99,10 @@ const CustomerSidebar = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-blue-50 hover:bg-blue-600"
-                }`}
+                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
+                  ? "bg-green-600 text-white"
+                  : "text-green-50 hover:bg-green-600"
+                  }`}
               >
                 {item.label}
               </Link>
@@ -113,7 +111,7 @@ const CustomerSidebar = () => {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-blue-600 space-y-3">
+      <div className="p-4 border-t border-green-600 space-y-3">
         <button
           onClick={handleSignOut}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -122,10 +120,10 @@ const CustomerSidebar = () => {
           Sign Out
         </button>
 
-        <div className="text-xs text-blue-100 space-y-1 text-center">
+        <div className="text-xs text-green-100 space-y-1 text-center">
           <p>© 2025 Bitsberg Technologies</p>
           <p>All rights reserved.</p>
-          <p className="text-blue-200">Version 1.0.0</p>
+          <p className="text-green-200">Version 1.0.0</p>
         </div>
       </div>
     </aside>
