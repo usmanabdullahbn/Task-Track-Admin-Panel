@@ -8,6 +8,8 @@ import {
   FaClock,
   FaSpinner,
   FaTrash,
+  FaListUl,
+  FaPauseCircle,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -30,9 +32,9 @@ const DashboardStats = ({ stats = {} }) => {
 
   const taskRoutes = {
     "Completed Tasks": "/tasks?status=completed",
-    "Pending Tasks": "/tasks?status=pending",
+    "Todo Tasks": "/tasks?status=todo",
     "In Progress Tasks": "/tasks?status=in-progress",
-    "Cancelled Tasks": "/tasks?status=cancelled",
+    "On Hold Tasks": "/tasks?status=on-hold",
   };
 
   return (
@@ -73,14 +75,14 @@ const DashboardStats = ({ stats = {} }) => {
       <Section title={`Total Task  ${stats.totalTasks ?? 0}`}>
         {[
           { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
-          { title: "Pending Tasks", value: stats.pendingTasks, color: "yellow", icon: <FaClock /> },
+          { title: "Todo Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
           { title: "In Progress Tasks", value: stats.inProgressTasks, color: "purple", icon: <FaSpinner /> },
-          { title: "Cancelled Tasks", value: stats.cancelledTasks, color: "red", icon: <FaTrash /> },
+          { title: "On Hold Tasks", value: stats.onHoldTasks, color: "yellow", icon: <FaPauseCircle /> },
         ].map((item) => (
           <StatusCard
             key={item.title}
             {...item}
-            onClick={() => navigate(taskRoutes[item.title])}
+            // onClick={() => navigate(taskRoutes[item.title])}
           />
         ))}
       </Section>
@@ -127,6 +129,7 @@ const colorMap = {
   yellow: "bg-yellow-50 border-yellow-200 text-yellow-600",
   purple: "bg-purple-50 border-purple-200 text-purple-600",
   red: "bg-red-50 border-red-200 text-red-600",
+  blue: "bg-blue-50 border-blue-200 text-blue-600",
 };
 
 const StatusCard = ({ title, value = 0, icon, color, onClick }) => (

@@ -18,6 +18,7 @@ const DashboardContent = () => {
       try {
         const response = await apiClient.getDashboardStats();
         setStats(response.stats);
+        console.log("Dashboard stats loaded:", response.stats);
       } catch (err) {
         setError(err.message || "Failed to load dashboard stats");
       } finally {
