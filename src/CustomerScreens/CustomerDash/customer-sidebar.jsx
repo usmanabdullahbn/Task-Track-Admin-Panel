@@ -15,6 +15,7 @@ const CustomerSidebar = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleSignOut = () => {
     try {
@@ -23,6 +24,19 @@ const CustomerSidebar = () => {
       // ignore
     }
     navigate("/login", { replace: true });
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    handleSignOut();
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   if (isMobile) {
@@ -41,7 +55,7 @@ const CustomerSidebar = () => {
           </button>
 
           <button
-            onClick={handleSignOut}
+            onClick={handleLogoutClick}
             className="text-white bg-red-700 p-3 rounded-lg"
             title="Sign out"
           >
@@ -113,7 +127,7 @@ const CustomerSidebar = () => {
 
       <div className="p-4 border-t border-green-600 space-y-3">
         <button
-          onClick={handleSignOut}
+          onClick={handleLogoutClick}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <FiLogOut size={18} />
@@ -126,6 +140,35 @@ const CustomerSidebar = () => {
           <p className="text-green-200">Version 1.0.0</p>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40" />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Confirm Logout
+            </h2>
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelLogout}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

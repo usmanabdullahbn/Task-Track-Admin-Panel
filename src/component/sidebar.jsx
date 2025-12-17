@@ -20,6 +20,7 @@ const Sidebar = ({ items }) => {
   const navigate = useNavigate(); // moved above handleSignOut
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleSignOut = () => {
     try {
@@ -28,6 +29,19 @@ const Sidebar = ({ items }) => {
       // ignore
     }
     navigate("/login", { replace: true });
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    handleSignOut();
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   // Use provided items (for customer) or fall back to default admin menu
@@ -50,7 +64,7 @@ const Sidebar = ({ items }) => {
           </button>
 
           <button
-            onClick={handleSignOut}
+            onClick={handleLogoutClick}
             className="text-white bg-red-700 p-3 rounded-lg"
             title="Sign out"
           >
@@ -69,11 +83,10 @@ const Sidebar = ({ items }) => {
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsOpen(false)}
-                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                      isActive
+                    className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
                         ? "bg-green-600 text-white"
                         : "text-green-50 hover:bg-green-600"
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -101,7 +114,7 @@ const Sidebar = ({ items }) => {
         <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">TaskTrack</h1>
           <button
-            onClick={handleSignOut}
+            onClick={handleLogoutClick}
             className="text-white hover:text-green-200"
             title="Sign out"
           >
@@ -116,11 +129,10 @@ const Sidebar = ({ items }) => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                  isActive
+                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
                     ? "bg-green-600 text-white"
                     : "text-green-50 hover:bg-green-600"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
@@ -134,6 +146,35 @@ const Sidebar = ({ items }) => {
         <p>All rights reserved.</p>
         <p className="mt-2 text-green-200">Version 1.0.0</p>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="absolute inset-0 backdrop-blur-sm z-40" />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">
+              Confirm Logout
+            </h2>
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelLogout}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
