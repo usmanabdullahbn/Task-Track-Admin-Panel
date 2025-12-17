@@ -90,18 +90,16 @@ const OrdersPage = () => {
               <div class="header">
                 <div>
                   <div class="title">Order ${o.order_number || o._id}</div>
-                  <div class="meta">Generated: ${generatedAt} • Order ID: ${
-      o._id || "-"
-    }</div>
+                  <div class="meta">Generated: ${generatedAt} • Order ID: ${o._id || "-"
+      }</div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:12px;color:${
-                    status === "Completed"
-                      ? "#059669"
-                      : status === "Active"
-                      ? "#0369a1"
-                      : "#b45309"
-                  };font-weight:700">${status}</div>
+                  <div style="font-size:12px;color:${status === "Completed"
+        ? "#059669"
+        : status === "Active"
+          ? "#0369a1"
+          : "#b45309"
+      };font-weight:700">${status}</div>
                   <div style="font-size:12px;color:var(--muted);margin-top:6px">${cust}</div>
                 </div>
               </div>
@@ -131,11 +129,10 @@ const OrdersPage = () => {
                 </div>
               </div>
 
-              ${
-                description
-                  ? `<div class="desc"><strong>Description</strong><div style="margin-top:8px">${description}</div></div>`
-                  : ""
-              }
+              ${description
+        ? `<div class="desc"><strong>Description</strong><div style="margin-top:8px">${description}</div></div>`
+        : ""
+      }
 
               <table>
                 <thead>
@@ -183,6 +180,15 @@ const OrdersPage = () => {
   const canDeleteOrder = role === "admin" || role === "manager";
 
   // -------------------------
+  // NORMALIZE STATUS FOR COMPARISON
+  // -------------------------
+  const normalizeStatus = (status) => {
+    if (!status) return "";
+    // Convert to lowercase and replace spaces/dashes with nothing for comparison
+    return status.toLowerCase().replace(/[\s-_]/g, "");
+  };
+
+  // -------------------------
   // FETCH ORDERS
   // -------------------------
   const fetchOrders = async (status = "all") => {
@@ -193,7 +199,10 @@ const OrdersPage = () => {
 
       // Filter by status if specified
       if (status !== "all") {
-        ordersList = ordersList.filter(order => order.status?.toLowerCase() === status.toLowerCase());
+        const normalizedFilterStatus = normalizeStatus(status);
+        ordersList = ordersList.filter(order =>
+          normalizeStatus(order.status) === normalizedFilterStatus
+        );
       }
 
       setOrders(ordersList);
@@ -393,7 +402,7 @@ const OrdersPage = () => {
           order.amount?.value ?? order.amount?.$numberDecimal ?? ""
         ).includes(searchTerm);
       case "status":
-        return (order.status || "").toLowerCase().includes(searchValue);
+        return normalizeStatus(order.status) === normalizeStatus(searchValue);
       default:
         return true;
     }
@@ -406,9 +415,8 @@ const OrdersPage = () => {
       />
 
       <main
-        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
-          showConfirmModal || showSuccessModal ? "blur-sm" : ""
-        }`}
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showConfirmModal || showSuccessModal ? "blur-sm" : ""
+          }`}
       >
         <div className="p-4 sm:p-6 md:p-8">
           {/* HEADER */}
