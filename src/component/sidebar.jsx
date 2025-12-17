@@ -84,8 +84,8 @@ const Sidebar = ({ items }) => {
                     to={item.href}
                     onClick={() => setIsOpen(false)}
                     className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
-                        ? "bg-green-600 text-white"
-                        : "text-green-50 hover:bg-green-600"
+                      ? "bg-green-600 text-white"
+                      : "text-green-50 hover:bg-green-600"
                       }`}
                   >
                     {item.label}
@@ -130,8 +130,8 @@ const Sidebar = ({ items }) => {
                 key={item.href}
                 to={item.href}
                 className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${isActive
-                    ? "bg-green-600 text-white"
-                    : "text-green-50 hover:bg-green-600"
+                  ? "bg-green-600 text-white"
+                  : "text-green-50 hover:bg-green-600"
                   }`}
               >
                 {item.label}
@@ -156,7 +156,7 @@ const Sidebar = ({ items }) => {
               Confirm Logout
             </h2>
             <p className="mb-6 text-gray-700">
-              Are you sure you want to logout?
+              Are you sure you want to logout from this account?
             </p>
             <div className="flex justify-end gap-3">
               <button
