@@ -94,6 +94,35 @@ const CustomerSidebar = () => {
             </div>
           </aside>
         )}
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 md:hidden">
+            <div className="absolute inset-0 backdrop-blur-sm z-40" />
+            <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-2 z-50">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">
+                Confirm Logout
+              </h2>
+              <p className="mb-6 text-gray-700">
+                Are you sure you want to logout?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleCancelLogout}
+                  className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmLogout}
+                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
