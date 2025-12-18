@@ -136,7 +136,20 @@ const EditCustomerPage = () => {
                   />
                 </div>
 
-                {/* Buttons */}
+                {/* Is Active */}
+                <div className="mt-4">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+                      className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Is Active</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">Uncheck to deactivate this customer</p>
+                </div>
                 <div className="mt-6 flex gap-4">
                   <button
                     onClick={handleUpdate}

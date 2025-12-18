@@ -11,6 +11,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
     plan_duration: "",
     start_time: "",
     end_time: "",
+    actual_start_time: "",
+    actual_end_time: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,6 +27,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
       plan_duration: task.plan_duration ?? "",
       start_time: task.start_time || "",
       end_time: task.end_time || "",
+      actual_start_time: task.actual_start_time || "",
+      actual_end_time: task.actual_end_time || "",
     });
     setError(null);
   }, [task]);
@@ -49,6 +53,8 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
         plan_duration: formData.plan_duration === "" ? undefined : Number(formData.plan_duration),
         start_time: formData.start_time || undefined,
         end_time: formData.end_time || undefined,
+        actual_start_time: formData.actual_start_time || undefined,
+        actual_end_time: formData.actual_end_time || undefined,
       };
 
       const updated = await apiClient.updateTask(task._id, payload);
@@ -125,6 +131,17 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
                 <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Actual Start Time</label>
+                <input type="datetime-local" name="actual_start_time" value={formData.actual_start_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Actual End Time</label>
+                <input type="datetime-local" name="actual_end_time" value={formData.actual_end_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
               </div>
             </div>
           </form>

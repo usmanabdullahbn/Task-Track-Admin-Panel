@@ -13,6 +13,7 @@ const EditEmployeePage = () => {
     email: "",
     phone: "",
     role: "employee",
+    is_active: true,
   });
 
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ const EditEmployeePage = () => {
         email: emp.email || "",
         phone: emp.phone || "",
         role: emp.role || "employee",
+        is_active: emp.is_active !== undefined ? emp.is_active : true,
       });
     } catch (err) {
       setError("Failed to load employee data");
@@ -203,6 +205,21 @@ const EditEmployeePage = () => {
                 <option value="technician">Technician</option>
                 {/* <option value="employee">Employee</option> */}
               </select>
+            </div>
+
+            {/* Is Active */}
+            <div className="mt-6">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+                  className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Is Active</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1">Uncheck to deactivate this employee</p>
             </div>
 
             {/* Error Message */}

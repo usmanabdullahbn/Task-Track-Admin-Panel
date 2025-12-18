@@ -168,6 +168,23 @@ const OrderDetailsPage = () => {
     }
   };
 
+  const computeActualHours = (task) => {
+    // Prefer explicit value from DB if present
+    if (task.actual_hours !== undefined && task.actual_hours !== null) {
+      return task.actual_hours;
+    }
+
+    if (task.actual_start_time && task.actual_end_time) {
+      const s = new Date(task.actual_start_time);
+      const e = new Date(task.actual_end_time);
+      const diffHours = (e - s) / (1000 * 60 * 60);
+      if (!Number.isFinite(diffHours)) return "-";
+      return diffHours.toFixed(2);
+    }
+
+    return "-";
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -355,7 +372,7 @@ const OrderDetailsPage = () => {
                             </td>
 
                             <td className="px-4 py-3 text-gray-600">
-                              {new Date(task.created_at).toLocaleDateString()}
+                              {task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}
                             </td>
 
                             {/* ACTION BUTTONS WITH ICONS */}
@@ -383,139 +400,183 @@ const OrderDetailsPage = () => {
 
                           {/* Expanded Task Details Row */}
                           {expandedTasks[task._id] && (
-                            <tr className="border-b bg-blue-50">
-                              <td colSpan="8" className="px-4 py-6">
-                                <div className="space-y-6">
-                                  {/* Title Section */}
-                                  <div>
-                                    <h4 className="text-lg font-bold text-gray-900 mb-4">
+                            <tr className="border-b">
+                              <td colSpan="8" className="px-6 py-8  from-blue-50 to-indigo-50">
+                                <div className="max-w-6xl mx-auto">
+                                  {/* Task Title Card */}
+                                  <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-blue-100">
+                                    <h4 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                                      <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
                                       {task.title}
                                     </h4>
-                                  </div>
-
-                                  {/* Two Column Layout */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Left Column */}
-                                    <div className="space-y-4">
-                                      {/* Status */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Status
-                                        </label>
-                                        <span
-                                          className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${task.status === "Completed"
-                                              ? "bg-green-100 text-green-800"
-                                              : task.status === "Active"
-                                                ? "bg-blue-100 text-blue-800"
-                                                : task.status === "In Progress"
-                                                  ? "bg-yellow-100 text-yellow-800"
-                                                  : "bg-gray-100 text-gray-800"
-                                            }`}
-                                        >
-                                          {task.status}
-                                        </span>
-                                      </div>
-
-                                      {/* Priority */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Priority
-                                        </label>
-                                        <p className="text-gray-900">{task.priority}</p>
-                                      </div>
-
-                                      {/* Assigned To */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Assigned To
-                                        </label>
-                                        <p className="text-gray-900">{task.user?.name || "-"}</p>
-                                      </div>
-
-                                      {/* Duration */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Duration (hours)
-                                        </label>
-                                        <p className="text-gray-900">{task.plan_duration || "-"}</p>
-                                      </div>
-                                    </div>
-
-                                    {/* Right Column */}
-                                    <div className="space-y-4">
-                                      {/* Start Time */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Start Time
-                                        </label>
-                                        <p className="text-gray-900">
-                                          {task.start_time
-                                            ? new Date(task.start_time).toLocaleString()
-                                            : "-"}
-                                        </p>
-                                      </div>
-
-                                      {/* End Time */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          End Time
-                                        </label>
-                                        <p className="text-gray-900">
-                                          {task.end_time
-                                            ? new Date(task.end_time).toLocaleString()
-                                            : "-"}
-                                        </p>
-                                      </div>
-
-                                      {/* Created At */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Created At
-                                        </label>
-                                        <p className="text-gray-900">
-                                          {task.created_at
-                                            ? new Date(task.created_at).toLocaleString()
-                                            : "-"}
-                                        </p>
-                                      </div>
-
-                                      {/* Last Modified */}
-                                      <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                          Last Modified
-                                        </label>
-                                        <p className="text-gray-900">
-                                          {task.updated_at
-                                            ? new Date(task.updated_at).toLocaleString()
-                                            : "-"}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Description - Full Width */}
-                                  {task.description && (
-                                    <div>
-                                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Description
-                                      </label>
-                                      <p className="text-gray-700 text-sm leading-relaxed">
+                                    {task.description && (
+                                      <p className="text-gray-600 text-sm leading-relaxed mt-3">
                                         {task.description}
                                       </p>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
 
-                                  {/* Image Attachment - Full Width */}
+                                  {/* Details Grid */}
+                                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Status & Priority Card */}
+                                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-blue-500">📊</span> Status & Priority
+                                      </h5>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Status
+                                          </label>
+                                          <span
+                                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                              task.status === "Completed"
+                                                ? "bg-green-100 text-green-800"
+                                                : task.status === "Active"
+                                                  ? "bg-blue-100 text-blue-800"
+                                                  : task.status === "In Progress"
+                                                    ? "bg-yellow-100 text-yellow-800"
+                                                    : "bg-gray-100 text-gray-800"
+                                            }`}
+                                          >
+                                            {task.status}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Priority
+                                          </label>
+                                          <p className="text-gray-900 font-medium">{task.priority}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Assignment & Duration Card */}
+                                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-green-500">👤</span> Assignment & Duration
+                                      </h5>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Assigned To
+                                          </label>
+                                          <p className="text-gray-900 font-medium">{task.user?.name || "-"}</p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Planned Duration
+                                          </label>
+                                          <p className="text-gray-900 font-medium">{task.plan_duration ? `${task.plan_duration} hours` : "-"}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Timings Card */}
+                                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-purple-500">⏰</span> Timings
+                                      </h5>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Start Time
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.start_time
+                                              ? new Date(task.start_time).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            End Time
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.end_time
+                                              ? new Date(task.end_time).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Actuals Card */}
+                                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 lg:col-span-2">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-orange-500">✅</span> Actual Performance
+                                      </h5>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Actual Start
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.actual_start_time
+                                              ? new Date(task.actual_start_time).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Actual End
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.actual_end_time
+                                              ? new Date(task.actual_end_time).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Total Actual Hours
+                                          </label>
+                                          <p className="text-gray-900 font-semibold text-lg">{computeActualHours(task)}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Metadata Card */}
+                                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-gray-500">📅</span> Metadata
+                                      </h5>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Created At
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.created_at
+                                              ? new Date(task.created_at).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Last Modified
+                                          </label>
+                                          <p className="text-gray-900 text-sm">
+                                            {task.updated_at
+                                              ? new Date(task.updated_at).toLocaleString()
+                                              : "-"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Attachment Section */}
                                   {task.file_upload && (
-                                    <div>
-                                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Attachment
-                                      </label>
+                                    <div className="bg-white rounded-xl shadow-md p-6 mt-6 border border-gray-100">
+                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span className="text-red-500">📎</span> Attachment
+                                      </h5>
                                       <a
                                         href={task.file_upload}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                        className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition duration-200"
                                       >
                                         View Attachment
                                       </a>
