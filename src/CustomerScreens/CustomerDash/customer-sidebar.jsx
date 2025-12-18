@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiUser } from "react-icons/fi";
 import { useIsMobile } from "../../component/useIsMobile";
 
 const customerMenuItems = [
@@ -83,6 +83,16 @@ const CustomerSidebar = () => {
                   </Link>
                 );
               })}
+              <Link
+                to="/customer-profile"
+                onClick={() => setIsOpen(false)}
+                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${location.pathname === "/customer-profile"
+                  ? "bg-blue-600 text-white"
+                  : "text-green-50 hover:bg-blue-600"
+                  }`}
+              >
+                My Profile
+              </Link>
             </nav>
 
             <div className="mt-8 border-t border-green-600 pt-4">
@@ -133,6 +143,13 @@ const CustomerSidebar = () => {
       <div>
         <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Customer Panel</h1>
+          {/* <Link
+            to="/customer-profile"
+            className="text-white hover:text-green-200 transition-colors"
+            title="Profile"
+          >
+            <FiUser size={22} />
+          </Link> */}
         </div>
 
         <nav className="space-y-2 px-4">
@@ -155,6 +172,13 @@ const CustomerSidebar = () => {
       </div>
 
       <div className="p-4 border-t border-green-600 space-y-3">
+        <Link
+          to="/customer-profile"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <FiUser size={18} />
+          My Profile
+        </Link>
         <button
           onClick={handleLogoutClick}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"

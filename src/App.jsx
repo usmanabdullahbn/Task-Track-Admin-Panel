@@ -8,6 +8,8 @@ import EmployeesPage from "./employees/page";
 import OrdersPage from "./orders/page";
 import ProjectsPage from "./projects/page";
 import EmployeeDayTimelinePage from "./component/EmployeeDayTimelinePage";
+import ProfilePage from "./component/ProfilePage";
+import CustomerProfilePage from "./CustomerScreens/CustomerDash/CustomerProfilePage";
 
 
 // Asset pages
@@ -89,6 +91,26 @@ const App = () => {
 
         {/* Public Route */}
         <Route path="/login" element={<Login />} />
+
+        {/* Profile Route (for both admin and customer) */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "customer"]}>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Customer Profile Route */}
+        <Route
+          path="/customer-profile"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <CustomerProfilePage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Customer Routes */}
         <Route

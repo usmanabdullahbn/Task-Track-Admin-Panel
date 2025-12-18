@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiUser } from "react-icons/fi";
 import { useIsMobile } from "./useIsMobile";
 
 const defaultMenuItems = [
@@ -142,13 +142,22 @@ const Sidebar = ({ items }) => {
       <div>
         <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">TaskTrack</h1>
-          <button
-            onClick={handleLogoutClick}
-            className="text-white hover:text-green-200"
-            title="Sign out"
-          >
-            <FiLogOut size={22} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profile"
+              className="text-white hover:text-green-200 transition-colors"
+              title="Profile"
+            >
+              <FiUser size={22} />
+            </Link>
+            <button
+              onClick={handleLogoutClick}
+              className="text-white hover:text-green-200"
+              title="Sign out"
+            >
+              <FiLogOut size={22} />
+            </button>
+          </div>
         </div>
 
         <nav className="mt-4 space-y-1 px-4">

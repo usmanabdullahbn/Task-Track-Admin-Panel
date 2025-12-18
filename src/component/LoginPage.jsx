@@ -10,44 +10,57 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState("admin"); // "admin" or "customer"
+  const [inactiveUser, setInactiveUser] = useState(null); // Store inactive user info for modal
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    setInactiveUser(null);
 
-  try {
-    let response;
+    try {
+      let response;
 
-    // Pick correct API based on userType
-    if (userType === "customer") {
-      response = await apiClient.loginCustomer(email, password);
-    } else {
-      response = await apiClient.loginUser(email, password);
+      // Pick correct API based on userType
+      if (userType === "customer") {
+        response = await apiClient.loginCustomer(email, password);
+      } else {
+        response = await apiClient.loginUser(email, password);
+      }
+
+      // Check if user is active
+      const user = response.user || response.customer || response;
+      if (user.is_active === false) {
+        // User is inactive, show modal instead of logging in
+        setInactiveUser({
+          name: user.name || email,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Store user data
+      const userData = {
+        ...response,
+        email,
+        role: userType,
+        loggedInAt: Date.now(),
+      };
+
+      localStorage.setItem("User", JSON.stringify(userData));
+
+      // Redirect based on type
+      if (userType === "customer") {
+        navigate("/customer-dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    } catch (err) {
+      setError(err.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
     }
-
-    // Store user data
-    const userData = {
-      ...response,
-      email,
-      role: userType,
-      loggedInAt: Date.now(),
-    };
-
-    localStorage.setItem("User", JSON.stringify(userData));
-
-    // Redirect based on type
-    if (userType === "customer") {
-      navigate("/customer-dashboard", { replace: true });
-    } else {
-      navigate("/", { replace: true });
-    }
-  } catch (err) {
-    setError(err.message || "Invalid email or password");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   return (
@@ -106,21 +119,19 @@ const handleSubmit = async (e) => {
           {/* User Type Toggle */}
           <div className="flex items-center justify-center gap-2 bg-gray-50 p-4 rounded-lg">
             <span
-              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                userType === "admin"
+              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${userType === "admin"
                   ? "bg-green-600 text-white"
                   : "text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setUserType("admin")}
             >
               Admin
             </span>
             <span
-              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                userType === "customer"
+              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${userType === "customer"
                   ? "bg-green-600 text-white"
                   : "text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setUserType("customer")}
             >
               Customer
@@ -142,6 +153,34 @@ const handleSubmit = async (e) => {
           © 2025 Bitsberg Technologies — All rights reserved.
         </p>
       </div>
+
+      {/* Inactive User Modal */}
+      {inactiveUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 backdrop-blur-sm bg-black/30 z-40" />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-2 z-50">
+            <div className="text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 0a9 9 0 110-18 9 9 0 010 18z" />
+                  </svg>
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Inactive</h2>
+              <p className="text-gray-600 mb-6">
+                The account <span className="font-semibold text-gray-900">{inactiveUser.name}</span> is currently inactive. Please contact the admin to activate your account.
+              </p>
+              <button
+                onClick={() => setInactiveUser(null)}
+                className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
