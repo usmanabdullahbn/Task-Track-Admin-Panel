@@ -201,7 +201,7 @@ const EditEmployeePage = () => {
                 <option value="manager">Manager</option>
                 <option value="supervisor">Supervisor</option>
                 <option value="technician">Technician</option>
-                <option value="employee">Employee</option>
+                {/* <option value="employee">Employee</option> */}
               </select>
             </div>
 
