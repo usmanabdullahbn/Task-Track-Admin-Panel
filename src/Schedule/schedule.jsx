@@ -3,147 +3,68 @@ import Sidebar from "../component/sidebar";
 import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
-// Helper utilities for time math
-const START_HOUR = 9;  // 9 AM
-const END_HOUR = 20;  // 8 PM
-const HOUR_WIDTH = 120; // px per hour
+// Constants
+const START_HOUR = 9, END_HOUR = 20, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
+const TASK_COLOR_MAP = {
+  'High': 'bg-red-100 border-red-400 text-red-900',
+  'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
+  'Low': 'bg-blue-100 border-blue-400 text-blue-900',
+};
+const DEMO_TASKS_DATA = [
+  { id: 'task-1', title: 'AC Fixing', desc: 'Air conditioning system fixing', hours: [15, 40], endHours: [17, 10], status: 'In Progress', priority: 'High' },
+  { id: 'task-2', title: 'Door Fixing', desc: 'Door repair and maintenance', hours: [14, 0], endHours: [15, 0], status: 'In Progress', priority: 'Medium' },
+  { id: 'task-3', title: 'Generator Fixing', desc: 'Generator maintenance and repair', hours: [18, 29], endHours: [21, 29], status: 'Todo', priority: 'High' },
+];
 
+// Helper functions
 const getMinutesFromStart = (date) => {
   const d = new Date(date);
   return (d.getHours() - START_HOUR) * 60 + d.getMinutes();
 };
-
-const getDurationMinutes = (start, end) => {
-  return (new Date(end) - new Date(start)) / 60000;
-};
+const getDurationMinutes = (start, end) => (new Date(end) - new Date(start)) / 60000;
+const parseApiResponse = (response) => Array.isArray(response) ? response : response?.Users || response?.users || response?.tasks || response?.data || [];
+const createDemoTasks = (employee, date) => DEMO_TASKS_DATA.map(task => ({
+  _id: task.id, title: task.title, description: task.desc, status: task.status, priority: task.priority, user: employee,
+  start_time: new Date(date.getFullYear(), date.getMonth(), date.getDate(), task.hours[0], task.hours[1]).toISOString(),
+  end_time: new Date(date.getFullYear(), date.getMonth(), date.getDate(), task.endHours[0], task.endHours[1]).toISOString(),
+  created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+}));
 
 const SchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("week"); // "month", "week", or "day"
-  const [displayMode, setDisplayMode] = useState("grid"); // "grid" or "list"
+  const [viewMode, setViewMode] = useState("week");
+  const [displayMode, setDisplayMode] = useState("grid");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState("all");
+  const [checkedTasks, setCheckedTasks] = useState({});
   const headerRightRef = React.useRef(null);
   const bodyRightRef = React.useRef(null);
 
-  // Generate dummy tasks
-  const generateDummyTasks = () => {
-    const taskTitles = [
-      "Team Meeting",
-      "Code Review",
-      "Design Review",
-      "Client Call",
-      "Project Planning",
-      "Bug Fixing",
-      "Database Optimization",
-      "API Development",
-      "Testing Sprint",
-      "Documentation",
-      "Deployment",
-      "Performance Tuning",
-      "Security Audit",
-      "User Testing",
-      "Marketing Review",
-    ];
-
-    const statuses = ["Todo", "In Progress", "Completed", "On Hold"];
-    const priorities = ["Low", "Medium", "High"];
-    const employees = employees.length > 0 ? employees : dummyEmployees.filter(emp => emp.id !== "all");
-    const dummyTasks = [];
-
-    // Create tasks for random days in the current month
-    for (let i = 0; i < 40; i++) {
-      const randomDay = Math.floor(Math.random() * 28) + 1; // Days 1-28
-      const randomHour = Math.floor(Math.random() * 24);
-      const randomMinute = Math.floor(Math.random() * 60);
-      const randomTitle =
-        taskTitles[Math.floor(Math.random() * taskTitles.length)];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      const randomPriority =
-        priorities[Math.floor(Math.random() * priorities.length)];
-      const randomEmployee = employees[Math.floor(Math.random() * employees.length)];
-
-      const taskDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        randomDay,
-        randomHour,
-        randomMinute
-      );
-
-      dummyTasks.push({
-        _id: `dummy-${i}`,
-        title: `${randomTitle} ${i + 1}`,
-        description: `This is a dummy task for testing purposes`,
-        status: randomStatus,
-        priority: randomPriority,
-        user: randomEmployee,
-        start_time: taskDate.toISOString(),
-        end_time: new Date(taskDate.getTime() + 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    }
-
-    return dummyTasks;
-  };
-
-  // Fetch all tasks and employees on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Fetch employees
-        const employeesResponse = await apiClient.getUsers();
-        console.log("getUsers response:", employeesResponse);
-        let allEmployees = [];
-        if (Array.isArray(employeesResponse)) {
-          allEmployees = employeesResponse;
-        } else if (Array.isArray(employeesResponse.Users)) {
-          allEmployees = employeesResponse.Users;
-        } else if (Array.isArray(employeesResponse.users)) {
-          allEmployees = employeesResponse.users;
-        } else if (Array.isArray(employeesResponse.data)) {
-          allEmployees = employeesResponse.data;
-        }
+        const allEmployees = parseApiResponse(await apiClient.getUsers());
         setEmployees(allEmployees);
-        console.log("Total employees loaded:", allEmployees.length, allEmployees);
 
-        // Fetch tasks
-        const tasksResponse = await apiClient.getTasks();
-        console.log("getTasks response:", tasksResponse);
-
-        let allTasks = [];
-        if (Array.isArray(tasksResponse)) {
-          allTasks = tasksResponse;
-        } else if (Array.isArray(tasksResponse.tasks)) {
-          allTasks = tasksResponse.tasks;
-        } else if (Array.isArray(tasksResponse.data)) {
-          allTasks = tasksResponse.data;
-        }
-
-        // If no tasks from API, use dummy tasks for development
+        let allTasks = parseApiResponse(await apiClient.getTasks());
         if (allTasks.length === 0) {
-          allTasks = generateDummyTasks();
-          console.log("Generated dummy tasks:", allTasks);
+          const shehbazEmployee = allEmployees.find(emp => emp.name?.toLowerCase() === "shehbaz");
+          allTasks = shehbazEmployee ? createDemoTasks(shehbazEmployee, currentDate) : [];
         }
-
         setTasks(allTasks);
-        console.log("Total tasks loaded:", allTasks.length, allTasks);
       } catch (err) {
         console.error("Failed to fetch data:", err);
-        // Use dummy tasks on error
-        setTasks(generateDummyTasks());
-        setEmployees([]);
+        const demoEmployee = { _id: "demo-emp", id: "demo-emp", name: "Shehbaz", role: "Employee" };
+        setTasks(createDemoTasks(demoEmployee, currentDate));
+        setEmployees([demoEmployee]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [currentDate]);
 
@@ -187,60 +108,36 @@ const SchedulePage = () => {
   };
 
   // Format time from ISO string
-  const formatTime = (isoString) => {
-    if (!isoString) return "";
-    const date = new Date(isoString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
+  const formatTime = (isoString) => !isoString ? "" : new Date(isoString).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
   // Get week start (Sunday) from a given date
   const getWeekStart = (date) => {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
+    return new Date(d.setDate(d.getDate() - d.getDay()));
   };
 
   // Get days in week starting from current date
   const getWeekDays = () => {
     const weekStart = getWeekStart(currentDate);
-    const days = [];
-    for (let i = 0; i < 7; i++) {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(weekStart);
       date.setDate(date.getDate() + i);
-      days.push(date);
-    }
-    return days;
+      return date;
+    });
   };
 
   // Navigate to previous month
-  const handlePreviousMonth = () => {
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
-    );
-  };
+  const handlePreviousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
 
   // Navigate to next month
-  const handleNextMonth = () => {
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
-    );
-  };
+  const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
 
   // Navigate to today
-  const handleToday = () => {
-    setCurrentDate(new Date());
-  };
+  const handleToday = () => setCurrentDate(new Date());
 
   // Sync header scroll with body scroll
   const handleBodyScroll = (e) => {
-    if (headerRightRef.current) {
-      headerRightRef.current.scrollLeft = e.target.scrollLeft;
-    }
+    if (headerRightRef.current) headerRightRef.current.scrollLeft = e.target.scrollLeft;
   };
 
   // Navigate by week
@@ -642,43 +539,46 @@ const SchedulePage = () => {
                             return (
                               <div
                                 key={date.toDateString()}
-                                className="w-48 h-32 border-r border-b border-gray-200 p-2 bg-white relative overflow-hidden group hover:bg-gray-50 transition"
+                                className="w-48 h-32 border-r border-b border-gray-200 p-2 bg-white overflow-y-auto group hover:bg-gray-50 transition"
                               >
-                                {dayTasks.map((task) => {
-                                  const taskStart = new Date(task.start_time);
-                                  const taskEnd = new Date(task.end_time);
+                                <div className="flex flex-col gap-1">
+                                  {dayTasks.map((task) => {
+                                    const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
+                                    const hours = Math.floor(durationMinutes / 60);
+                                    const mins = Math.floor(durationMinutes % 60);
+                                    const durationText = `${hours}h ${mins}m`;
+                                    const isChecked = checkedTasks[task._id];
+                                    const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
 
-                                  // Calculate position within the day (0-1)
-                                  const dayTotalMinutes = 24 * 60;
-                                  const startMinutes = taskStart.getHours() * 60 + taskStart.getMinutes();
-                                  const topPercent = (startMinutes / dayTotalMinutes) * 100;
-                                  const durationMinutes = getDurationMinutes(taskStart, taskEnd);
-                                  const heightPercent = (durationMinutes / dayTotalMinutes) * 100;
-
-                                  // Color based on status/priority
-                                  const colorMap = {
-                                    'High': 'bg-red-100 border-red-400 text-red-900',
-                                    'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
-                                    'Low': 'bg-blue-100 border-blue-400 text-blue-900',
-                                  };
-                                  const taskColor = colorMap[task.priority] || 'bg-yellow-100 border-yellow-400 text-yellow-900';
-
-                                  return (
-                                    <div
-                                      key={task._id}
-                                      className={`absolute left-1 right-1 border-l-4 rounded px-2 py-1 text-xs truncate hover:shadow-md transition cursor-pointer ${taskColor}`}
-                                      style={{
-                                        top: `${topPercent}%`,
-                                        height: `${Math.max(heightPercent, 8)}%`,
-                                        minHeight: '24px',
-                                      }}
-                                      title={`${task.title}\n${formatTime(task.start_time)} - ${formatTime(task.end_time)}\n${task.description || ''}`}
-                                    >
-                                      <p className="font-semibold truncate">{task.title}</p>
-                                      <p className="text-xs opacity-75">{formatTime(task.start_time)}</p>
-                                    </div>
-                                  );
-                                })}
+                                    return (
+                                      <div
+                                        key={task._id}
+                                        className={`border-l-4 rounded px-2 py-1.5 text-xs ${taskColor}`}
+                                        title={`${task.title}\n${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDuration: ${durationText}`}
+                                      >
+                                        <div className="flex items-start gap-1 mb-0.5">
+                                          <input
+                                            type="checkbox"
+                                            checked={isChecked || false}
+                                            onChange={(e) => {
+                                              e.stopPropagation();
+                                              setCheckedTasks(prev => ({
+                                                ...prev,
+                                                [task._id]: !prev[task._id]
+                                              }));
+                                            }}
+                                            className="w-3 h-3 cursor-pointer flex-shrink-0"
+                                          />
+                                          <p className="font-semibold truncate text-xs">{task.title}</p>
+                                        </div>
+                                        <div className="text-xs opacity-85 pl-4">
+                                          <p className="truncate">{formatTime(task.start_time)} - {formatTime(task.end_time)}</p>
+                                          <p className="opacity-75 text-xs">{durationText}</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             );
                           })}
@@ -702,14 +602,14 @@ const SchedulePage = () => {
                 {/* Header Right Columns - No overflow, will match table scroll */}
                 <div className="flex-1 overflow-hidden" ref={headerRightRef}>
                   <div className="flex min-w-max">
-                    {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => {
-                      const hour = START_HOUR + i;
+                    {Array.from({ length: 24 }).map((_, i) => {
+                      const hour = i;
                       const ampm = hour < 12 ? 'AM' : 'PM';
-                      const displayHour = hour === 12 || hour === 0 ? 12 : hour % 12;
+                      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
                       return (
                         <div
                           key={i}
-                          style={{ width: HOUR_WIDTH * 2 }}
+                          style={{ width: DAY_VIEW_HOUR_WIDTH }}
                           className="border-r border-gray-200 p-3 text-center text-sm font-semibold text-gray-700"
                         >
                           {displayHour}:00 {ampm}
@@ -743,7 +643,7 @@ const SchedulePage = () => {
 
                 {/* Right Columns - Horizontally and Vertically Scrollable */}
                 <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
-                  <div className="flex min-w-max">
+                  <div className="flex flex-col min-w-max">
                     {employees.map((emp) => {
                       const empTasks = tasks.filter(
                         (t) =>
@@ -757,10 +657,10 @@ const SchedulePage = () => {
                           className="flex border-b border-gray-200 h-28 relative bg-white group hover:bg-gray-50 transition"
                         >
                           {/* Hour slots background */}
-                          {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => (
+                          {Array.from({ length: 24 }).map((_, i) => (
                             <div
                               key={i}
-                              style={{ width: HOUR_WIDTH * 2 }}
+                              style={{ width: DAY_VIEW_HOUR_WIDTH }}
                               className={`border-r border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
                             />
                           ))}
@@ -770,34 +670,45 @@ const SchedulePage = () => {
                             {empTasks.map((task) => {
                               const taskStart = new Date(task.start_time);
                               const startMinutesFromMidnight = taskStart.getHours() * 60 + taskStart.getMinutes();
-                              const startMinutesFromStartHour = startMinutesFromMidnight - START_HOUR * 60;
-                              const left = (startMinutesFromStartHour / 60) * HOUR_WIDTH;
+                              const left = (startMinutesFromMidnight / 60) * DAY_VIEW_HOUR_WIDTH;
                               const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
-                              const width = (durationMinutes / 60) * HOUR_WIDTH;
-
-                              // Color based on status/priority
-                              const colorMap = {
-                                'High': 'bg-red-100 border-red-400 text-red-900',
-                                'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
-                                'Low': 'bg-blue-100 border-blue-400 text-blue-900',
-                              };
-                              const taskColor = colorMap[task.priority] || 'bg-yellow-100 border-yellow-400 text-yellow-900';
+                              const width = (durationMinutes / 60) * DAY_VIEW_HOUR_WIDTH;
+                              const isChecked = checkedTasks[task._id];
+                              const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
+                              const hours = Math.floor(durationMinutes / 60);
+                              const mins = Math.floor(durationMinutes % 60);
+                              const durationText = `${hours}h ${mins}m`;
 
                               return (
                                 <div
                                   key={task._id}
                                   style={{
                                     left: `${left}px`,
-                                    width: `${Math.max(width, 80)}px`,
+                                    width: `${Math.max(width, 100)}px`,
                                   }}
-                                  className={`absolute top-2 bottom-2 border-l-4 rounded px-2 py-1 text-xs flex flex-col justify-between hover:shadow-lg transition cursor-pointer ${taskColor}`}
+                                  className={`absolute top-2 bottom-2 border-l-4 rounded px-2 py-1 text-xs flex flex-col justify-start hover:shadow-lg transition ${taskColor}`}
                                   title={`${task.title}\n${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}
                                 >
-                                  <div>
-                                    <p className="font-semibold truncate">{task.title}</p>
-                                    <p className="text-xs opacity-75 truncate">
-                                      {formatTime(task.start_time)} - {formatTime(task.end_time)}
-                                    </p>
+                                  {/* Checkbox */}
+                                  <div className="flex items-start gap-1.5 mb-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked || false}
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        setCheckedTasks(prev => ({
+                                          ...prev,
+                                          [task._id]: !prev[task._id]
+                                        }));
+                                      }}
+                                      className="w-4 h-4 cursor-pointer mt-0.5 flex-shrink-0"
+                                    />
+                                    <span className="font-semibold truncate">{task.title}</span>
+                                  </div>
+                                  {/* Time and Duration */}
+                                  <div className="text-xs opacity-85 pl-5.5">
+                                    <p>{formatTime(task.start_time)} - {formatTime(task.end_time)}</p>
+                                    <p className="opacity-75">Duration: {durationText}</p>
                                   </div>
                                 </div>
                               );
