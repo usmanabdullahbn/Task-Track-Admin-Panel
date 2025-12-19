@@ -54,13 +54,22 @@ const CustomerSidebar = () => {
             {isOpen ? "✕" : "☰"}
           </button>
 
-          <button
-            onClick={handleLogoutClick}
-            className="text-white bg-red-700 p-3 rounded-lg"
-            title="Sign out"
-          >
-            <FiLogOut size={22} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/customer-profile"
+              className="text-white bg-blue-700 p-3 rounded-lg"
+              title="Profile"
+            >
+              <FiUser size={22} />
+            </Link>
+            <button
+              onClick={handleLogoutClick}
+              className="text-white bg-red-700 p-3 rounded-lg"
+              title="Sign out"
+            >
+              <FiLogOut size={22} />
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -83,16 +92,6 @@ const CustomerSidebar = () => {
                   </Link>
                 );
               })}
-              <Link
-                to="/customer-profile"
-                onClick={() => setIsOpen(false)}
-                className={`block rounded-lg px-4 py-3 text-sm font-medium transition-colors ${location.pathname === "/customer-profile"
-                  ? "bg-blue-600 text-white"
-                  : "text-green-50 hover:bg-blue-600"
-                  }`}
-              >
-                My Profile
-              </Link>
             </nav>
 
             <div className="mt-8 border-t border-green-600 pt-4">
@@ -143,13 +142,22 @@ const CustomerSidebar = () => {
       <div>
         <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Customer Panel</h1>
-          {/* <Link
-            to="/customer-profile"
-            className="text-white hover:text-green-200 transition-colors"
-            title="Profile"
-          >
-            <FiUser size={22} />
-          </Link> */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/customer-profile"
+              className="text-white hover:text-green-200 transition-colors"
+              title="Profile"
+            >
+              <FiUser size={22} />
+            </Link>
+            <button
+              onClick={handleLogoutClick}
+              className="text-white hover:text-green-200"
+              title="Sign out"
+            >
+              <FiLogOut size={22} />
+            </button>
+          </div>
         </div>
 
         <nav className="space-y-2 px-4">
@@ -171,22 +179,7 @@ const CustomerSidebar = () => {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-green-600 space-y-3">
-        <Link
-          to="/customer-profile"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <FiUser size={18} />
-          My Profile
-        </Link>
-        <button
-          onClick={handleLogoutClick}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <FiLogOut size={18} />
-          Sign Out
-        </button>
-
+      <div className="p-4 border-t border-green-600">
         <div className="text-xs text-green-100 space-y-1 text-center">
           <p>© 2025 Bitsberg Technologies</p>
           <p>All rights reserved.</p>

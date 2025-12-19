@@ -415,7 +415,35 @@ const AddAssetsPage = () => {
       setShowSuccessModal(true);
     } catch (err) {
       console.error("Submission error:", err);
-      setError(err.message || "Failed to create assets");
+      let errorMessage = "Failed to create assets";
+      if (err.response && err.response.data) {
+        const data = err.response.data;
+        if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        } else if (data.detail) {
+          errorMessage = data.detail;
+        } else if (data.errors) {
+          if (Array.isArray(data.errors)) {
+            errorMessage = data.errors.map(e => e.message || e.msg || e).join(', ');
+          } else if (typeof data.errors === 'string') {
+            errorMessage = data.errors;
+          } else {
+            errorMessage = JSON.stringify(data.errors);
+          }
+        } else if (data.msg) {
+          errorMessage = data.msg;
+        } else {
+          // Fallback to stringify the data
+          errorMessage = typeof data === 'object' ? JSON.stringify(data) : String(data);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       window.scrollTo(0, 0);
     } finally {
       setSubmitting(false);

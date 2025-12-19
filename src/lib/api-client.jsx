@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "http://localhost:4000/api";
+// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -435,7 +435,22 @@ export const apiClient = {
       body: JSON.stringify(taskData),
     });
 
-    if (!response.ok) throw new Error("Failed to create task");
+    if (!response.ok) {
+      // Try to extract more detailed error info from the server
+      let details = "";
+      try {
+        const data = await response.json();
+        details = data.message || JSON.stringify(data);
+      } catch (e) {
+        try {
+          details = await response.text();
+        } catch (ee) {
+          details = response.statusText || "Unknown error";
+        }
+      }
+      throw new Error(details || "Failed to create task");
+    }
+
     return response.json();
   },
 
