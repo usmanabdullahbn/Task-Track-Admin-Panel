@@ -3,6 +3,20 @@ import Sidebar from "../component/sidebar";
 import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
+// Helper utilities for time math
+const START_HOUR = 9;  // 9 AM
+const END_HOUR = 20;  // 8 PM
+const HOUR_WIDTH = 120; // px per hour
+
+const getMinutesFromStart = (date) => {
+  const d = new Date(date);
+  return (d.getHours() - START_HOUR) * 60 + d.getMinutes();
+};
+
+const getDurationMinutes = (start, end) => {
+  return (new Date(end) - new Date(start)) / 60000;
+};
+
 const SchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState([]);
@@ -558,122 +572,128 @@ const SchedulePage = () => {
               })}
             </div>
           ) : viewMode === "week" ? (
-            // WEEK VIEW
-            <div className="grid grid-cols-7 bg-white min-h-96">
-              {getWeekDays().map((date, index) => {
-                const day = date.getDate();
-                const tasksForDay = getTasksForDate(day);
-                const isToday =
-                  date.getDate() === new Date().getDate() &&
-                  date.getMonth() === new Date().getMonth() &&
-                  date.getFullYear() === new Date().getFullYear();
-
-                return (
-                  <div
-                    key={index}
-                    className={`border p-3 min-h-full ${
-                      isToday ? "bg-blue-50" : "bg-white"
-                    } overflow-y-auto`}
-                  >
+            // WEEK VIEW - Employee Rows, Day Columns
+            <div className="overflow-x-auto">
+              <div className="min-w-[1200px]">
+                {/* Header */}
+                <div className="flex border-b bg-gray-50">
+                  <div className="w-64 shrink-0 border-r p-3 font-semibold text-gray-700">
+                    Team Members
+                  </div>
+                  {getWeekDays().map((date) => (
                     <div
-                      className={`text-sm font-semibold mb-2 ${
-                        isToday ? "text-blue-600" : "text-gray-900"
-                      }`}
+                      key={date}
+                      className="flex-1 text-center py-3 font-semibold border-r text-gray-700"
                     >
-                      {date.toLocaleString("default", {
+                      {date.toLocaleDateString("default", {
                         weekday: "short",
-                        month: "short",
                         day: "numeric",
                       })}
                     </div>
+                  ))}
+                </div>
 
-                    {/* Tasks List with times */}
-                    <div className="space-y-1">
-                      {tasksForDay.length > 0 ? (
-                        tasksForDay.map((task) => (
-                          <div
-                            key={task._id}
-                            className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                            title={`${task.title} - ${task.user?.name || 'Unknown'}`}
-                          >
-                            <div className="flex items-start gap-1">
-                              <span className="text-orange-500 mt-0.5">●</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">
-                                  {task.title}
-                                </p>
-                                <p className="text-orange-700">
-                                  {formatTime(task.start_time)}
-                                </p>
-                                <p className="text-orange-600 text-xs">
-                                  {task.user?.name || 'Unknown'}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400">No tasks</p>
-                      )}
+                {/* Employee Rows */}
+                {employees.map((emp) => (
+                  <div key={emp._id || emp.id} className="flex border-b min-h-[100px]">
+                    {/* Employee Column */}
+                    <div className="w-64 shrink-0 border-r p-3 bg-gray-50">
+                      <p className="font-medium text-gray-900">{emp.name}</p>
+                      <p className="text-xs text-gray-500">{emp.role || emp.designation || "Employee"}</p>
                     </div>
+
+                    {/* Day Columns */}
+                    {getWeekDays().map((date) => {
+                      const dayTasks = tasks.filter(
+                        (t) =>
+                          (t.user?._id || t.user?.id) === (emp._id || emp.id) &&
+                          new Date(t.start_time).toDateString() === date.toDateString()
+                      );
+
+                      return (
+                        <div key={date} className="flex-1 p-2 space-y-2 border-r bg-white">
+                          {dayTasks.map((task) => (
+                            <div
+                              key={task._id}
+                              className="bg-yellow-100 border-l-4 border-yellow-500 rounded px-2 py-1 text-xs shadow-sm hover:bg-yellow-200 transition cursor-pointer"
+                              title={`${task.title} - ${formatTime(task.start_time)}`}
+                            >
+                              <p className="font-semibold truncate text-gray-900">{task.title}</p>
+                              <p className="text-gray-600">
+                                {formatTime(task.start_time)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           ) : (
-            // DAY VIEW
-            <div className="bg-white p-6">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {currentDate.toLocaleString("default", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </h3>
-
-                {getTasksForDate(currentDate.getDate()).length > 0 ? (
-                  <div className="space-y-3">
-                    {getTasksForDate(currentDate.getDate()).map((task) => (
-                      <div
-                        key={task._id}
-                        className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">
-                              {task.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {task.description}
-                            </p>
-                            <p className="text-sm text-orange-600 mt-2">
-                              Assigned to: {task.user?.name || 'Unknown'}
-                            </p>
-                            <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">Start:</span>
-                                <p className="font-medium text-gray-900">
-                                  {formatTime(task.start_time)}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Status:</span>
-                                <p className="font-medium text-orange-600">
-                                  {task.status}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <span className="text-orange-500 text-2xl">●</span>
-                        </div>
-                      </div>
-                    ))}
+            // DAY VIEW - Horizontal Timeline
+            <div className="overflow-x-auto">
+              <div className="min-w-[1400px]">
+                {/* Time Header */}
+                <div className="flex border-b bg-gray-50">
+                  <div className="w-64 shrink-0 border-r p-3 font-semibold text-gray-700">
+                    Team Members
                   </div>
-                ) : (
-                  <p className="text-gray-500">No tasks scheduled for this day</p>
-                )}
+                  {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{ width: HOUR_WIDTH }}
+                      className="text-center text-sm font-medium py-3 border-r text-gray-600"
+                    >
+                      {START_HOUR + i}:00
+                    </div>
+                  ))}
+                </div>
+
+                {/* Employee Rows */}
+                {employees.map((emp) => {
+                  const empTasks = tasks.filter(
+                    (t) =>
+                      (t.user?._id || t.user?.id) === (emp._id || emp.id) &&
+                      new Date(t.start_time).toDateString() === currentDate.toDateString()
+                  );
+
+                  return (
+                    <div key={emp._id || emp.id} className="flex border-b h-24 relative">
+                      {/* Employee Column */}
+                      <div className="w-64 shrink-0 border-r p-3 bg-gray-50">
+                        <p className="font-medium text-gray-900">{emp.name}</p>
+                        <p className="text-xs text-gray-500">{emp.role || emp.designation || "Employee"}</p>
+                      </div>
+
+                      {/* Timeline */}
+                      <div className="relative flex-1 bg-white">
+                        {empTasks.map((task) => {
+                          const left =
+                            (getMinutesFromStart(task.start_time) / 60) * HOUR_WIDTH;
+                          const width =
+                            (getDurationMinutes(task.start_time, task.end_time) / 60) *
+                            HOUR_WIDTH;
+
+                          return (
+                            <div
+                              key={task._id}
+                              style={{ left, width }}
+                              className="absolute top-4 h-14 bg-yellow-100 border-l-4 border-yellow-500 rounded shadow-sm px-3 py-1 text-xs hover:bg-yellow-200 transition cursor-pointer"
+                              title={`${task.title} - ${formatTime(task.start_time)} to ${formatTime(task.end_time)}`}
+                            >
+                              <p className="font-semibold truncate text-gray-900">{task.title}</p>
+                              <p className="text-gray-600">
+                                {formatTime(task.start_time)} – {formatTime(task.end_time)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -682,8 +702,8 @@ const SchedulePage = () => {
         {/* Legend */}
         <div className="mt-6 flex items-center gap-6 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <span className="text-orange-500 text-lg">●</span>
-            <span>Task scheduled</span>
+            <div className="w-4 h-4 bg-yellow-100 border-l-4 border-yellow-500 rounded"></div>
+            <span>Scheduled Task</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="p-1 bg-blue-50 rounded text-xs border border-blue-200">Today</div>
