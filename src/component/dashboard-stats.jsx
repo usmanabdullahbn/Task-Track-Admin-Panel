@@ -75,7 +75,7 @@ const DashboardStats = ({ stats = {} }) => {
       <Section title={`Total Task  ${stats.totalTasks ?? 0}`}>
         {[
           { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
-          { title: "Todo Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
+          { title: "Pending Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
           { title: "In Progress Tasks", value: stats.inProgressTasks, color: "purple", icon: <FaSpinner /> },
           { title: "On Hold Tasks", value: stats.onHoldTasks, color: "yellow", icon: <FaPauseCircle /> },
         ].map((item) => (
