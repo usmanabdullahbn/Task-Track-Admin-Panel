@@ -77,7 +77,7 @@ const DashboardStats = ({ stats = {} }) => {
           { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
           { title: "Pending Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
           { title: "In Progress Tasks", value: stats.inProgressTasks, color: "purple", icon: <FaSpinner /> },
-          { title: "On Hold Tasks", value: stats.onHoldTasks, color: "yellow", icon: <FaPauseCircle /> },
+          { title: "Cancelled Task", value: stats.onHoldTasks, color: "red", icon: <FaTrash />},
         ].map((item) => (
           <StatusCard
             key={item.title}
