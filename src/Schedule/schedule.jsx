@@ -567,7 +567,7 @@ const SchedulePage = () => {
                                                 [task._id]: !prev[task._id]
                                               }));
                                             }}
-                                            className="w-3 h-3 cursor-pointer flex-shrink-0"
+                                            className="w-3 h-3 cursor-pointer"
                                           />
                                           <p className="font-semibold truncate text-xs">{task.title}</p>
                                         </div>
@@ -701,7 +701,7 @@ const SchedulePage = () => {
                                           [task._id]: !prev[task._id]
                                         }));
                                       }}
-                                      className="w-4 h-4 cursor-pointer mt-0.5 flex-shrink-0"
+                                      className="w-4 h-4 cursor-pointer mt-0.5"
                                     />
                                     <span className="font-semibold truncate">{task.title}</span>
                                   </div>
