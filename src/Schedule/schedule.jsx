@@ -4,7 +4,7 @@ import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
 // Constants
-const START_HOUR = 9, END_HOUR = 20, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
+const START_HOUR = 10, END_HOUR = 19, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
 const TASK_COLOR_MAP = {
   'High': 'bg-red-100 border-red-400 text-red-900',
   'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
@@ -35,7 +35,7 @@ const SchedulePage = () => {
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("week");
+  const [viewMode, setViewMode] = useState("day");
   const [displayMode, setDisplayMode] = useState("grid");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState("all");
@@ -602,8 +602,8 @@ const SchedulePage = () => {
                 {/* Header Right Columns - No overflow, will match table scroll */}
                 <div className="flex-1 overflow-hidden" ref={headerRightRef}>
                   <div className="flex min-w-max">
-                    {Array.from({ length: 24 }).map((_, i) => {
-                      const hour = i;
+                    {Array.from({ length: END_HOUR - START_HOUR + 1 }).map((_, i) => {
+                      const hour = START_HOUR + i;
                       const ampm = hour < 12 ? 'AM' : 'PM';
                       const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
                       return (
@@ -657,7 +657,7 @@ const SchedulePage = () => {
                           className="flex border-b border-gray-200 h-28 relative bg-white group hover:bg-gray-50 transition"
                         >
                           {/* Hour slots background */}
-                          {Array.from({ length: 24 }).map((_, i) => (
+                          {Array.from({ length: END_HOUR - START_HOUR + 1 }).map((_, i) => (
                             <div
                               key={i}
                               style={{ width: DAY_VIEW_HOUR_WIDTH }}
@@ -670,7 +670,8 @@ const SchedulePage = () => {
                             {empTasks.map((task) => {
                               const taskStart = new Date(task.start_time);
                               const startMinutesFromMidnight = taskStart.getHours() * 60 + taskStart.getMinutes();
-                              const left = (startMinutesFromMidnight / 60) * DAY_VIEW_HOUR_WIDTH;
+                              const startMinutesFromStart = startMinutesFromMidnight - (START_HOUR * 60);
+                              const left = Math.max(0, (startMinutesFromStart / 60) * DAY_VIEW_HOUR_WIDTH);
                               const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
                               const width = (durationMinutes / 60) * DAY_VIEW_HOUR_WIDTH;
                               const isChecked = checkedTasks[task._id];
