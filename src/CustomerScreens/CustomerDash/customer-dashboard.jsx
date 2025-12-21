@@ -20,6 +20,7 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem("User"));
   const customer = user?.customer;
+  console.log(customer)
 
   useEffect(() => {
     const fetchStats = async () => {
