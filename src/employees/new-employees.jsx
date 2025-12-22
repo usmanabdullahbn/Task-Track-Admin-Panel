@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Sidebar from "../component/sidebar"
 import { Link, useNavigate } from "react-router-dom"
 import { apiClient } from "../lib/api-client"
@@ -10,7 +10,12 @@ const NewEmployeePage = () => {
     email: "",
     phone: "",
     role: "employee",
+    customerId: "",
+    customerName: "",
   })
+
+  const [customers, setCustomers] = useState([])
+  const [loadingCustomers, setLoadingCustomers] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -19,9 +24,42 @@ const NewEmployeePage = () => {
 
   const navigate = useNavigate()
 
+  // Fetch customers on component mount
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoadingCustomers(true)
+        const response = await apiClient.getCustomers()
+        const customersList = Array.isArray(response)
+          ? response
+          : response.customers || []
+        setCustomers(customersList)
+      } catch (err) {
+        console.error("Failed to fetch customers:", err)
+      } finally {
+        setLoadingCustomers(false)
+      }
+    }
+
+    fetchCustomers()
+  }, [])
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    
+    // If changing customer, auto-populate customer ID and name
+    if (name === "customerName") {
+      const selectedCustomer = customers.find((c) => c._id === value)
+      if (selectedCustomer) {
+        setFormData((prev) => ({
+          ...prev,
+          customerName: selectedCustomer.name,
+          customerId: selectedCustomer._id,
+        }))
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -51,9 +89,21 @@ const NewEmployeePage = () => {
       setSubmitting(false)
       return
     }
+    if (formData.role === "employee" && !formData.customerId) {
+      setError("Please select a customer for employee role")
+      setSubmitting(false)
+      return
+    }
 
     try {
-      const payload = { ...formData, role: String(formData.role).toLowerCase() }
+      const payload = { 
+        ...formData, 
+        role: String(formData.role).toLowerCase(),
+        customer: formData.role === "employee" && formData.customerId ? {
+          id: formData.customerId,
+          name: formData.customerName,
+        } : undefined
+      }
 
       // Backend should auto-generate password
       const response = await apiClient.createUser(payload)
@@ -136,9 +186,30 @@ const NewEmployeePage = () => {
                   <option value="manager">Manager</option>
                   <option value="supervisor">Supervisor</option>
                   <option value="technician">Technician</option>
-                  {/* <option value="employee">Employee</option> */}
+                  <option value="employee">Employee</option>
                 </select>
               </div>
+
+              {/* Customer selection - only show for employees */}
+              {formData.role === "employee" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+                  <select
+                    name="customerName"
+                    value={formData.customerId}
+                    onChange={handleInputChange}
+                    disabled={loadingCustomers}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map((customer) => (
+                      <option key={customer._id} value={customer._id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">

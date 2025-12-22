@@ -11,6 +11,8 @@ const NewProjectPage = () => {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [employees, setEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -54,7 +56,7 @@ const NewProjectPage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // If changing customer, auto-populate customer ID and name
+    // If changing customer, auto-populate customer ID and name, and fetch employees
     if (name === "customerName") {
       const selectedCustomer = customers.find((c) => c._id === value);
       if (selectedCustomer) {
@@ -62,6 +64,21 @@ const NewProjectPage = () => {
           ...prev,
           customerName: selectedCustomer.name,
           customerId: selectedCustomer._id,
+          employeeName: "", // Reset employee when customer changes
+          employeeId: "",
+        }));
+        
+        // Fetch employees for this customer
+        fetchEmployeesForCustomer(selectedCustomer._id);
+      }
+    } else if (name === "employeeName") {
+      // Handle employee selection
+      const selectedEmployee = employees.find((emp) => emp._id === value);
+      if (selectedEmployee) {
+        setFormData((prev) => ({
+          ...prev,
+          employeeName: selectedEmployee.name,
+          employeeId: selectedEmployee._id,
         }));
       }
     } else {
@@ -69,9 +86,30 @@ const NewProjectPage = () => {
     }
   };
 
+  // Fetch employees for a specific customer
+  const fetchEmployeesForCustomer = async (customerId) => {
+    try {
+      setLoadingEmployees(true);
+      const response = await apiClient.getUsersByCustomerId(customerId);
+      console.log("getUsersByCustomerId response:", response);
+      
+      const employeesList = Array.isArray(response)
+        ? response
+        : response.users || [];
+      
+      console.log("Employees list:", employeesList);
+      setEmployees(employeesList);
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+      setEmployees([]);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!formData.title || !formData.customerName || !formData.customerId) {
-      toast.error("Customer ID, Name, and Title are required");
+    if (!formData.title || !formData.customerName) {
+      toast.error("Customer and Title are required");
       return;
     }
 
@@ -170,15 +208,42 @@ const NewProjectPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer ID
+                    Assigned Employee
                   </label>
-                  <input
-                    name="customerId"
-                    placeholder="Auto-populated"
-                    value={formData.customerId}
-                    readOnly
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600"
-                  />
+                  <select
+                    name="employeeName"
+                    value={formData.employeeId}
+                    onChange={handleInputChange}
+                    disabled={loadingEmployees || !formData.customerId}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">
+                      {formData.customerId ? (loadingEmployees ? "Loading employees..." : "Select an employee") : "Select customer first"}
+                    </option>
+                    {employees.map((employee) => (
+                      <option key={employee._id} value={employee._id}>
+                        {employee.name}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {/* Debug: Show employees list */}
+                  {formData.customerId && employees.length > 0 && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                      <strong>Available Employees ({employees.length}):</strong>
+                      <div className="mt-1 max-h-32 overflow-y-auto">
+                        {employees.map((emp, index) => (
+                          <div key={emp._id || index} className="mb-1 p-1 bg-white rounded border">
+                            <div><strong>Name:</strong> {emp.name}</div>
+                            <div><strong>ID:</strong> {emp._id}</div>
+                            <div><strong>Email:</strong> {emp.email || 'N/A'}</div>
+                            <div><strong>Role:</strong> {emp.role || 'N/A'}</div>
+                            <div><strong>Full Object:</strong> {JSON.stringify(emp, null, 2)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

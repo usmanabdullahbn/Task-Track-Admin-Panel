@@ -106,6 +106,12 @@ export const apiClient = {
     return response.json();
   },
 
+  async getUsersByCustomerId(customerId) {
+    const response = await fetch(`${API_BASE_URL}/users/customer/${customerId}`);
+    if (!response.ok) throw new Error("Failed to fetch users by customer");
+    return response.json();
+  },
+
   // ============================
   //         CUSTOMERS
   // ============================
