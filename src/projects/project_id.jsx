@@ -117,9 +117,8 @@ const EditProjectPage = () => {
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
       <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
       <main
-        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${
-          showSuccessModal ? "blur-sm" : ""
-        }`}
+        className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""
+          }`}
       >
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
@@ -154,7 +153,7 @@ const EditProjectPage = () => {
                     <input
                       type="text"
                       name="title"
-                      disabled= 'true'
+                      disabled='true'
                       value={formData.customer || ""}
                       readOnly
                       className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600"
@@ -183,9 +182,10 @@ const EditProjectPage = () => {
                     <input
                       type="text"
                       name="contactName"
+                      disabled
                       value={formData.contactName || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
                     />
                   </div>
 
@@ -196,9 +196,10 @@ const EditProjectPage = () => {
                     <input
                       type="text"
                       name="contactPhone"
+                      disabled
                       value={formData.contactPhone || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -212,9 +213,10 @@ const EditProjectPage = () => {
                     <input
                       type="email"
                       name="contactEmail"
+                      disabled
                       value={formData.contactEmail || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
                     />
                   </div>
 

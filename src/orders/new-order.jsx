@@ -126,6 +126,11 @@ const NewOrderPage = () => {
       setLoading(true);
       setError("");
 
+      // Get the selected project to extract employee details
+      const selectedProject = projects.find((p) => p._id === formData.projectId) || {};
+      const employeeId = selectedProject.employee?.id || "";
+      const employeeName = selectedProject.employee?.name || "";
+
       // Prepare payload - include only relevant fields expected by backend
       const payload = {
         customer: {
@@ -136,6 +141,10 @@ const NewOrderPage = () => {
           id: formData.projectId,
           name: formData.projectName,
         },
+        employee: {
+          id: employeeId,
+          name: employeeName,
+        },
         title: formData.orderTitle,
         erpNumber: formData.erpNumber,
         amount: formData.amount,
@@ -143,6 +152,7 @@ const NewOrderPage = () => {
         status: formData.status,
       };
 
+      console.log("Order Payload:", payload);
       const response = await apiClient.createOrder(payload);
 
       // Accept common response shapes
@@ -261,8 +271,8 @@ const NewOrderPage = () => {
                         {!formData.customerId
                           ? "Select customer first"
                           : loadingProjects
-                          ? "Loading projects..."
-                          : "Select a project"}
+                            ? "Loading projects..."
+                            : "Select a project"}
                       </option>
                       {projects.map((project) => (
                         <option key={project._id} value={project._id}>

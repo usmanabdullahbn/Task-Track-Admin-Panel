@@ -122,11 +122,16 @@ const NewAssetPage = () => {
 
   // Submit Handler
   const handleSubmit = async () => {
+    // Get the selected project to extract employee details
+    const selectedProject = projects.find((p) => p._id === formData.project) || {};
+    const employeeId = selectedProject.employee?.id || "";
+    const employeeName = selectedProject.employee?.name || "";
+
     const payload = {
       customer_id: formData.customer,
       customer_name: formData.customerName,
-      employee_id: "",
-      employee_name: "",
+      employee_id: employeeId,
+      employee_name: employeeName,
       project_id: formData.project,
       project_name: formData.projectName,
       // order_id: formData.order,
@@ -146,6 +151,7 @@ const NewAssetPage = () => {
       setSubmitting(true);
       setError("");
 
+      console.log("Asset Payload:", payload);
       await apiClient.createAsset(payload);
       setShowSuccessModal(true);
     } catch (err) {

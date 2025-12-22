@@ -55,7 +55,7 @@ const NewProjectPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // If changing customer, auto-populate customer ID and name, and fetch employees
     if (name === "customerName") {
       const selectedCustomer = customers.find((c) => c._id === value);
@@ -67,7 +67,7 @@ const NewProjectPage = () => {
           employeeName: "", // Reset employee when customer changes
           employeeId: "",
         }));
-        
+
         // Fetch employees for this customer
         fetchEmployeesForCustomer(selectedCustomer._id);
       }
@@ -79,6 +79,9 @@ const NewProjectPage = () => {
           ...prev,
           employeeName: selectedEmployee.name,
           employeeId: selectedEmployee._id,
+          contact_name: selectedEmployee.name,
+          contact_phone: selectedEmployee.phone || "",
+          contact_email: selectedEmployee.email || "",
         }));
       }
     } else {
@@ -92,11 +95,11 @@ const NewProjectPage = () => {
       setLoadingEmployees(true);
       const response = await apiClient.getUsersByCustomerId(customerId);
       console.log("getUsersByCustomerId response:", response);
-      
+
       const employeesList = Array.isArray(response)
         ? response
         : response.users || [];
-      
+
       console.log("Employees list:", employeesList);
       setEmployees(employeesList);
     } catch (err) {
@@ -151,83 +154,83 @@ const NewProjectPage = () => {
 
 
   return (
-  <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-    <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50">
+      <Sidebar className={showSuccessModal ? "blur-sm" : ""} />
 
-    <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
-      <div className="p-4 sm:p-6 md:p-8">
+      <main className={`flex-1 overflow-y-auto pt-16 md:pt-0 ${showSuccessModal ? "blur-sm" : ""}`}>
+        <div className="p-4 sm:p-6 md:p-8">
 
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-4">
-          <button
-            onClick={() => window.history.back()}
-            className="text-green-700 hover:text-green-900 font-medium"
-          >
-            ← Back
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Add Project
-          </h1>
-        </div>
+          {/* Header */}
+          <div className="mb-6 flex items-center gap-4">
+            <button
+              onClick={() => window.history.back()}
+              className="text-green-700 hover:text-green-900 font-medium"
+            >
+              ← Back
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Add Project
+            </h1>
+          </div>
 
-        {/* FORM + MAP GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* FORM + MAP GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* FORM SECTION */}
-          <div className="lg:col-span-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            {/* FORM SECTION */}
+            <div className="lg:col-span-2">
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
-              {/* Row 1 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer
-                  </label>
-                  <select
-                    name="customerName"
-                    value={formData.customerId}
-                    onChange={handleInputChange}
-                    disabled={loadingCustomers}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select a customer</option>
-                    {customers.map((customer) => (
-                      <option key={customer._id} value={customer._id}>
-                        {customer.name}
+                {/* Row 1 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Customer
+                    </label>
+                    <select
+                      name="customerName"
+                      value={formData.customerId}
+                      onChange={handleInputChange}
+                      disabled={loadingCustomers}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((customer) => (
+                        <option key={customer._id} value={customer._id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/customers/new")}
+                      className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                    >
+                      + Add New Customer
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Assigned Employee
+                    </label>
+                    <select
+                      name="employeeName"
+                      value={formData.employeeId}
+                      onChange={handleInputChange}
+                      disabled={loadingEmployees || !formData.customerId}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {formData.customerId ? (loadingEmployees ? "Loading employees..." : "Select an employee") : "Select customer first"}
                       </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/customers/new")}
-                    className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
-                  >
-                    + Add New Customer
-                  </button>
-                </div>
+                      {employees.map((employee) => (
+                        <option key={employee._id} value={employee._id}>
+                          {employee.name}
+                        </option>
+                      ))}
+                    </select>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Assigned Employee
-                  </label>
-                  <select
-                    name="employeeName"
-                    value={formData.employeeId}
-                    onChange={handleInputChange}
-                    disabled={loadingEmployees || !formData.customerId}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">
-                      {formData.customerId ? (loadingEmployees ? "Loading employees..." : "Select an employee") : "Select customer first"}
-                    </option>
-                    {employees.map((employee) => (
-                      <option key={employee._id} value={employee._id}>
-                        {employee.name}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {/* Debug: Show employees list */}
+                    {/* Debug: Show employees list
                   {formData.customerId && employees.length > 0 && (
                     <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
                       <strong>Available Employees ({employees.length}):</strong>
@@ -243,166 +246,166 @@ const NewProjectPage = () => {
                         ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 2 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project Title
-                  </label>
-                  <input
-                    name="title"
-                    placeholder="Enter project title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
+                  )} */}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Project Location (Text)
-                  </label>
-                  <input
-                    name="map_location"
-                    placeholder="Location summary"
-                    value={formData.map_location}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
-                </div>
-              </div>
+                {/* Row 2 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Project Title
+                    </label>
+                    <input
+                      name="title"
+                      placeholder="Enter project title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
 
-              {/* Row 3 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Person
-                  </label>
-                  <input
-                    name="contact_name"
-                    placeholder="Enter contact name"
-                    value={formData.contact_name}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Phone
-                  </label>
-                  <input
-                    name="contact_phone"
-                    placeholder="Phone number"
-                    value={formData.contact_phone}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
-                </div>
-              </div>
-
-              {/* Row 4 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Email
-                  </label>
-                  <input
-                    type="email"
-                    name="contact_email"
-                    placeholder="Email address"
-                    value={formData.contact_email}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Project Location (Text)
+                    </label>
+                    <input
+                      name="map_location"
+                      placeholder="Location summary"
+                      value={formData.map_location}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Person
+                    </label>
+                    <input
+                      name="contact_name"
+                      placeholder="Enter contact name"
+                      value={formData.contact_name}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Phone
+                    </label>
+                    <input
+                      name="contact_phone"
+                      placeholder="Phone number"
+                      value={formData.contact_phone}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 4 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Email
+                    </label>
+                    <input
+                      type="email"
+                      name="contact_email"
+                      placeholder="Email address"
+                      value={formData.contact_email}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    >
+                      <option value="active">Active</option>
+                      <option value="completed">Completed</option>
+                      <option value="on-hold">On Hold</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Row 5 - Lat/Lng */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Latitude
+                    </label>
+                    <input
+                      name="latitude"
+                      value={formData.latitude}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Longitude
+                    </label>
+                    <input
+                      name="longitude"
+                      value={formData.longitude}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="mt-8 flex gap-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition"
                   >
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="on-hold">On Hold</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                    Add Project
+                  </button>
+
+                  <button
+                    onClick={() => window.history.back()}
+                    className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+                  >
+                    Back
+                  </button>
                 </div>
-              </div>
-
-              {/* Row 5 - Lat/Lng */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Latitude
-                  </label>
-                  <input
-                    name="latitude"
-                    value={formData.latitude}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Longitude
-                  </label>
-                  <input
-                    name="longitude"
-                    value={formData.longitude}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
-                  />
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="mt-8 flex gap-4">
-                <button
-                  onClick={handleSubmit}
-                  className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition"
-                >
-                  Add Project
-                </button>
-
-                <button
-                  onClick={() => window.history.back()}
-                  className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
-                >
-                  Back
-                </button>
               </div>
             </div>
-          </div>
 
-          {/* MAP SECTION */}
-          <div className="lg:col-span-1">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm h-96">
-              <MapComponent
-                lat={parseFloat(formData.latitude)}
-                lng={parseFloat(formData.longitude)}
-              />
+            {/* MAP SECTION */}
+            <div className="lg:col-span-1">
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm h-96">
+                <MapComponent
+                  lat={parseFloat(formData.latitude)}
+                  lng={parseFloat(formData.longitude)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(true)}
+                className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                Pick Location on Map
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowLocationPicker(true)}
-              className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              Pick Location on Map
-            </button>
-          </div>
 
-        </div>
+          </div>
         </div>
       </main>
 
@@ -443,7 +446,7 @@ const NewProjectPage = () => {
         }}
       />
     </div>
-);
+  );
 
 }
 
