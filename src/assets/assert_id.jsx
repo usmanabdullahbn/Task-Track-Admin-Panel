@@ -22,9 +22,6 @@ const EditAssetPage = () => {
     serial_number: "",
     category: "",
     barcode: "",
-    customer: "",
-    project: "",
-    order: "",
   });
 
   // Fetch asset by ID
@@ -45,9 +42,6 @@ const EditAssetPage = () => {
           serial_number: asset.serial_number || "",
           category: asset.category || "",
           barcode: asset.barcode || "",
-          customer: asset.customer?.name || "",
-          project: asset.project?.name || "",
-          order: asset.order?.order_number || "",
         });
 
         setLoading(false);
@@ -85,15 +79,6 @@ const EditAssetPage = () => {
         serial_number: formData.serial_number,
         category: formData.category,
         barcode: formData.barcode,
-        customer: originalAsset.customer
-          ? { id: originalAsset.customer.id, name: formData.customer }
-          : null,
-        project: originalAsset.project
-          ? { id: originalAsset.project.id, name: formData.project }
-          : null,
-        order: originalAsset.order
-          ? { id: originalAsset.order.id, order_number: formData.order }
-          : null,
       };
 
       await apiClient.updateAsset(id, payload);
@@ -218,42 +203,6 @@ const EditAssetPage = () => {
                   type="text"
                   name="manufacturer"
                   value={formData.manufacturer}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Customer
-                </label>
-                <input
-                  type="text"
-                  name="customer"
-                  value={formData.customer}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project
-                </label>
-                <input
-                  type="text"
-                  name="project"
-                  value={formData.project}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Order
-                </label>
-                <input
-                  type="text"
-                  name="order"
-                  value={formData.order}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                 />
