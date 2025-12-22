@@ -8,7 +8,6 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
     description: "",
     priority: "Medium",
     status: "Todo",
-    plan_duration: "",
     start_time: "",
     end_time: "",
     actual_start_time: "",
@@ -17,6 +16,23 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Helper function to format date string to datetime-local format
+  const formatForDatetimeLocal = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch {
+      return "";
+    }
+  };
+
   useEffect(() => {
     if (!task) return;
     setFormData({
@@ -24,11 +40,10 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
       description: task.description || "",
       priority: task.priority || "Medium",
       status: task.status || "Todo",
-      plan_duration: task.plan_duration ?? "",
-      start_time: task.start_time || "",
-      end_time: task.end_time || "",
-      actual_start_time: task.actual_start_time || "",
-      actual_end_time: task.actual_end_time || "",
+      start_time: formatForDatetimeLocal(task.start_time),
+      end_time: formatForDatetimeLocal(task.end_time),
+      actual_start_time: formatForDatetimeLocal(task.actual_start_time),
+      actual_end_time: formatForDatetimeLocal(task.actual_end_time),
     });
     setError(null);
   }, [task]);
@@ -50,11 +65,10 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
         description: formData.description,
         priority: formData.priority,
         status: formData.status,
-        plan_duration: formData.plan_duration === "" ? undefined : Number(formData.plan_duration),
-        start_time: formData.start_time || undefined,
-        end_time: formData.end_time || undefined,
-        actual_start_time: formData.actual_start_time || undefined,
-        actual_end_time: formData.actual_end_time || undefined,
+        start_time: formData.start_time ? new Date(formData.start_time).toISOString() : undefined,
+        end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined,
+        actual_start_time: formData.actual_start_time ? new Date(formData.actual_start_time).toISOString() : undefined,
+        actual_end_time: formData.actual_end_time ? new Date(formData.actual_end_time).toISOString() : undefined,
       };
 
       const updated = await apiClient.updateTask(task._id, payload);
@@ -63,7 +77,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
       onClose && onClose();
     } catch (err) {
       console.error("EditTaskModal: update failed", err);
-      setError(err?.message || "Failed to update task");
+      setError(err.message || "Failed to update task. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -85,8 +99,14 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {error && <p className="text-red-500 mb-3">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ERROR MESSAGE */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Title</label>
               <input name="title" value={formData.title} onChange={handleChange} required className="w-full px-3 py-2 border rounded" />
@@ -118,30 +138,49 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Plan Duration (hours)</label>
-              <input type="number" name="plan_duration" value={formData.plan_duration} onChange={handleChange} step="0.5" min="0" className="w-full px-3 py-2 border rounded" />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
-                <input type="datetime-local" name="start_time" value={formData.start_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input 
+                  type="datetime-local" 
+                  name="start_time" 
+                  value={formData.start_time} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
-                <input type="datetime-local" name="end_time" value={formData.end_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input 
+                  type="datetime-local" 
+                  name="end_time" 
+                  value={formData.end_time} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors" 
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Actual Start Time</label>
-                <input type="datetime-local" name="actual_start_time" value={formData.actual_start_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input 
+                  type="datetime-local" 
+                  name="actual_start_time" 
+                  value={formData.actual_start_time} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Actual End Time</label>
-                <input type="datetime-local" name="actual_end_time" value={formData.actual_end_time} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input 
+                  type="datetime-local" 
+                  name="actual_end_time" 
+                  value={formData.actual_end_time} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors" 
+                />
               </div>
             </div>
           </form>

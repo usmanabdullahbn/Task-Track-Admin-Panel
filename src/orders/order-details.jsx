@@ -185,6 +185,23 @@ const OrderDetailsPage = () => {
     return "-";
   };
 
+  const computePlannedHours = (task) => {
+    // Prefer explicit plan_duration if present
+    if (task.plan_duration !== undefined && task.plan_duration !== null) {
+      return task.plan_duration;
+    }
+
+    if (task.start_time && task.end_time) {
+      const s = new Date(task.start_time);
+      const e = new Date(task.end_time);
+      const diffHours = (e - s) / (1000 * 60 * 60);
+      if (!Number.isFinite(diffHours)) return "-";
+      return diffHours.toFixed(2);
+    }
+
+    return "-";
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -361,13 +378,13 @@ const OrderDetailsPage = () => {
 
                             <td className="px-4 py-3">
                               {task.start_time
-                                ? new Date(task.start_time).toLocaleString()
+                                ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                 : "-"}
                             </td>
 
                             <td className="px-4 py-3">
                               {task.end_time
-                                ? new Date(task.end_time).toLocaleString()
+                                ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                 : "-"}
                             </td>
 
@@ -484,7 +501,7 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.start_time
-                                              ? new Date(task.start_time).toLocaleString()
+                                              ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                               : "-"}
                                           </p>
                                         </div>
@@ -494,9 +511,15 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.end_time
-                                              ? new Date(task.end_time).toLocaleString()
+                                              ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                               : "-"}
                                           </p>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                            Total Planned Hours
+                                          </label>
+                                          <p className="text-gray-900 font-semibold text-lg">{computePlannedHours(task)}</p>
                                         </div>
                                       </div>
                                     </div>
@@ -513,7 +536,7 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_start_time
-                                              ? new Date(task.actual_start_time).toLocaleString()
+                                              ? new Date(task.actual_start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                               : "-"}
                                           </p>
                                         </div>
@@ -523,7 +546,7 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_end_time
-                                              ? new Date(task.actual_end_time).toLocaleString()
+                                              ? new Date(task.actual_end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                                               : "-"}
                                           </p>
                                         </div>
