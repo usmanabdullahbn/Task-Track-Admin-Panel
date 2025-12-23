@@ -23,6 +23,20 @@ const AddAssetsPage = () => {
   // Debugging: Log the order context data
   console.log("Order Context:", orderContext);
 
+  // Check if project info is missing
+  useEffect(() => {
+    const hasProjectInfo = !!(
+      orderContext.project?.id ||
+      orderContext.project?._id ||
+      orderContext.projectId
+    );
+
+    if (!hasProjectInfo && orderContext.customerId) {
+      setProjectNotFound(true);
+      setError("This customer has no projects. Please go back and create a project first.");
+    }
+  }, []);
+
   // ============= STATE =============
   const [assets, setAssets] = useState([]); // Array of assets with tasks
   const [activeAssetIdx, setActiveAssetIdx] = useState(null); // Currently active asset tab
@@ -32,6 +46,7 @@ const AddAssetsPage = () => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [projectNotFound, setProjectNotFound] = useState(false);
 
   // ============= FETCH DATA =============
   useEffect(() => {
@@ -253,8 +268,7 @@ const AddAssetsPage = () => {
 
       if (assets[i].tasks.length === 0) {
         setError(
-          `Asset ${i + 1} (${
-            assets[i].assetTitle
+          `Asset ${i + 1} (${assets[i].assetTitle
           }): Please add at least one task`
         );
         return false;
@@ -485,46 +499,54 @@ const AddAssetsPage = () => {
           {(orderContext.id ||
             orderContext.customer?.id ||
             orderContext.customerId) && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h2 className="font-semibold text-blue-900 mb-2">
-                Order Context
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-blue-700">Order ID</p>
-                  <p className="font-medium text-gray-900">{orderContext.id}</p>
-                </div>
-                <div>
-                  <p className="text-blue-700">Order Title</p>
-                  <p className="font-medium text-gray-900">
-                    {orderContext.title}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-blue-700">Customer</p>
-                  <p className="font-medium text-gray-900">
-                    {/* show customer title/name */}
-                    {orderContext.customer?.name ||
-                      orderContext.customer?.title ||
-                      orderContext.customerName}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-blue-700">Project</p>
-                  <p className="font-medium text-gray-900">
-                    {/* show project title/name */}
-                    {orderContext.project?.name ||
-                      orderContext.project?.title ||
-                      orderContext.projectName}
-                  </p>
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h2 className="font-semibold text-blue-900 mb-2">
+                  Order Context
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-blue-700">Order ID</p>
+                    <p className="font-medium text-gray-900">{orderContext.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Order Title</p>
+                    <p className="font-medium text-gray-900">
+                      {orderContext.title}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Customer</p>
+                    <p className="font-medium text-gray-900">
+                      {/* show customer title/name */}
+                      {orderContext.customer?.name ||
+                        orderContext.customer?.title ||
+                        orderContext.customerName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Project</p>
+                    <p className="font-medium text-gray-900">
+                      {/* show project title/name */}
+                      {orderContext.project?.name ||
+                        orderContext.project?.title ||
+                        orderContext.projectName}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-              {error}
+            <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-center justify-between">
+              <span>{error}</span>
+              {projectNotFound && (
+                <button
+                  onClick={() => navigate("/projects/new", { state: { customerId: orderContext.customerId || orderContext.customer?.id, customerName: orderContext.customerName || orderContext.customer?.name } })}
+                  className="bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors ml-4 whitespace-nowrap"
+                >
+                  + Add Project
+                </button>
+              )}
             </div>
           )}
 
@@ -558,11 +580,10 @@ const AddAssetsPage = () => {
                     <button
                       key={asset.id}
                       onClick={() => setActiveAssetIdx(idx)}
-                      className={`px-4 py-2.5 rounded-t-lg font-medium whitespace-nowrap transition-colors ${
-                        activeAssetIdx === idx
+                      className={`px-4 py-2.5 rounded-t-lg font-medium whitespace-nowrap transition-colors ${activeAssetIdx === idx
                           ? "bg-green-700 text-white"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
+                        }`}
                     >
                       Asset {idx + 1}
                       {asset.assetTitle && ` - ${asset.assetTitle}`}

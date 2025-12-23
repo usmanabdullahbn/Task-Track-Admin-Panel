@@ -86,11 +86,19 @@ const NewOrderPage = () => {
             : projectsResponse.projects || [];
 
           setProjects(projectsList);
+
+          // Show error if customer has no projects
+          if (projectsList.length === 0) {
+            setError("This customer has no projects");
+          } else {
+            setError("");
+          }
+
           console.log("Fetched Projects for Customer:", projectsList);
         } catch (err) {
           console.error("Failed to fetch projects:", err);
           setProjects([]);
-          setError("Failed to load projects for selected customer");
+          setError("No projects exist for the selected customer.");
         } finally {
           setLoadingProjects(false);
         }
@@ -119,6 +127,12 @@ const NewOrderPage = () => {
     // Basic validation - make amount required
     if (!formData.customerId || !formData.projectId || !formData.orderTitle || !formData.amount) {
       setError("Please select customer, project, provide an order title, and enter an amount.");
+      return;
+    }
+
+    // Check if customer has no projects
+    if (projects.length === 0) {
+      setError("This customer has no projects. Please add a project first.");
       return;
     }
 
@@ -255,31 +269,41 @@ const NewOrderPage = () => {
                     </select>
                   </div>
 
-                  {/* Project - Dependent Dropdown */}
+                  {/* Project - Dependent Dropdown or Add Project Button */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Project <span className="text-red-600">*</span>
                     </label>
-                    <select
-                      name="projectId"
-                      value={formData.projectId}
-                      onChange={handleInputChange}
-                      disabled={!formData.customerId || loadingProjects}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">
-                        {!formData.customerId
-                          ? "Select customer first"
-                          : loadingProjects
-                            ? "Loading projects..."
-                            : "Select a project"}
-                      </option>
-                      {projects.map((project) => (
-                        <option key={project._id} value={project._id}>
-                          {project.title || project.name}
+                    {formData.customerId && projects.length === 0 && !loadingProjects ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/projects/new", { state: { customerId: formData.customerId, customerName: formData.customerName } })}
+                        className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                      >
+                        + Add New Project
+                      </button>
+                    ) : (
+                      <select
+                        name="projectId"
+                        value={formData.projectId}
+                        onChange={handleInputChange}
+                        disabled={!formData.customerId || loadingProjects}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {!formData.customerId
+                            ? "Select customer first"
+                            : loadingProjects
+                              ? "Loading projects..."
+                              : "Select a project"}
                         </option>
-                      ))}
-                    </select>
+                        {projects.map((project) => (
+                          <option key={project._id} value={project._id}>
+                            {project.title || project.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 

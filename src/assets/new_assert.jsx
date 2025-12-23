@@ -26,6 +26,7 @@ const NewAssetPage = () => {
   const [projects, setProjects] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -74,7 +75,7 @@ const NewAssetPage = () => {
       // fetch projects for selected customer
       (async () => {
         try {
-          setLoadingData(true);
+          setLoadingProjects(true);
           setError("");
 
           // try common apiClient method names (server might export either)
@@ -94,12 +95,19 @@ const NewAssetPage = () => {
               ? projectsResponse
               : projectsResponse.projects || [];
           setProjects(list);
+
+          // Show error if customer has no projects
+          if (list.length === 0) {
+            setError("This customer has no projects");
+          } else {
+            setError("");
+          }
         } catch (err) {
           console.error("Failed to load projects for customer:", err);
           setProjects([]);
-          setError("Error loading projects for selected customer.");
+          setError("No projects exist for the selected customer.");
         } finally {
-          setLoadingData(false);
+          setLoadingProjects(false);
         }
       })();
 
@@ -216,38 +224,50 @@ const NewAssetPage = () => {
                 </button>
               </div>
 
-              {/* Project Selection (projects filtered by selected customer) */}
+              {/* Project Selection (projects filtered by selected customer) or Add Project Button */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Project <span className="text-red-600">*</span>
                 </label>
-                <select
-                  name="project"
-                  value={formData.project}
-                  onChange={handleInputChange}
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
-                  disabled={!formData.customer || loadingData}
-                >
-                  <option value="">
-                    {formData.customer
-                      ? loadingData
-                        ? "Loading projects..."
-                        : "Select a project"
-                      : "Select a customer first"}
-                  </option>
-                  {projects.map((project) => (
-                    <option key={project._id} value={project._id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => navigate("/projects/new")}
-                  className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
-                >
-                  + Add New Project
-                </button>
+                {formData.customer && projects.length === 0 && !loadingProjects ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/projects/new", { state: { customerId: formData.customer, customerName: formData.customerName } })}
+                    className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                  >
+                    + Add New Project
+                  </button>
+                ) : (
+                  <>
+                    <select
+                      name="project"
+                      value={formData.project}
+                      onChange={handleInputChange}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
+                      disabled={!formData.customer || loadingProjects}
+                    >
+                      <option value="">
+                        {formData.customer
+                          ? loadingProjects
+                            ? "Loading projects..."
+                            : "Select a project"
+                          : "Select a customer first"}
+                      </option>
+                      {projects.map((project) => (
+                        <option key={project._id} value={project._id}>
+                          {project.title}
+                        </option>
+                      ))}
+                    </select>
+                    {/* <button
+                      type="button"
+                      onClick={() => navigate("/projects/new", { state: { customerId: formData.customer, customerName: formData.customerName } })}
+                      className="mt-2 w-full rounded-lg border-2 border-green-600 px-4 py-2 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                    >
+                      + Add New Project
+                    </button> */}
+                  </>
+                )}
               </div>
 
               {/* Title */}
