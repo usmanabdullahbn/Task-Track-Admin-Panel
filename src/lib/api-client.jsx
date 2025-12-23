@@ -220,6 +220,12 @@ export const apiClient = {
     return res.json();
   },
 
+  async getProjectsByCustomerEmployeeId(employeeId) {
+    const response = await fetch(`${API_BASE_URL}/projects/employee/${employeeId}`);
+    if (!response.ok) throw new Error("Failed to fetch projects by employee");
+    return response.json();
+  },
+
   async createProject(projectData) {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
@@ -291,6 +297,12 @@ export const apiClient = {
   async getOrdersByProjectId(projectId) {
     const response = await fetch(`${API_BASE_URL}/orders/project${projectId}`);
     if (!response.ok) throw new Error("Failed to fetch customer orders");
+    return response.json();
+  },
+
+  async getOrdersByCustomerEmployeeId(employeeId) {
+    const response = await fetch(`${API_BASE_URL}/orders/employee/${employeeId}`);
+    if (!response.ok) throw new Error("Failed to fetch orders by employee");
     return response.json();
   },
 
@@ -388,6 +400,12 @@ export const apiClient = {
     });
 
     if (!response.ok) throw new Error("Failed to delete asset");
+    return response.json();
+  },
+
+  async getAssetsByCustomerEmployeeId(employeeId) {
+    const response = await fetch(`${API_BASE_URL}/assets/employee/${employeeId}`);
+    if (!response.ok) throw new Error("Failed to fetch assets by employee");
     return response.json();
   },
 
