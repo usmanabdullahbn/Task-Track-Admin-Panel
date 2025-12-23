@@ -16,11 +16,11 @@ const CustomerProjects = () => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Get customer ID from localStorage
-  const getCustomerId = () => {
+  const getEmployeeId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
-      const customerId = user?.user?._id;
-      return customerId || null;
+      const employeeId = user?.user?._id;
+      return employeeId || null;
     } catch (e) {
       // console.error("Error parsing User from localStorage:", e);
       return null;
@@ -29,16 +29,16 @@ const CustomerProjects = () => {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const customerId = getCustomerId();
-      if (!customerId) {
-        setError("Customer ID not found");
+      const employeeId = getEmployeeId();
+      if (!employeeId) {
+        setError("employee ID not found");
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const data = await apiClient.getProjectByCustomerId(customerId);
+        const data = await apiClient.getProjectsByCustomerEmployeeId(employeeId);
         // console.log("API Response:", data);
         
         // Handle both direct array and wrapped response

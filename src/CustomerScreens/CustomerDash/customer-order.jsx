@@ -18,10 +18,10 @@ const CustomerOrder = () => {
   const [printData, setPrintData] = useState(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
-  const getCustomerId = () => {
+  const getEmployeeId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
-      return user?.user?._id || null;
+      return user?.employee?._id || null;
     } catch (e) {
       return null;
     }
@@ -32,9 +32,9 @@ const CustomerOrder = () => {
   // -------------------------
   useEffect(() => {
     const fetchOrders = async () => {
-      const customerId = getCustomerId();
-      if (!customerId) {
-        setError("Customer ID not found");
+      const employeeId = getEmployeeId();
+      if (!employeeId) {
+        setError("employee ID not found");
         setOrders([]);
         setLoading(false);
         return;
@@ -42,7 +42,7 @@ const CustomerOrder = () => {
 
       try {
         setLoading(true);
-        const data = await apiClient.getOrdersByCustomerId(customerId);
+        const data = await apiClient.getOrdersByCustomerEmployeeId(employeeId);
         console.log("Orders API response:", data);
 
         // support both array and wrapped response { success: true, orders: [...] }

@@ -11,14 +11,14 @@ const AssetsPage = () => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // -------------------------
-  // GET CUSTOMER ID FROM LOCALSTORAGE
+  // GET EMPLOYEE ID FROM LOCALSTORAGE
   // -------------------------
-  const getCustomerId = () => {
+  const getEmployeeId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
       return user?.user?._id || user?._id || null;
     } catch (err) {
-      console.error("Failed to get customer ID from localStorage:", err);
+      console.error("Failed to get employee ID from localStorage:", err);
       return null;
     }
   };
@@ -29,15 +29,15 @@ const AssetsPage = () => {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const customerId = getCustomerId();
-        if (!customerId) {
+        const employeeId = getEmployeeId();
+        if (!employeeId) {
           console.error("Customer ID not found in localStorage");
           setAssets([]);
           setLoading(false);
           return;
         }
 
-        const res = await apiClient.getAssetByCustomerId(customerId);
+        const res = await apiClient.getAssetsByCustomerEmployeeId(employeeId);
         console.log("Assets API Response:", res);
 
         // Handle both array and { assets: [] } response shapes

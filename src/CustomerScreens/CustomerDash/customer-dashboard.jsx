@@ -19,13 +19,13 @@ const CustomerDashboard = () => {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem("User"));
-  const customer = user?.user;
-  console.log(customer._id)
+  const employee = user?.user;
+  console.log(employee._id)
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!customer?._id) {
-        console.log("No customer found");
+      if (!employee?._id) {
+        console.log("No employee found");
         setLoading(false);
         return;
       }
@@ -33,9 +33,9 @@ const CustomerDashboard = () => {
       try {
         setLoading(true);
         const [projectsRes, ordersRes, assetsRes] = await Promise.all([
-          apiClient.getProjectByCustomerId(customer._id),
-          apiClient.getOrdersByCustomerId(customer._id),
-          apiClient.getAssetByCustomerId(customer._id),
+          apiClient.getProjectsByCustomerEmployeeId(employee._id),
+          apiClient.getOrdersByCustomerEmployeeId(employee._id),
+          apiClient.getAssetsByCustomerEmployeeId(employee._id),
         ]);
 
         const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
@@ -78,7 +78,7 @@ const CustomerDashboard = () => {
     };
 
     fetchStats();
-  }, [customer?._id]);
+  }, [employee?._id]);
 
   const topRoutes = {
     "Total Projects": "/customer-projects",
