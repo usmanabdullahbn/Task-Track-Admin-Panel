@@ -19,7 +19,7 @@ const CustomerProjects = () => {
   const getCustomerId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
-      const customerId = user?.customer?._id;
+      const customerId = user?.user?._id;
       return customerId || null;
     } catch (e) {
       // console.error("Error parsing User from localStorage:", e);

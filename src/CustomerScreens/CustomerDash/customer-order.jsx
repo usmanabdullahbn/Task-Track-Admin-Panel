@@ -21,7 +21,7 @@ const CustomerOrder = () => {
   const getCustomerId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
-      return user?.customer?._id || null;
+      return user?.user?._id || null;
     } catch (e) {
       return null;
     }

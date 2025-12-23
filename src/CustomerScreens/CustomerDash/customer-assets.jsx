@@ -16,7 +16,7 @@ const AssetsPage = () => {
   const getCustomerId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("User"));
-      return user?.customer?._id || user?._id || null;
+      return user?.user?._id || user?._id || null;
     } catch (err) {
       console.error("Failed to get customer ID from localStorage:", err);
       return null;
