@@ -9,7 +9,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userType, setUserType] = useState("admin"); // "admin" or "customer"
   const [inactiveUser, setInactiveUser] = useState(null); // Store inactive user info for modal
 
   const handleSubmit = async (e) => {
@@ -19,14 +18,8 @@ const Login = () => {
     setInactiveUser(null);
 
     try {
-      let response;
-
-      // Pick correct API based on userType
-      if (userType === "customer") {
-        response = await apiClient.loginCustomer(email, password);
-      } else {
-        response = await apiClient.loginUser(email, password);
-      }
+      // Always use admin login
+      const response = await apiClient.loginUser(email, password);
 
       // Check if user is active
       const user = response.user || response.customer || response;
@@ -43,14 +36,14 @@ const Login = () => {
       const userData = {
         ...response,
         email,
-        role: userType,
+        role: user.role || "admin", // Use actual user role from response, default to admin
         loggedInAt: Date.now(),
       };
 
       localStorage.setItem("User", JSON.stringify(userData));
 
-      // Redirect based on type
-      if (userType === "customer") {
+      // Redirect based on actual user role
+      if (user.role === "employee" || user.role === "customer") {
         navigate("/customer-dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });
@@ -114,28 +107,6 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
             />
-          </div>
-
-          {/* User Type Toggle */}
-          <div className="flex items-center justify-center gap-2 bg-gray-50 p-4 rounded-lg">
-            <span
-              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${userType === "admin"
-                  ? "bg-green-600 text-white"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`}
-              onClick={() => setUserType("admin")}
-            >
-              Admin
-            </span>
-            <span
-              className={`text-sm font-medium px-3 py-2 rounded-lg cursor-pointer transition-colors ${userType === "customer"
-                  ? "bg-green-600 text-white"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`}
-              onClick={() => setUserType("customer")}
-            >
-              Customer
-            </span>
           </div>
 
           {/* Login Button */}

@@ -209,7 +209,7 @@ const CustomerProfilePage = () => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="flex flex-col md:flex-row h-screen  from-gray-50 to-gray-100">
             <CustomerSidebar />
 
             <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
@@ -217,7 +217,7 @@ const CustomerProfilePage = () => {
                     {/* Header Section */}
                     <div className="mb-8">
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
+                            <div className="w-16 h-16  from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
                                 <FaUser size={32} />
                             </div>
                             <div>
@@ -232,7 +232,7 @@ const CustomerProfilePage = () => {
                     {/* Success Message */}
                     {success && (
                         <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg flex items-start gap-3">
-                            <FaCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
+                            <FaCheckCircle className="text-green-600 mt-0.5-shrink-0" size={20} />
                             <p className="text-green-700">{success}</p>
                         </div>
                     )}
@@ -240,7 +240,7 @@ const CustomerProfilePage = () => {
                     {/* Error Message */}
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3">
-                            <FaExclamationCircle className="text-red-600 mt-0.5 flex-shrink-0" size={20} />
+                            <FaExclamationCircle className="text-red-600 mt-0.5" size={20} />
                             <p className="text-red-700">{error}</p>
                         </div>
                     )}
@@ -258,7 +258,7 @@ const CustomerProfilePage = () => {
                             {!isEditing ? (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
+                                    className="flex items-center gap-2 px-6 py-3 from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
                                 >
                                     <FaEdit size={16} />
                                     Edit Profile
@@ -267,7 +267,7 @@ const CustomerProfilePage = () => {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={handleSaveProfile}
-                                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
+                                        className="flex items-center gap-2 px-6 py-3 from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
                                     >
                                         <FaSave size={16} />
                                         Save Changes
@@ -300,7 +300,7 @@ const CustomerProfilePage = () => {
                                     type="text"
                                     value={user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
                                     disabled
-                                    className="w-full px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-lg border border-gray-200 font-medium cursor-not-allowed"
+                                    className="w-full px-4 py-3 from-gray-50 to-gray-100 text-gray-700 rounded-lg border border-gray-200 font-medium cursor-not-allowed"
                                 />
                             </div>
 
@@ -370,7 +370,7 @@ const CustomerProfilePage = () => {
 
                         <button
                             onClick={() => setShowPasswordModal(true)}
-                            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-2"
+                            className="px-8 py-3 from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-2"
                         >
                             <FaLock size={16} />
                             Change Password
@@ -399,7 +399,7 @@ const CustomerProfilePage = () => {
                         {/* Error Message in Modal */}
                         {error && (
                             <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-start gap-2">
-                                <FaExclamationCircle className="text-red-600 mt-0.5 flex-shrink-0" size={18} />
+                                <FaExclamationCircle className="text-red-600 mt-0.5-shrink-0" size={18} />
                                 <p className="text-red-700 text-sm">{error}</p>
                             </div>
                         )}
@@ -505,7 +505,7 @@ const CustomerProfilePage = () => {
                             </button>
                             <button
                                 onClick={handleChangePassword}
-                                className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
+                                className="px-6 py-2 rounded-lg from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium"
                             >
                                 Update Password
                             </button>
