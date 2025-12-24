@@ -400,12 +400,35 @@ const AddAssetsPage = () => {
               : null,
 
             remarks: task.remarks || "",
-            attachment_name: task.attachment ? task.attachment.name : "",
           };
 
           console.log(taskPayload);
 
-          return apiClient.createTask(taskPayload);
+          if (task.attachment) {
+            const fd = new FormData();
+            fd.append('customer[id]', taskPayload.customer.id);
+            fd.append('customer[name]', taskPayload.customer.name);
+            fd.append('project[id]', taskPayload.project.id);
+            fd.append('project[name]', taskPayload.project.name);
+            fd.append('order[id]', taskPayload.order.id);
+            fd.append('order[title]', taskPayload.order.title);
+            fd.append('asset[id]', taskPayload.asset.id);
+            fd.append('asset[name]', taskPayload.asset.name);
+            fd.append('user[id]', taskPayload.user.id);
+            fd.append('user[name]', taskPayload.user.name);
+            fd.append('title', taskPayload.title);
+            fd.append('description', taskPayload.description || '');
+            fd.append('priority', taskPayload.priority || 'Medium');
+            fd.append('status', taskPayload.status || 'Todo');
+            fd.append('plan_duration', String(taskPayload.plan_duration || 0));
+            fd.append('start_time', taskPayload.start_time || '');
+            fd.append('end_time', taskPayload.end_time || '');
+            fd.append('remarks', taskPayload.remarks || '');
+            fd.append('files', task.attachment);
+            return apiClient.createTask(fd);
+          } else {
+            return apiClient.createTask(taskPayload);
+          }
         });
 
         // wait for all tasks of this asset to be created
@@ -841,13 +864,15 @@ const AddAssetsPage = () => {
                                         e.target.files[0] || null
                                       )
                                     }
-                                    className="w-full text-sm text-gray-900"
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
+               text-gray-900 file:bg-green-700 file:text-white 
+               file:border-none file:px-4 file:py-2 file:mr-4 
+               file:rounded-md file:cursor-pointer
+               hover:file:bg-green-800 transition cursor-pointer"
                                   />
-                                  {task.attachment && (
-                                    <p className="mt-2 text-xs text-gray-600">
-                                      Selected: {task.attachment.name}
-                                    </p>
-                                  )}
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Select a file for this task.
+                                  </p>
                                 </div>
                               </div>
                             </div>

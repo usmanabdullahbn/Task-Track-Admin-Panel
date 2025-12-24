@@ -15,6 +15,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // Helper function to format date string to datetime-local format
   const formatForDatetimeLocal = (dateString) => {
@@ -71,9 +72,20 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
         actual_end_time: formData.actual_end_time ? new Date(formData.actual_end_time).toISOString() : undefined,
       };
 
-      const updated = await apiClient.updateTask(task._id, payload);
-      const updatedTask = updated?.task ?? updated;
-      onUpdated && onUpdated(updatedTask || task);
+      if (selectedFiles.length > 0) {
+        const fd = new FormData();
+        Object.keys(payload).forEach((k) => {
+          if (payload[k] !== undefined && payload[k] !== null) fd.append(k, payload[k]);
+        });
+        selectedFiles.forEach((file) => fd.append('files', file));
+        const updated = await apiClient.updateTask(task._id, fd);
+        const updatedTask = updated?.task ?? updated;
+        onUpdated && onUpdated(updatedTask || task);
+      } else {
+        const updated = await apiClient.updateTask(task._id, payload);
+        const updatedTask = updated?.task ?? updated;
+        onUpdated && onUpdated(updatedTask || task);
+      }
       onClose && onClose();
     } catch (err) {
       console.error("EditTaskModal: update failed", err);
@@ -182,6 +194,28 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors" 
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Attachments</label>
+              <input
+                type="file"
+                multiple
+                name="files"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  console.log("Selected files for task update:", files);
+                  setSelectedFiles(files);
+                }}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
+               text-gray-900 file:bg-green-700 file:text-white 
+               file:border-none file:px-4 file:py-2 file:mr-4 
+               file:rounded-md file:cursor-pointer
+               hover:file:bg-green-800 transition cursor-pointer"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                You can select multiple files.
+              </p>
             </div>
           </form>
         </div>

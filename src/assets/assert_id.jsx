@@ -14,6 +14,8 @@ const EditAssetPage = () => {
 
   const [originalAsset, setOriginalAsset] = useState(null);
 
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -81,7 +83,19 @@ const EditAssetPage = () => {
         barcode: formData.barcode,
       };
 
-      await apiClient.updateAsset(id, payload);
+      if (selectedFiles && selectedFiles.length > 0) {
+        const fd = new FormData();
+        Object.keys(payload).forEach((k) => {
+          if (payload[k] !== undefined && payload[k] !== null) fd.append(k, payload[k]);
+        });
+
+        selectedFiles.forEach((file) => fd.append('files', file));
+
+        await apiClient.updateAssetWithFiles(id, fd);
+      } else {
+        await apiClient.updateAsset(id, payload);
+      }
+
       setShowSuccess(true);
     } catch (err) {
       console.error(err);
@@ -238,6 +252,7 @@ const EditAssetPage = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files);
                   console.log("Selected Files:", files);
+                  setSelectedFiles(files);
                 }}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
                text-gray-900 file:bg-green-700 file:text-white 

@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-// const API_BASE_URL = "http://localhost:4000/api";
-const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+const API_BASE_URL = "http://localhost:4000/api";
+// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -383,6 +383,20 @@ export const apiClient = {
     return response.json();
   },
 
+  async createAssetWithFiles(formData) {
+    const response = await fetch(`${API_BASE_URL}/assets`, {
+      method: "POST",
+      body: formData, // FormData automatically sets Content-Type with boundary
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to create asset with files");
+    }
+
+    return response.json();
+  },
+
   async updateAsset(id, assetData) {
     const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
       method: "PUT",
@@ -453,10 +467,11 @@ export const apiClient = {
   },
 
   async createTask(taskData) {
+    const isFormData = taskData instanceof FormData;
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(taskData),
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      body: isFormData ? taskData : JSON.stringify(taskData),
     });
 
     if (!response.ok) {
@@ -479,10 +494,11 @@ export const apiClient = {
   },
 
   async updateTask(id, taskData) {
+    const isFormData = taskData instanceof FormData;
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(taskData),
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      body: isFormData ? taskData : JSON.stringify(taskData),
     });
 
     if (!response.ok) throw new Error("Failed to update task");

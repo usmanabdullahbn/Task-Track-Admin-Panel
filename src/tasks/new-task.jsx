@@ -32,6 +32,7 @@ const NewTaskPage = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -184,9 +185,28 @@ const NewTaskPage = () => {
         status: formData.status,
       };
 
-      // console.log(payload);
+      // If files are selected, send multipart/form-data
+      if (selectedFiles && selectedFiles.length > 0) {
+        const fd = new FormData();
 
-      await apiClient.createTask(payload);
+        // append object fields as JSON strings so backend can parse them
+        fd.append('customer', JSON.stringify(payload.customer));
+        fd.append('project', JSON.stringify(payload.project));
+        fd.append('order', JSON.stringify(payload.order));
+        fd.append('asset', JSON.stringify(payload.asset));
+        fd.append('employee', JSON.stringify(payload.employee));
+
+        fd.append('title', payload.title);
+        fd.append('description', payload.description || '');
+        fd.append('plan_duration', String(payload.plan_duration || 0));
+        fd.append('status', payload.status || '');
+
+        selectedFiles.forEach((file) => fd.append('files', file));
+
+        await apiClient.createTask(fd);
+      } else {
+        await apiClient.createTask(payload);
+      }
       navigate("/tasks");
     } catch (err) {
       console.error("Failed to create task:", err);
@@ -332,6 +352,22 @@ const NewTaskPage = () => {
                   rows={3}
                   className="w-full rounded-lg border px-4 py-2"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-2">File Upload</label>
+                <input
+                  type="file"
+                  multiple
+                  name="files"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    console.log('Selected Task Files:', files);
+                    setSelectedFiles(files);
+                  }}
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white text-gray-900 file:bg-green-700 file:text-white file:border-none file:px-4 file:py-2 file:mr-4 file:rounded-md file:cursor-pointer hover:file:bg-green-800 transition cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 mt-1">You can attach multiple files to the task.</p>
               </div>
 
               <div>

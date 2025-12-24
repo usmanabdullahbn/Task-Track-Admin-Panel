@@ -28,6 +28,7 @@ const NewAssetPage = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Fetch customers on mount (projects will be loaded when a customer is selected)
@@ -144,7 +145,7 @@ const NewAssetPage = () => {
       serial_number: formData.serialNumber,
       category: formData.category,
       barcode: formData.barcode,
-      area: formData.area,
+      location: formData.area,
     };
 
     try {
@@ -152,7 +153,28 @@ const NewAssetPage = () => {
       setError("");
 
       console.log("Asset Payload:", payload);
-      await apiClient.createAsset(payload);
+      console.log("Selected Files:", selectedFiles);
+
+      // If files are selected, use FormData for multipart upload
+      if (selectedFiles.length > 0) {
+        const formDataToSend = new FormData();
+        
+        // Add all text fields to FormData
+        Object.keys(payload).forEach(key => {
+          formDataToSend.append(key, payload[key]);
+        });
+        
+        // Add files to FormData
+        selectedFiles.forEach((file, index) => {
+          formDataToSend.append('files', file);
+        });
+
+        await apiClient.createAssetWithFiles(formDataToSend);
+      } else {
+        // No files, use regular JSON API
+        await apiClient.createAsset(payload);
+      }
+
       setShowSuccessModal(true);
     } catch (err) {
       console.error(err);
@@ -384,6 +406,7 @@ const NewAssetPage = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files);
                   console.log("Selected Files:", files);
+                  setSelectedFiles(files);
                 }}
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
                text-gray-900 file:bg-green-700 file:text-white 

@@ -52,6 +52,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
   // submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -258,9 +259,39 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
 
       console.log("Task Payload:", taskPayload);
 
-      // Call the API to create task
-      const result = await apiClient.createTask(taskPayload);
-      console.log("Task created successfully:", result);
+      // If files are selected, use FormData for multipart upload
+      if (selectedFiles.length > 0) {
+        const fd = new FormData();
+
+        // Append nested fields properly for multer parsing
+        fd.append('customer[id]', taskPayload.customer.id);
+        fd.append('customer[name]', taskPayload.customer.name);
+        fd.append('project[id]', taskPayload.project.id);
+        fd.append('project[name]', taskPayload.project.name);
+        fd.append('order[id]', taskPayload.order.id);
+        fd.append('order[title]', taskPayload.order.title);
+        fd.append('asset[id]', taskPayload.asset.id);
+        fd.append('asset[name]', taskPayload.asset.name);
+        fd.append('user[id]', taskPayload.user.id);
+        fd.append('user[name]', taskPayload.user.name);
+
+        fd.append('title', taskPayload.title);
+        fd.append('description', taskPayload.description || '');
+        fd.append('priority', taskPayload.priority || 'Medium');
+        fd.append('status', taskPayload.status || 'Todo');
+        fd.append('start_time', taskPayload.start_time || '');
+        fd.append('end_time', taskPayload.end_time || '');
+        fd.append('remarks', taskPayload.remarks || '');
+
+        selectedFiles.forEach((file) => fd.append('files', file));
+
+        const result = await apiClient.createTask(fd);
+        console.log("Task created with files successfully:", result);
+      } else {
+        // No files, use regular JSON API
+        const result = await apiClient.createTask(taskPayload);
+        console.log("Task created successfully:", result);
+      }
 
       // Call the callback if provided
       if (onSubmit) {
@@ -296,6 +327,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
           name: formData.project.name,
         },
       });
+      setSelectedFiles([]);
 
       onClose();
     } catch (error) {
@@ -520,24 +552,26 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             {/* ATTACHMENT */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Attachment
+                Attachments
               </label>
               <input
                 type="file"
-                name="attachment"
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    attachment: e.target.files?.[0] || null,
-                  }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                multiple
+                name="files"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  console.log("Selected files for task:", files);
+                  setSelectedFiles(files);
+                }}
+                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
+               text-gray-900 file:bg-green-700 file:text-white 
+               file:border-none file:px-4 file:py-2 file:mr-4 
+               file:rounded-md file:cursor-pointer
+               hover:file:bg-green-800 transition cursor-pointer"
               />
-              {formData.attachment && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Selected: {formData.attachment.name}
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                You can select multiple files.
+              </p>
             </div>
           </form>
         </div>
