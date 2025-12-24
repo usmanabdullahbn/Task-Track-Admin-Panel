@@ -51,6 +51,7 @@ const SchedulePage = () => {
         setEmployees(allEmployees);
 
         let allTasks = parseApiResponse(await apiClient.getTasks());
+        console.log("Fetched task details:", allTasks);
         if (allTasks.length === 0) {
           const shehbazEmployee = allEmployees.find(emp => emp.name?.toLowerCase() === "shehbaz");
           allTasks = shehbazEmployee ? createDemoTasks(shehbazEmployee, currentDate) : [];
@@ -549,13 +550,20 @@ const SchedulePage = () => {
                                     const durationText = `${hours}h ${mins}m`;
                                     const isChecked = checkedTasks[task._id];
                                     const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
+                                    console.log("Week view task:", task);
 
                                     return (
                                       <div
                                         key={task._id}
                                         className={`border-l-4 rounded px-2 py-1.5 text-xs ${taskColor}`}
-                                        title={`${task.title}\n${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDuration: ${durationText}`}
+                                        title={`${task.order?.title} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDuration: ${durationText}`}
                                       >
+                                        {task.order?.title && (
+                                          <div className="mb-1 text-xs font-medium opacity-90">
+                                            <p className="truncate">{task.order.title}</p>
+                                            {/* <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p> */}
+                                          </div>
+                                        )}
                                         <div className="flex items-start gap-1 mb-0.5">
                                           <input
                                             type="checkbox"
@@ -688,8 +696,14 @@ const SchedulePage = () => {
                                     width: `${Math.max(width, 100)}px`,
                                   }}
                                   className={`absolute top-2 bottom-2 border-l-4 rounded px-2 py-1 text-xs flex flex-col justify-start hover:shadow-lg transition ${taskColor}`}
-                                  title={`${task.title}\n${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}
+                                  title={`${task.order?.title} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}
                                 >
+                                  {/* Order Info */}
+                                  {task.order && (
+                                    <div className="mb-1 text-xs font-medium opacity-90">
+                                      <p className="truncate">{task.order.title}</p>
+                                    </div>
+                                  )}
                                   {/* Checkbox */}
                                   <div className="flex items-start gap-1.5 mb-1">
                                     <input
