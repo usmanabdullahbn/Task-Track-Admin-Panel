@@ -229,24 +229,17 @@ const NewProjectPage = () => {
                         </option>
                       ))}
                     </select>
+                    {formData.customerId && !loadingEmployees && employees.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/employee/new")}
+                        className="mt-2 w-full rounded-lg border border-green-700 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                      >
+                        + Add New Employee
+                      </button>
+                    )}
 
-                    {/* Debug: Show employees list
-                  {formData.customerId && employees.length > 0 && (
-                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                      <strong>Available Employees ({employees.length}):</strong>
-                      <div className="mt-1 max-h-32 overflow-y-auto">
-                        {employees.map((emp, index) => (
-                          <div key={emp._id || index} className="mb-1 p-1 bg-white rounded border">
-                            <div><strong>Name:</strong> {emp.name}</div>
-                            <div><strong>ID:</strong> {emp._id}</div>
-                            <div><strong>Email:</strong> {emp.email || 'N/A'}</div>
-                            <div><strong>Role:</strong> {emp.role || 'N/A'}</div>
-                            <div><strong>Full Object:</strong> {JSON.stringify(emp, null, 2)}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )} */}
+
                   </div>
                 </div>
 
