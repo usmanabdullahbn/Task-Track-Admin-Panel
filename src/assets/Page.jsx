@@ -520,7 +520,7 @@ const AssetsPage = () => {
                         {file.mimetype && file.mimetype.startsWith('image/') && (
                           <div className="">
                             <img
-                              src={file.url.startsWith('http') ? file.url : `https://backend-task-track.onrender.com${file.url}`}
+                              src={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
                               alt={file.originalname}
                               className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                             />
@@ -535,13 +535,14 @@ const AssetsPage = () => {
                           </p>
                         </div>
                         
-                        {/* Download Button */}
+                        {/* View Button */}
                         <a
-                          href={file.url.startsWith('http') ? file.url : `https://backend-task-track.onrender.com${file.url}`}
-                          download={file.originalname}
+                          href={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
-                          Download
+                          View
                         </a>
                       </div>
                     </div>
