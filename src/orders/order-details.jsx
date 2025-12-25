@@ -23,6 +23,10 @@ const OrderDetailsPage = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [assetTableExpanded, setAssetTableExpanded] = useState(true);
 
+  // files modal state
+  const [showFilesModal, setShowFilesModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -146,6 +150,17 @@ const OrderDetailsPage = () => {
       ...prev,
       [taskId]: !prev[taskId],
     }));
+  };
+
+  // files modal functions
+  const openFilesModal = (task) => {
+    setSelectedTask(task);
+    setShowFilesModal(true);
+  };
+
+  const closeFilesModal = () => {
+    setShowFilesModal(false);
+    setSelectedTask(null);
   };
 
   const handleOpenAddTask = () => {
@@ -397,6 +412,15 @@ const OrderDetailsPage = () => {
                               className="px-4 py-3 flex items-center gap-2"
                               onClick={(e) => e.stopPropagation()}
                             >
+                              {/* VIEW FILES */}
+                              <button
+                                className="p-2 rounded-lg bg-blue-400 hover:bg-blue-500 text-white shadow flex items-center justify-center"
+                                onClick={() => openFilesModal(task)}
+                                title="View Files"
+                              >
+                                📁
+                              </button>
+
                               {/* EDIT BUTTON */}
                               <button
                                 className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white shadow flex items-center justify-center"
@@ -588,23 +612,6 @@ const OrderDetailsPage = () => {
                                       </div>
                                     </div>
                                   </div>
-
-                                  {/* Attachment Section */}
-                                  {task.file_upload && (
-                                    <div className="bg-white rounded-xl shadow-md p-6 mt-6 border border-gray-100">
-                                      <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-red-500">📎</span> Attachment
-                                      </h5>
-                                      <a
-                                        href={task.file_upload}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition duration-200"
-                                      >
-                                        View Attachment
-                                      </a>
-                                    </div>
-                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -677,6 +684,78 @@ const OrderDetailsPage = () => {
           <p className="text-green-800 font-semibold">
             Task "{deleteSuccess}" has been deleted successfully
           </p>
+        </div>
+      )}
+
+      {/* FILES MODAL */}
+      {showFilesModal && selectedTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-lg bg-white shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Files for {selectedTask.title}</h2>
+              <button
+                onClick={closeFilesModal}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {selectedTask.file_upload && selectedTask.file_upload.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedTask.file_upload.map((file, index) => (
+                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-start gap-4">
+                        {/* Image Preview */}
+                        {file.mimetype && file.mimetype.startsWith('image/') && (
+                          <div className="">
+                            <img
+                              src={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                              alt={file.originalname}
+                              className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
+                        )}
+
+                        {/* File Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{file.originalname}</p>
+                          <p className="text-sm text-gray-500">
+                            Size: {(file.size / 1024).toFixed(2)} KB • Type: {file.mimetype}
+                          </p>
+                        </div>
+
+                        {/* View Button */}
+                        <a
+                          href={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          View
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No files attached to this task.</p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={closeFilesModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
