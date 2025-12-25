@@ -492,15 +492,17 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
               >
                 <option value="">Unassigned</option>
                 {loadingUsers && <option disabled>Loading users...</option>}
-                {!loadingUsers && users && users.length > 0 && users.map((user, idx) => {
-                  const userId = user._id || user.id || idx;
-                  const userName = user.name || user.fullName || user.full_name || user.email || "Unknown";
-                  return (
-                    <option key={userId} value={userName}>
-                      {userName}
-                    </option>
-                  );
-                })}
+                {!loadingUsers && users && users.length > 0 && users
+                  .filter((user) => user.role === "supervisor" || user.role === "technician")
+                  .map((user, idx) => {
+                    const userId = user._id || user.id || idx;
+                    const userName = user.name || user.fullName || user.full_name || user.email || "Unknown";
+                    return (
+                      <option key={userId} value={userName}>
+                        {userName} ({user.role})
+                      </option>
+                    );
+                  })}
                 {!loadingUsers && (!users || users.length === 0) && <option disabled>No users available</option>}
               </select>
             </div>

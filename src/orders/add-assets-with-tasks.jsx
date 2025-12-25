@@ -798,14 +798,16 @@ const AddAssetsPage = () => {
                                     className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                   >
                                     <option value="">Unassigned</option>
-                                    {allUsers.map((u) => (
-                                      <option
-                                        key={u._id || u.id}
-                                        value={u._id || u.id}
-                                      >
-                                        {u.name || u.fullName || u.email}
-                                      </option>
-                                    ))}
+                                    {allUsers
+                                      .filter((u) => u.role === "supervisor" || u.role === "technician")
+                                      .map((u) => (
+                                        <option
+                                          key={u._id || u.id}
+                                          value={u._id || u.id}
+                                        >
+                                          {u.name || u.fullName || u.email} ({u.role})
+                                        </option>
+                                      ))}
                                   </select>
                                 </div>
 

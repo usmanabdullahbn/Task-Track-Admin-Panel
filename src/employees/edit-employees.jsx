@@ -189,7 +189,7 @@ const EditEmployeePage = () => {
             </div>
 
             {/* Role */}
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role
               </label>
@@ -203,9 +203,9 @@ const EditEmployeePage = () => {
                 <option value="manager">Manager</option>
                 <option value="supervisor">Supervisor</option>
                 <option value="technician">Technician</option>
-                {/* <option value="employee">Employee</option> */}
+                // <option value="employee">Employee</option> 
               </select>
-            </div>
+            </div> */}
 
             {/* Is Active */}
             <div className="mt-6">
