@@ -1,6 +1,6 @@
 // const API_BASE_URL = "http://10.0.0.234:4000/api";
-const API_BASE_URL = "http://localhost:4000/api";
-// const API_BASE_URL = "https://backend-task-track.onrender.com/api";
+// const API_BASE_URL = "http://localhost:4000/api";
+const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 
 export const apiClient = {
   // ============================
@@ -398,10 +398,11 @@ export const apiClient = {
   },
 
   async updateAsset(id, assetData) {
+    const isFormData = assetData instanceof FormData;
     const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(assetData),
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
+      body: isFormData ? assetData : JSON.stringify(assetData),
     });
 
     if (!response.ok) throw new Error("Failed to update asset");

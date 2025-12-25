@@ -91,7 +91,7 @@ const EditAssetPage = () => {
 
         selectedFiles.forEach((file) => fd.append('files', file));
 
-        await apiClient.updateAssetWithFiles(id, fd);
+        await apiClient.updateAsset(id, fd);
       } else {
         await apiClient.updateAsset(id, payload);
       }
