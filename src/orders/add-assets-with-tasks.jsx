@@ -83,6 +83,7 @@ const AddAssetsPage = () => {
             _id: u._id || u.id || u._id_str || "",
             id: u.id || u._id || "",
             name: u.name || u.fullName || u.full_name || u.email || "(no-name)",
+            role: u.role || u.userRole || u.user_role || "",
             raw: u,
           }));
 
