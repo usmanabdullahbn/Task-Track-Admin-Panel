@@ -94,10 +94,10 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             },
           }));
 
-          // Fetch assets for this customer
-          const customerId = fetched.customer?.id || fetched.customer?._id;
-          if (customerId) {
-            fetchAssets(customerId);
+          // Fetch assets for this project
+          const projectId = fetched.project?.id || fetched.project?._id;
+          if (projectId) {
+            fetchAssets(projectId);
           }
         }
       } catch (err) {
@@ -108,19 +108,37 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
       }
     };
 
-    // Fetch assets for the customer
-    const fetchAssets = async (customerId) => {
-      if (!customerId) {
+    // Fetch assets for the project
+    const fetchAssets = async (projectId) => {
+      if (!projectId) {
         setAssets([]);
         return;
       }
       setLoadingAssets(true);
       try {
-        const data = await apiClient.getAssetByCustomerId(customerId);
+        // Try to fetch assets by project ID first
+        let assetsList = [];
+        try {
+          const data = await apiClient.getAssetsByProjectId(projectId);
+          assetsList = data?.assets || data || [];
+        } catch (err) {
+          console.warn("Failed to fetch assets by project ID, falling back to all assets", err);
+          // Fallback: fetch all assets and filter by project
+          const allData = await apiClient.getAssets();
+          const allAssets = allData?.assets || allData || [];
+          assetsList = allAssets.filter((asset) => {
+            return (
+              asset.project_id === projectId ||
+              asset.project?._id === projectId ||
+              asset.project?.id === projectId ||
+              asset.projectId === projectId
+            );
+          });
+        }
+        
         if (mounted) {
-          const assetsList = data?.assets || data || [];
           setAssets(assetsList);
-          console.log("Fetched assets for customer:", customerId, assetsList);
+          console.log("Fetched assets for project:", projectId, assetsList);
         }
       } catch (err) {
         console.error("AddTaskModal: failed to fetch assets", err);

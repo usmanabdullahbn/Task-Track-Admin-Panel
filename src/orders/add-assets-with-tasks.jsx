@@ -160,7 +160,18 @@ const AddAssetsPage = () => {
           ? assetsResponse
           : assetsResponse.assets || [];
         console.log("Assets fetched:", assetsList.length);
-        setAllAssets(assetsList);
+
+        // Filter assets to only show those with the same project as the order
+        const filteredAssets = assetsList.filter((asset) => {
+          return (
+            asset.project_id === projectId ||
+            asset.project?._id === projectId ||
+            asset.project?.id === projectId ||
+            asset.projectId === projectId
+          );
+        });
+        console.log("Filtered assets:", filteredAssets.length);
+        setAllAssets(filteredAssets);
       } catch (err) {
         console.error("Failed to fetch assets:", err);
         setError("Failed to load assets");
