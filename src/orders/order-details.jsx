@@ -290,6 +290,28 @@ const OrderDetailsPage = () => {
               </span>
             </div>
           </div>
+
+          {/* Signature */}
+          {order.file_upload && order.file_upload.length > 0 && (
+            <div className="mt-4">
+              <label className="font-semibold text-gray-700 text-sm">
+                Signature
+              </label>
+              <div className="mt-1">
+                {(() => {
+                  const lastFile = order.file_upload[order.file_upload.length - 1];
+                  console.log(lastFile.url);
+                  return (
+                    <img
+                      src={lastFile.url.startsWith('http') ? lastFile.url : `http://localhost:4000${lastFile.url}`}
+                      alt="Signature"
+                      className="w-24 h-24 object-contain rounded border"
+                    />
+                  );
+                })()}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ===================== TASKS SECTION ===================== */}
