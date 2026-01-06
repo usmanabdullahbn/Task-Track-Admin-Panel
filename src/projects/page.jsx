@@ -152,7 +152,7 @@ const ProjectsPage = () => {
               <div class="header">
                 <div>
                   <div class="title">${(p.title || p.name || "Project").replace(/</g,"&lt;")}</div>
-                  <div class="meta">Project ID: ${p._id || "-" } • Generated: ${generatedAt}</div>
+                  <div class="meta">Generated: ${generatedAt}</div>
                 </div>
                 <div style="text-align:right">
                   <div style="font-size:12px;color:${status === 'Completed' ? '#059669' : status === 'Active' ? '#0369a1' : '#b45309'};font-weight:700">${status}</div>
@@ -191,7 +191,6 @@ const ProjectsPage = () => {
                 </thead>
                 <tbody>
                   <tr><td>Title</td><td>${(p.title || "-").replace(/</g,"&lt;")}</td></tr>
-                  <tr><td>Project ID</td><td>${p._id || "-"}</td></tr>
                   <tr><td>Status</td><td>${status}</td></tr>
                   <tr><td>Customer</td><td>${customerName}</td></tr>
                   <tr><td>Location</td><td>${location}</td></tr>
