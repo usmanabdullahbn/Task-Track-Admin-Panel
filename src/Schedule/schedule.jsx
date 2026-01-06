@@ -4,7 +4,7 @@ import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
 // Constants
-const START_HOUR = 10, END_HOUR = 19, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
+const START_HOUR = 0, END_HOUR = 23, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
 const TASK_COLOR_MAP = {
   'High': 'bg-red-100 border-red-400 text-red-900',
   'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
@@ -48,7 +48,11 @@ const SchedulePage = () => {
       try {
         setLoading(true);
         const allEmployees = parseApiResponse(await apiClient.getUsers());
-        setEmployees(allEmployees);
+        const filteredEmployees = allEmployees.filter(emp => {
+          const role = (emp.role || emp.designation || "").toLowerCase();
+          return role.includes("technician") || role.includes("supervisor");
+        });
+        setEmployees(filteredEmployees);
 
         let allTasks = parseApiResponse(await apiClient.getTasks());
         console.log("Fetched task details:", allTasks);
@@ -59,7 +63,7 @@ const SchedulePage = () => {
         setTasks(allTasks);
       } catch (err) {
         console.error("Failed to fetch data:", err);
-        const demoEmployee = { _id: "demo-emp", id: "demo-emp", name: "Shehbaz", role: "Employee" };
+        const demoEmployee = { _id: "demo-emp", id: "demo-emp", name: "Shehbaz", role: "technician" };
         setTasks(createDemoTasks(demoEmployee, currentDate));
         setEmployees([demoEmployee]);
       } finally {
@@ -108,8 +112,8 @@ const SchedulePage = () => {
     });
   };
 
-  // Format time from ISO string
-  const formatTime = (isoString) => !isoString ? "" : new Date(isoString).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  // Format time from ISO string (24-hour format)
+  const formatTime = (isoString) => !isoString ? "" : new Date(isoString).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 
   // Get week start (Sunday) from a given date
   const getWeekStart = (date) => {
@@ -489,12 +493,12 @@ const SchedulePage = () => {
                             })}
                           </p>
                         </div>
-                        {/* Mini time slots for the day */}
+                        {/* Mini time slots for the day (24-hour) */}
                         <div className="flex text-xs text-gray-500 text-center divide-x divide-gray-200">
-                          <div className="flex-1 py-1">12 AM</div>
-                          <div className="flex-1 py-1">6 AM</div>
-                          <div className="flex-1 py-1">12 PM</div>
-                          <div className="flex-1 py-1">6 PM</div>
+                          <div className="flex-1 py-1">00:00</div>
+                          <div className="flex-1 py-1">06:00</div>
+                          <div className="flex-1 py-1">12:00</div>
+                          <div className="flex-1 py-1">18:00</div>
                         </div>
                       </div>
                     ))}
@@ -612,15 +616,14 @@ const SchedulePage = () => {
                   <div className="flex min-w-max">
                     {Array.from({ length: END_HOUR - START_HOUR + 1 }).map((_, i) => {
                       const hour = START_HOUR + i;
-                      const ampm = hour < 12 ? 'AM' : 'PM';
-                      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                      const displayHour24 = hour.toString().padStart(2, '0');
                       return (
                         <div
                           key={i}
                           style={{ width: DAY_VIEW_HOUR_WIDTH }}
                           className="border-r border-gray-200 p-3 text-center text-sm font-semibold text-gray-700"
                         >
-                          {displayHour}:00 {ampm}
+                          {displayHour24}:00
                         </div>
                       );
                     })}
