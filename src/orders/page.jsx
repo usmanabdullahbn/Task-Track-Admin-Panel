@@ -9,9 +9,11 @@ const OrdersPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("order");
+  const [searchField, setSearchField] = useState("title");
   const [statusFilter, setStatusFilter] = useState("all");
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -189,13 +191,25 @@ const OrdersPage = () => {
   };
 
   // -------------------------
-  // FETCH ORDERS
+  // FETCH DATA (Orders, Customers, Projects)
   // -------------------------
-  const fetchOrders = async (status = "all") => {
+  const fetchData = async (status = "all") => {
     try {
       setLoading(true);
-      const data = await apiClient.getOrders();
-      let ordersList = Array.isArray(data?.orders) ? data.orders : [];
+      
+      // Fetch orders
+      const ordersData = await apiClient.getOrders();
+      let ordersList = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+      
+      // Fetch customers
+      const customersData = await apiClient.getCustomers();
+      const customersList = Array.isArray(customersData?.customers) ? customersData.customers : [];
+      setCustomers(customersList);
+      
+      // Fetch projects
+      const projectsData = await apiClient.getProjects();
+      const projectsList = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
+      setProjects(projectsList);
 
       // Filter by status if specified
       if (status !== "all") {
@@ -207,9 +221,11 @@ const OrdersPage = () => {
 
       setOrders(ordersList);
     } catch (err) {
-      console.error("Failed to fetch orders:", err);
-      setError(err?.message || "Failed to fetch orders");
+      console.error("Failed to fetch data:", err);
+      setError(err?.message || "Failed to fetch data");
       setOrders([]);
+      setCustomers([]);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -221,10 +237,10 @@ const OrdersPage = () => {
       setSearchField("status");
       setSearchTerm(statusParam);
       setStatusFilter(statusParam);
-      fetchOrders(statusParam);
+      fetchData(statusParam);
     } else {
       setStatusFilter("all");
-      fetchOrders("all");
+      fetchData("all");
     }
   }, [searchParams]);
 
@@ -391,12 +407,12 @@ const OrdersPage = () => {
     switch (searchField) {
       case "order":
         return (order.order_number || "").toLowerCase().includes(searchValue);
-      case "erp":
-        return (order.erp_number || "").toLowerCase().includes(searchValue);
+      case "title":
+        return (order.title || "").toLowerCase().includes(searchValue);
       case "customer":
-        return (order.customer_id || "").toLowerCase().includes(searchValue);
+        return (order.customer?.name || order.customer_name || "").toLowerCase().includes(searchValue);
       case "project":
-        return (order.project_id || "").toLowerCase().includes(searchValue);
+        return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase().includes(searchValue);
       case "amount":
         return String(
           order.amount?.value ?? order.amount?.$numberDecimal ?? ""
@@ -445,7 +461,19 @@ const OrdersPage = () => {
               {/* SEARCH SECTION */}
               <div className="border-b border-gray-200 p-4 sm:p-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {/* Order # */}
+                  {/* Title (matches first table column) */}
+                  <input
+                    type="text"
+                    placeholder="Search Title"
+                    value={searchField === "title" ? searchTerm : ""}
+                    onChange={(e) => {
+                      setSearchField("title");
+                      setSearchTerm(e.target.value);
+                    }}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
+
+                  {/* Order # (matches second table column) */}
                   <input
                     type="text"
                     placeholder="Search Order #"
@@ -457,43 +485,51 @@ const OrdersPage = () => {
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
 
-                  {/* ERP # */}
-                  <input
-                    type="text"
-                    placeholder="Search ERP #"
-                    value={searchField === "erp" ? searchTerm : ""}
-                    onChange={(e) => {
-                      setSearchField("erp");
-                      setSearchTerm(e.target.value);
-                    }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
+                  {/* Customer Name (matches third table column) */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search Customer"
+                      value={searchField === "customer" ? searchTerm : ""}
+                      onChange={(e) => {
+                        setSearchField("customer");
+                        setSearchTerm(e.target.value);
+                      }}
+                      list="customer-list"
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 w-full"
+                    />
+                    <datalist id="customer-list">
+                      {customers
+                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+                        .map((customer) => (
+                          <option key={customer._id} value={customer.name} />
+                        ))}
+                    </datalist>
+                  </div>
 
-                  {/* Customer ID / name */}
-                  <input
-                    type="text"
-                    placeholder="Search Customer ID"
-                    value={searchField === "customer" ? searchTerm : ""}
-                    onChange={(e) => {
-                      setSearchField("customer");
-                      setSearchTerm(e.target.value);
-                    }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
+                  {/* Project Name (matches fourth table column) */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search Project"
+                      value={searchField === "project" ? searchTerm : ""}
+                      onChange={(e) => {
+                        setSearchField("project");
+                        setSearchTerm(e.target.value);
+                      }}
+                      list="project-list"
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 w-full"
+                    />
+                    <datalist id="project-list">
+                      {projects
+                        .sort((a, b) => ((a.name || a.title) || "").localeCompare((b.name || b.title) || ""))
+                        .map((project) => (
+                          <option key={project._id} value={project.name || project.title} />
+                        ))}
+                    </datalist>
+                  </div>
 
-                  {/* Project ID / name */}
-                  <input
-                    type="text"
-                    placeholder="Search Project ID"
-                    value={searchField === "project" ? searchTerm : ""}
-                    onChange={(e) => {
-                      setSearchField("project");
-                      setSearchTerm(e.target.value);
-                    }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
-
-                  {/* Status dropdown (replaces Amount) */}
+                  {/* Status dropdown (matches sixth table column) */}
                   <select
                     value={searchField === "status" ? searchTerm : ""}
                     onChange={(e) => {
@@ -501,7 +537,7 @@ const OrdersPage = () => {
                         handleStatusFilterChange(e.target.value);
                       } else {
                         // Clear status filter
-                        setSearchField("order");
+                        setSearchField("title");
                         setSearchTerm("");
                         setStatusFilter("all");
                         setSearchParams({});
