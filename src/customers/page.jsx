@@ -89,11 +89,15 @@ const CustomersPage = () => {
   }, []);
 
   // Filter Logic
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter((customer) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      customer.name?.toLowerCase().includes(term) ||
+      customer.email?.toLowerCase().includes(term) ||
+      customer.phone?.toLowerCase().includes(term) ||
+      customer.address?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -120,7 +124,7 @@ const CustomersPage = () => {
             <div className="border-b border-gray-200 p-4 sm:p-6">
               <input
                 type="text"
-                placeholder="Search customers by name or email..."
+                placeholder="Search customers by name, email, phone or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
