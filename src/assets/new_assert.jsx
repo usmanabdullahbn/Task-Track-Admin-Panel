@@ -325,7 +325,7 @@ const NewAssetPage = () => {
               {/* Barcode */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Barcode <span className="text-red-600">*</span>
+                  Barcode 
                 </label>
                 <input
                   type="text"
@@ -340,7 +340,7 @@ const NewAssetPage = () => {
               {/* Area */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Area <span className="text-red-600">*</span>
+                  Area 
                 </label>
                 <input
                   type="text"
