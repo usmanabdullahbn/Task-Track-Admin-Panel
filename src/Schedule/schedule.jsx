@@ -680,8 +680,7 @@ const SchedulePage = () => {
                           <div className="absolute inset-0">
                             {empTasks.map((task) => {
                               const taskStart = new Date(task.start_time);
-                              const startMinutesFromMidnight = taskStart.getHours() * 60 + taskStart.getMinutes();
-                              const startMinutesFromStart = startMinutesFromMidnight - (START_HOUR * 60);
+                              const startMinutesFromStart = getMinutesFromStart(task.start_time);
                               const left = Math.max(0, (startMinutesFromStart / 60) * DAY_VIEW_HOUR_WIDTH);
                               const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
                               const width = (durationMinutes / 60) * DAY_VIEW_HOUR_WIDTH;
