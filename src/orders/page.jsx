@@ -90,7 +90,7 @@ const OrdersPage = () => {
               <div class="header">
                 <div>
                   <div class="title">Order ${o.order_number || o._id}</div>
-                  <div class="meta">Generated: ${generatedAt} • Order ID: ${o._id || "-"
+                  <div class="meta">Generated: ${generatedAt} • Order Number: ${o.order_number || o._id || "-"
       }</div>
                 </div>
                 <div style="text-align:right">

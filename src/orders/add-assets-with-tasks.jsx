@@ -10,6 +10,7 @@ const AddAssetsPage = () => {
   // Get order context from navigation state
   const orderContext = location.state?.orderData || {
     id: "",
+    order_number: "",
     title: "",
     customerId: "",
     customerName: "",
@@ -540,8 +541,8 @@ const AddAssetsPage = () => {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-blue-700">Order ID</p>
-                    <p className="font-medium text-gray-900">{orderContext.id}</p>
+                    <p className="text-blue-700">Order Number</p>
+                    <p className="font-medium text-gray-900">{orderContext.order_number}</p>
                   </div>
                   <div>
                     <p className="text-blue-700">Order Title</p>
