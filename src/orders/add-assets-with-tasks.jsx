@@ -824,10 +824,10 @@ const AddAssetsPage = () => {
                                   </select>
                                 </div>
 
-                                {/* Start Time */}
+                                {/* Plan Start Time */}
                                 <div>
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Start time
+                                    Plan Start Time
                                   </label>
                                   <input
                                     type="datetime-local"
@@ -844,10 +844,10 @@ const AddAssetsPage = () => {
                                   />
                                 </div>
 
-                                {/* End Time */}
+                                {/* Plan End Time */}
                                 <div>
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    End time
+                                    Plan End Time
                                   </label>
                                   <input
                                     type="datetime-local"

@@ -529,7 +529,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Start time
+                  Plan Start Time
                 </label>
                 <input
                   type="datetime-local"
@@ -542,7 +542,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  End time
+                  Plan End Time
                 </label>
                 <input
                   type="datetime-local"

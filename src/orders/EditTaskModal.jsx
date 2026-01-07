@@ -152,7 +152,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Plan Start Time</label>
                 <input 
                   type="datetime-local" 
                   name="start_time" 
@@ -162,7 +162,7 @@ const EditTaskModal = ({ isOpen, onClose, task, onUpdated }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Plan End Time</label>
                 <input 
                   type="datetime-local" 
                   name="end_time" 

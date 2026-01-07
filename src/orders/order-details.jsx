@@ -365,8 +365,8 @@ const OrderDetailsPage = () => {
                         <th className="px-4 py-3 text-left">Status</th>
                         <th className="px-4 py-3 text-left">Priority</th>
                         <th className="px-4 py-3 text-left">Assigned</th>
-                        <th className="px-4 py-3 text-left">Start</th>
-                        <th className="px-4 py-3 text-left">End</th>
+                        <th className="px-4 py-3 text-left">Plan Start Time</th>
+                        <th className="px-4 py-3 text-left">Plan End Time</th>
                         <th className="px-4 py-3 text-left">Created</th>
                         <th className="px-4 py-3 text-left flex items-center justify-between">
                           <span>Action</span>
@@ -543,7 +543,7 @@ const OrderDetailsPage = () => {
                                       <div className="space-y-4">
                                         <div>
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                                            Start Time
+                                            Plan Start Time
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.start_time
@@ -553,7 +553,7 @@ const OrderDetailsPage = () => {
                                         </div>
                                         <div>
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                                            End Time
+                                            Plan End Time
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.end_time

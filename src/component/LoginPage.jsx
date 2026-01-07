@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/api-client"; // <-- update path if needed
+import logo from "../images/SGI_Logo_biling.png"; // <-- update path if needed
 
 const Login = () => {
   const navigate = useNavigate();
@@ -61,12 +62,16 @@ const Login = () => {
       <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-100">
 
         {/* Logo / Brand */}
-        <h1 className="text-3xl font-bold text-green-600 text-center mb-6">
-          TaskTrack Admin
-        </h1>
+        <div className="text-center mb-6">
+          <img
+            src={logo}
+            alt="SGI Logo"
+            className="w-80 h-auto mx-auto"
+          />
+        </div>
 
         {/* Title */}
-        <h2 className="text-xl font-semibold text-gray-700 text-center mb-6">
+        <h2 className="text-xl font-semibold text-green-900 text-center mb-6">
           Login to your account
         </h2>
 
