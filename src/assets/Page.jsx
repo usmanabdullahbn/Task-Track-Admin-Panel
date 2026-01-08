@@ -516,7 +516,18 @@ const AssetsPage = () => {
                   {selectedAsset.file_upload.map((file, index) => (
                     <div key={index} className="p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-start gap-4">
-                        {/* Image Preview */}
+                        {/* File Preview */}
+                        {file.mimetype === 'application/pdf' && (
+                          <div className="w-20 h-20 border border-gray-200 rounded-lg overflow-hidden">
+                            <embed
+                              src={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                              type="application/pdf"
+                              width="80"
+                              height="80"
+                              className="w-full h-full"
+                            />
+                          </div>
+                        )}
                         {file.mimetype && file.mimetype.startsWith('image/') && (
                           <div className="">
                             <img
@@ -526,7 +537,12 @@ const AssetsPage = () => {
                             />
                           </div>
                         )}
-                        
+                        {!file.mimetype || (!file.mimetype.startsWith('image/') && file.mimetype !== 'application/pdf') && (
+                          <div className="w-20 h-20 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
+                            <span className="text-gray-500 text-xs">File</span>
+                          </div>
+                        )}
+
                         {/* File Info */}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">{file.originalname}</p>
@@ -534,15 +550,15 @@ const AssetsPage = () => {
                             Size: {(file.size / 1024).toFixed(2)} KB • Type: {file.mimetype}
                           </p>
                         </div>
-                        
-                        {/* View Button */}
+
+                        {/* View/Download Button */}
                         <a
                           href={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
-                          View
+                          {file.mimetype === 'application/pdf' ? 'View' : 'Download'}
                         </a>
                       </div>
                     </div>
