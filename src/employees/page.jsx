@@ -163,6 +163,7 @@ const EmployeesPage = () => {
                       <th className="px-4 sm:px-6 py-3">Name</th>
                       <th className="px-4 sm:px-6 py-3">Position</th>
                       <th className="px-4 sm:px-6 py-3">Role</th>
+                      <th className="px-4 sm:px-6 py-3">Company</th>
                       <th className="px-4 sm:px-6 py-3">Email</th>
                       <th className="px-4 sm:px-6 py-3">Phone</th>
                       <th className="px-4 sm:px-6 py-3">Action</th>
@@ -180,6 +181,11 @@ const EmployeesPage = () => {
                         </td>
                         <td className="px-4 sm:px-6 py-3">{employee.designation || "—"}</td>
                         <td className="px-4 sm:px-6 py-3">{employee.role || "—"}</td>
+                        <td className="px-4 sm:px-6 py-3">
+                          {employee.role === "employee" 
+                            ? (employee.customer?.name || "N/A") 
+                            : "Switchgear International"}
+                        </td>
                         <td className="px-4 sm:px-6 py-3">{employee.email}</td>
                         <td className="px-4 sm:px-6 py-3">{employee.phone || "—"}</td>
 
