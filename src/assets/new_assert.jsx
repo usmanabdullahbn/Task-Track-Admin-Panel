@@ -423,6 +423,7 @@ const NewAssetPage = () => {
                 type="file"
                 multiple
                 name="files"
+                accept=".pdf,.doc,.docx,.csv"
                 onChange={(e) => {
                   const files = Array.from(e.target.files);
                   console.log("Selected Files:", files);
@@ -435,7 +436,7 @@ const NewAssetPage = () => {
                hover:file:bg-green-800 transition cursor-pointer"
               />
               <p className="text-xs text-gray-500 mt-1">
-                You can select multiple files.
+                You can select multiple PDF, Word, or CSV files.
               </p>
             </div>
 

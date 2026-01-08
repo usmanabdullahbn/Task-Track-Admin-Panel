@@ -892,6 +892,7 @@ const AddAssetsPage = () => {
                                   </label>
                                   <input
                                     type="file"
+                                    accept=".pdf,.doc,.docx,.csv"
                                     onChange={(e) =>
                                       updateTask(
                                         activeAssetIdx,
@@ -907,7 +908,7 @@ const AddAssetsPage = () => {
                hover:file:bg-green-800 transition cursor-pointer"
                                   />
                                   <p className="text-xs text-gray-500 mt-1">
-                                    Select a file for this task.
+                                    Select a PDF, Word, or CSV file for this task.
                                   </p>
                                 </div>
                               </div>

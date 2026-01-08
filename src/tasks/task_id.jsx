@@ -98,6 +98,7 @@ const EditTaskPage = () => {
                   type="file"
                   multiple
                   name="files"
+                  accept=".pdf,.doc,.docx,.csv"
                   onChange={(e) => {
                     const files = Array.from(e.target.files)
                     console.log("Selected files for task update:", files)
@@ -105,7 +106,7 @@ const EditTaskPage = () => {
                   }}
                   className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white text-gray-900 file:bg-green-700 file:text-white file:border-none file:px-4 file:py-2 file:mr-4 file:rounded-md file:cursor-pointer hover:file:bg-green-800 transition cursor-pointer"
                 />
-                <p className="text-xs text-gray-500 mt-1">You can attach multiple files to the task.</p>
+                <p className="text-xs text-gray-500 mt-1">You can attach multiple PDF, Word, or CSV files to the task.</p>
               </div>
             </div>
 
