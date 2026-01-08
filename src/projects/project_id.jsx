@@ -182,10 +182,9 @@ const EditProjectPage = () => {
                     <input
                       type="text"
                       name="contactName"
-                      disabled
                       value={formData.contactName || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
                     />
                   </div>
 
@@ -196,10 +195,9 @@ const EditProjectPage = () => {
                     <input
                       type="text"
                       name="contactPhone"
-                      disabled
                       value={formData.contactPhone || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
                     />
                   </div>
                 </div>
@@ -213,10 +211,9 @@ const EditProjectPage = () => {
                     <input
                       type="email"
                       name="contactEmail"
-                      disabled
                       value={formData.contactEmail || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600 disabled:opacity-60"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
                     />
                   </div>
 
