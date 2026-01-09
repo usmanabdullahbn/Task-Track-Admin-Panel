@@ -74,15 +74,15 @@ const DashboardStats = ({ stats = {} }) => {
       {/* ===== TASKS ===== */}
       <Section title={`Total Task  ${stats.totalTasks ?? 0}`}>
         {[
-          { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
-          { title: "Pending Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
+          { title: "Todo Tasks", value: stats.todoTasks, color: "blue", icon: <FaListUl /> },
           { title: "In Progress Tasks", value: stats.inProgressTasks, color: "purple", icon: <FaSpinner /> },
-          { title: "Cancelled Task", value: stats.onHoldTasks, color: "red", icon: <FaTrash />},
+          { title: "Completed Tasks", value: stats.completedTasks, color: "green", icon: <FaCheckCircle /> },
+          { title: "On Hold Tasks", value: stats.onHoldTasks, color: "red", icon: <FaPauseCircle />},
         ].map((item) => (
           <StatusCard
             key={item.title}
             {...item}
-            // onClick={() => navigate(taskRoutes[item.title])}
+            onClick={() => navigate(taskRoutes[item.title])}
           />
         ))}
       </Section>

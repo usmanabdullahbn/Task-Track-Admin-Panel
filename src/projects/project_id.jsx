@@ -11,6 +11,9 @@ const EditProjectPage = () => {
 
   const [formData, setFormData] = useState({
     customer: "",
+    customerId: "",
+    employeeName: "",
+    employeeId: "",
     title: "",
     location: "",
     latitude: "",
@@ -21,11 +24,34 @@ const EditProjectPage = () => {
   });
 
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  // Fetch employees for a specific customer
+  const fetchEmployeesForCustomer = async (customerId) => {
+    try {
+      setLoadingEmployees(true);
+      const response = await apiClient.getUsersByCustomerId(customerId);
+      console.log("getUsersByCustomerId response:", response);
+
+      const employeesList = Array.isArray(response)
+        ? response
+        : response.users || [];
+
+      console.log("Employees list:", employeesList);
+      setEmployees(employeesList);
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+      setEmployees([]);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
 
   // Fetch project data and customers
   useEffect(() => {
@@ -38,8 +64,13 @@ const EditProjectPage = () => {
         const projectData = projectResponse?.project || projectResponse;
         console.log("Loaded project data:", projectData);
 
+        const customerId = projectData.customer._id || projectData.customer.id || "";
+
         setFormData({
           customer: projectData.customer.name || "",
+          customerId: customerId,
+          employeeName: projectData.employee?.name || "",
+          employeeId: projectData.employee?._id || projectData.employee?.id || "",
           title: projectData.title || "",
           location: projectData.map_location || "",
           latitude: projectData.latitude.$numberDecimal || "",
@@ -56,6 +87,11 @@ const EditProjectPage = () => {
           ? customersResponse
           : customersResponse.customers || [];
         setCustomers(customersList);
+
+        // Fetch employees for this customer
+        if (customerId) {
+          await fetchEmployeesForCustomer(customerId);
+        }
       } catch (err) {
         setError(err.message || "Failed to load project data");
         console.error(err);
@@ -69,7 +105,36 @@ const EditProjectPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // If changing customer, fetch employees for that customer
+    if (name === "customerId") {
+      const selectedCustomer = customers.find((c) => c._id === value);
+      if (selectedCustomer) {
+        setFormData((prev) => ({
+          ...prev,
+          customerId: value,
+          customer: selectedCustomer.name,
+          employeeName: "", // Reset employee when customer changes
+          employeeId: "",
+        }));
+        fetchEmployeesForCustomer(value);
+      }
+    } else if (name === "employeeId") {
+      // Handle employee selection
+      const selectedEmployee = employees.find((emp) => emp._id === value);
+      if (selectedEmployee) {
+        setFormData((prev) => ({
+          ...prev,
+          employeeName: selectedEmployee.name,
+          employeeId: selectedEmployee._id,
+          contactName: selectedEmployee.name,
+          contactPhone: selectedEmployee.phone || "",
+          contactEmail: selectedEmployee.email || "",
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleUpdate = async () => {
@@ -85,6 +150,10 @@ const EditProjectPage = () => {
         contact_name: formData.contactName,
         contact_phone: formData.contactPhone,
         contact_email: formData.contactEmail,
+        employee: {
+          id: formData.employeeId || "0",
+          name: formData.employeeName || "Not Assigned",
+        },
       };
 
       await apiClient.updateProject(id, updateData);
@@ -144,33 +213,61 @@ const EditProjectPage = () => {
             {/* Form Section */}
             <div className="lg:col-span-2">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                {/* Customer Dropdown */}
+                {/* Customer and Employee Dropdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Customer Name
                     </label>
-                    <input
-                      type="text"
-                      name="title"
-                      disabled='true'
-                      value={formData.customer || ""}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-gray-100 cursor-not-allowed text-gray-600"
-                    />
+                    <select
+                      name="customerId"
+                      value={formData.customerId || ""}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700"
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((customer) => (
+                        <option key={customer._id} value={customer._id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Project Title
+                      Assigned Employee
                     </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title || ""}
+                    <select
+                      name="employeeId"
+                      value={formData.employeeId || ""}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
+                      disabled={loadingEmployees || !formData.customerId}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-green-700 focus:border-green-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {formData.customerId ? (loadingEmployees ? "Loading employees..." : "Select an employee") : "Select customer first"}
+                      </option>
+                      {employees.map((employee) => (
+                        <option key={employee._id} value={employee._id}>
+                          {employee.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                </div>
+
+                {/* Project Title */}
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Project Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title || ""}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                  />
                 </div>
 
                 {/* Contact Fields */}
