@@ -56,7 +56,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
 
   useEffect(() => {
     let mounted = true;
-    
+
     // Fetch order details
     const fetchDetail = async () => {
       if (!orderId) {
@@ -135,7 +135,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             );
           });
         }
-        
+
         if (mounted) {
           setAssets(assetsList);
           console.log("Fetched assets for project:", projectId, assetsList);
@@ -154,9 +154,9 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
       try {
         const data = await apiClient.getUsers();
         console.log("Raw getUsers response:", data);
-        
+
         let usersList = [];
-        
+
         // Try different response formats
         if (Array.isArray(data)) {
           usersList = data;
@@ -184,9 +184,9 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             }
           }
         }
-        
+
         console.log("Final users list:", usersList);
-        
+
         if (mounted) {
           setUsers(usersList || []);
         }
@@ -202,7 +202,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
 
     fetchDetail();
     fetchUsers();
-    
+
     return () => {
       mounted = false;
     };
@@ -215,7 +215,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
 
   const handleSubmit = async (e) => {
     e && e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.title || !formData.asset) {
       setSubmitError("Please fill in all required fields (Task Title and Asset)");
@@ -529,28 +529,102 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Plan Start Time
+                  Plan Start Time (24-hour)
                 </label>
-                <input
-                  type="datetime-local"
-                  name="start_time"
-                  value={formData.start_time}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="date"
+                    value={formData.start_time ? formData.start_time.split('T')[0] : ""}
+                    onChange={(e) => {
+                      const time = formData.start_time ? formData.start_time.split('T')[1] || "00:00" : "00:00";
+                      const newVal = e.target.value ? `${e.target.value}T${time}` : "";
+                      setFormData(s => ({ ...s, start_time: newVal }));
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    placeholder="HH"
+                    value={formData.start_time ? formData.start_time.split('T')[1]?.split(':')[0] || "00" : ""}
+                    onChange={(e) => {
+                      const date = formData.start_time ? formData.start_time.split('T')[0] : new Date().toISOString().split('T')[0];
+                      const minutes = formData.start_time ? formData.start_time.split('T')[1]?.split(':')[1] || "00" : "00";
+                      const hour = String(Math.min(23, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                      const newVal = date ? `${date}T${hour}:${minutes}` : "";
+                      setFormData(s => ({ ...s, start_time: newVal }));
+                    }}
+                    className="w-14 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm"
+                  />
+                  <span className="text-gray-400">:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="MM"
+                    value={formData.start_time ? formData.start_time.split('T')[1]?.split(':')[1] || "00" : ""}
+                    onChange={(e) => {
+                      const date = formData.start_time ? formData.start_time.split('T')[0] : new Date().toISOString().split('T')[0];
+                      const hour = formData.start_time ? formData.start_time.split('T')[1]?.split(':')[0] || "00" : "00";
+                      const minutes = String(Math.min(59, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                      const newVal = date ? `${date}T${hour}:${minutes}` : "";
+                      setFormData(s => ({ ...s, start_time: newVal }));
+                    }}
+                    className="w-14 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Hours: 00-23 | Minutes: 00-59</p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Plan End Time
+                  Plan End Time (24-hour)
                 </label>
-                <input
-                  type="datetime-local"
-                  name="end_time"
-                  value={formData.end_time}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="date"
+                    value={formData.end_time ? formData.end_time.split('T')[0] : ""}
+                    onChange={(e) => {
+                      const time = formData.end_time ? formData.end_time.split('T')[1] || "00:00" : "00:00";
+                      const newVal = e.target.value ? `${e.target.value}T${time}` : "";
+                      setFormData(s => ({ ...s, end_time: newVal }));
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    placeholder="HH"
+                    value={formData.end_time ? formData.end_time.split('T')[1]?.split(':')[0] || "00" : ""}
+                    onChange={(e) => {
+                      const date = formData.end_time ? formData.end_time.split('T')[0] : new Date().toISOString().split('T')[0];
+                      const minutes = formData.end_time ? formData.end_time.split('T')[1]?.split(':')[1] || "00" : "00";
+                      const hour = String(Math.min(23, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                      const newVal = date ? `${date}T${hour}:${minutes}` : "";
+                      setFormData(s => ({ ...s, end_time: newVal }));
+                    }}
+                    className="w-14 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm"
+                  />
+                  <span className="text-gray-400">:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="MM"
+                    value={formData.end_time ? formData.end_time.split('T')[1]?.split(':')[1] || "00" : ""}
+                    onChange={(e) => {
+                      const date = formData.end_time ? formData.end_time.split('T')[0] : new Date().toISOString().split('T')[0];
+                      const hour = formData.end_time ? formData.end_time.split('T')[1]?.split(':')[0] || "00" : "00";
+                      const minutes = String(Math.min(59, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                      const newVal = date ? `${date}T${hour}:${minutes}` : "";
+                      setFormData(s => ({ ...s, end_time: newVal }));
+                    }}
+                    className="w-14 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Hours: 00-23 | Minutes: 00-59</p>
               </div>
             </div>
 

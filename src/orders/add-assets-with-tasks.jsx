@@ -617,8 +617,8 @@ const AddAssetsPage = () => {
                       key={asset.id}
                       onClick={() => setActiveAssetIdx(idx)}
                       className={`px-4 py-2.5 rounded-t-lg font-medium whitespace-nowrap transition-colors ${activeAssetIdx === idx
-                          ? "bg-green-700 text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-green-700 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                         }`}
                     >
                       Asset {idx + 1}
@@ -827,90 +827,176 @@ const AddAssetsPage = () => {
                                 {/* Plan Start Time */}
                                 <div>
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Plan Start Time
+                                    Plan Start Time (24-hour)
                                   </label>
-                                  <input
-                                    type="datetime-local"
-                                    value={task.startTime || ""}
-                                    onChange={(e) =>
-                                      updateTask(
-                                        activeAssetIdx,
-                                        taskIdx,
-                                        "startTime",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                  />
+                                  <div className="flex gap-2 items-center">
+                                    <input
+                                      type="date"
+                                      value={task.startTime ? task.startTime.split('T')[0] : ""}
+                                      onChange={(e) => {
+                                        const time = task.startTime ? task.startTime.split('T')[1] || "00:00" : "00:00";
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "startTime",
+                                          e.target.value ? `${e.target.value}T${time}` : ""
+                                        );
+                                      }}
+                                      className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    />
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="23"
+                                      placeholder="HH"
+                                      value={task.startTime ? task.startTime.split('T')[1]?.split(':')[0] || "00" : ""}
+                                      onChange={(e) => {
+                                        const date = task.startTime ? task.startTime.split('T')[0] : new Date().toISOString().split('T')[0];
+                                        const minutes = task.startTime ? task.startTime.split('T')[1]?.split(':')[1] || "00" : "00";
+                                        const hour = String(Math.min(23, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "startTime",
+                                          date ? `${date}T${hour}:${minutes}` : ""
+                                        );
+                                      }}
+                                      className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 text-center"
+                                    />
+                                    <span className="text-gray-400">:</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="59"
+                                      placeholder="MM"
+                                      value={task.startTime ? task.startTime.split('T')[1]?.split(':')[1] || "00" : ""}
+                                      onChange={(e) => {
+                                        const date = task.startTime ? task.startTime.split('T')[0] : new Date().toISOString().split('T')[0];
+                                        const hour = task.startTime ? task.startTime.split('T')[1]?.split(':')[0] || "00" : "00";
+                                        const minutes = String(Math.min(59, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "startTime",
+                                          date ? `${date}T${hour}:${minutes}` : ""
+                                        );
+                                      }}
+                                      className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 text-center"
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">Hours: 00-23 | Minutes: 00-59</p>
                                 </div>
 
                                 {/* Plan End Time */}
                                 <div>
                                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Plan End Time
+                                    Plan End Time (24-hour)
                                   </label>
-                                  <input
-                                    type="datetime-local"
-                                    value={task.endTime || ""}
-                                    onChange={(e) =>
-                                      updateTask(
-                                        activeAssetIdx,
-                                        taskIdx,
-                                        "endTime",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                  />
+                                  <div className="flex gap-2 items-center">
+                                    <input
+                                      type="date"
+                                      value={task.endTime ? task.endTime.split('T')[0] : ""}
+                                      onChange={(e) => {
+                                        const time = task.endTime ? task.endTime.split('T')[1] || "00:00" : "00:00";
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "endTime",
+                                          e.target.value ? `${e.target.value}T${time}` : ""
+                                        );
+                                      }}
+                                      className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    />
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="23"
+                                      placeholder="HH"
+                                      value={task.endTime ? task.endTime.split('T')[1]?.split(':')[0] || "00" : ""}
+                                      onChange={(e) => {
+                                        const date = task.endTime ? task.endTime.split('T')[0] : new Date().toISOString().split('T')[0];
+                                        const minutes = task.endTime ? task.endTime.split('T')[1]?.split(':')[1] || "00" : "00";
+                                        const hour = String(Math.min(23, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "endTime",
+                                          date ? `${date}T${hour}:${minutes}` : ""
+                                        );
+                                      }}
+                                      className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 text-center"
+                                    />
+                                    <span className="text-gray-400">:</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="59"
+                                      placeholder="MM"
+                                      value={task.endTime ? task.endTime.split('T')[1]?.split(':')[1] || "00" : ""}
+                                      onChange={(e) => {
+                                        const date = task.endTime ? task.endTime.split('T')[0] : new Date().toISOString().split('T')[0];
+                                        const hour = task.endTime ? task.endTime.split('T')[1]?.split(':')[0] || "00" : "00";
+                                        const minutes = String(Math.min(59, Math.max(0, parseInt(e.target.value) || 0))).padStart(2, '0');
+                                        updateTask(
+                                          activeAssetIdx,
+                                          taskIdx,
+                                          "endTime",
+                                          date ? `${date}T${hour}:${minutes}` : ""
+                                        );
+                                      }}
+                                      className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 text-center"
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">Hours: 00-23 | Minutes: 00-59</p>
                                 </div>
+                              </div>
 
-                                {/* Remarks */}
-                                <div className="sm:col-span-2">
-                                  <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Remarks
-                                  </label>
-                                  <textarea
-                                    value={task.remarks || ""}
-                                    onChange={(e) =>
-                                      updateTask(
-                                        activeAssetIdx,
-                                        taskIdx,
-                                        "remarks",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Any additional notes..."
-                                    rows="2"
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
-                                  />
-                                </div>
+                              {/* Remarks */}
+                              <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-gray-600 block mb-1">
+                                  Remarks
+                                </label>
+                                <textarea
+                                  value={task.remarks || ""}
+                                  onChange={(e) =>
+                                    updateTask(
+                                      activeAssetIdx,
+                                      taskIdx,
+                                      "remarks",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Any additional notes..."
+                                  rows="2"
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
+                                />
+                              </div>
 
-                                {/* Attachment */}
-                                <div className="sm:col-span-2">
-                                  <label className="text-xs font-medium text-gray-600 block mb-1">
-                                    Attachment
-                                  </label>
-                                  <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.csv"
-                                    onChange={(e) =>
-                                      updateTask(
-                                        activeAssetIdx,
-                                        taskIdx,
-                                        "attachment",
-                                        e.target.files[0] || null
-                                      )
-                                    }
-                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
+                              {/* Attachment */}
+                              <div className="sm:col-span-2">
+                                <label className="text-xs font-medium text-gray-600 block mb-1">
+                                  Attachment
+                                </label>
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.csv"
+                                  onChange={(e) =>
+                                    updateTask(
+                                      activeAssetIdx,
+                                      taskIdx,
+                                      "attachment",
+                                      e.target.files[0] || null
+                                    )
+                                  }
+                                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 bg-white
                text-gray-900 file:bg-green-700 file:text-white 
                file:border-none file:px-4 file:py-2 file:mr-4 
                file:rounded-md file:cursor-pointer
                hover:file:bg-green-800 transition cursor-pointer"
-                                  />
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Select a PDF, Word, or CSV file for this task.
-                                  </p>
-                                </div>
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Select a PDF, Word, or CSV file for this task.
+                                </p>
                               </div>
                             </div>
                           ))}
@@ -965,34 +1051,36 @@ const AddAssetsPage = () => {
             </Link>
           </div>
         </div>
-      </main>
+      </main >
 
       {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
-            <h2 className="text-lg font-semibold text-green-600 mb-3">
-              ✓ Success!
-            </h2>
-            <p className="text-gray-700 mb-6">
-              {assets.length} asset{assets.length !== 1 ? "s" : ""} with{" "}
-              {assets.reduce((sum, a) => sum + a.tasks.length, 0)} task
-              {assets.reduce((sum, a) => sum + a.tasks.length, 1) !== 1
-                ? "s"
-                : ""}{" "}
-              created successfully.
-            </p>
+      {
+        showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+              <h2 className="text-lg font-semibold text-green-600 mb-3">
+                ✓ Success!
+              </h2>
+              <p className="text-gray-700 mb-6">
+                {assets.length} asset{assets.length !== 1 ? "s" : ""} with{" "}
+                {assets.reduce((sum, a) => sum + a.tasks.length, 0)} task
+                {assets.reduce((sum, a) => sum + a.tasks.length, 1) !== 1
+                  ? "s"
+                  : ""}{" "}
+                created successfully.
+              </p>
 
-            <button
-              onClick={closeModal}
-              className="w-full bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 font-medium"
-            >
-              Go to Orders
-            </button>
+              <button
+                onClick={closeModal}
+                className="w-full bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 font-medium"
+              >
+                Go to Orders
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
