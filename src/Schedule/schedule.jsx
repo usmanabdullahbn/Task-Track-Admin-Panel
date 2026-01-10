@@ -4,7 +4,7 @@ import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
 // Constants
-const START_HOUR = 0, END_HOUR = 23, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 150;
+const START_HOUR = 0, END_HOUR = 23, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 60;
 const TASK_COLOR_MAP = {
   'High': 'bg-red-100 border-red-400 text-red-900',
   'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
