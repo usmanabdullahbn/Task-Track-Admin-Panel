@@ -6,6 +6,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 
 const CustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchField, setSearchField] = useState("name");
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -90,13 +91,21 @@ const CustomersPage = () => {
 
   // Filter Logic
   const filteredCustomers = customers.filter((customer) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      customer.name?.toLowerCase().includes(term) ||
-      customer.email?.toLowerCase().includes(term) ||
-      customer.phone?.toLowerCase().includes(term) ||
-      customer.address?.toLowerCase().includes(term)
-    );
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
+
+    switch (searchField) {
+      case "name":
+        return (customer.name || "").toLowerCase().includes(term);
+      case "email":
+        return (customer.email || "").toLowerCase().includes(term);
+      case "phone":
+        return (customer.phone || "").toLowerCase().includes(term);
+      case "address":
+        return (customer.address || "").toLowerCase().includes(term);
+      default:
+        return true;
+    }
   });
 
   return (
@@ -122,13 +131,55 @@ const CustomersPage = () => {
           {/* Search Box */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 p-4 sm:p-6">
-              <input
-                type="text"
-                placeholder="Search customers by name, email, phone or address..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-              />
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {/* Name */}
+                <input
+                  type="text"
+                  placeholder="Search Name"
+                  value={searchField === "name" ? searchTerm : ""}
+                  onChange={(e) => {
+                    setSearchField("name");
+                    setSearchTerm(e.target.value);
+                  }}
+                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+
+                {/* Email */}
+                <input
+                  type="text"
+                  placeholder="Search Email"
+                  value={searchField === "email" ? searchTerm : ""}
+                  onChange={(e) => {
+                    setSearchField("email");
+                    setSearchTerm(e.target.value);
+                  }}
+                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+
+                {/* Phone */}
+                <input
+                  type="text"
+                  placeholder="Search Phone"
+                  value={searchField === "phone" ? searchTerm : ""}
+                  onChange={(e) => {
+                    setSearchField("phone");
+                    setSearchTerm(e.target.value);
+                  }}
+                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+
+                {/* Address */}
+                <input
+                  type="text"
+                  placeholder="Search Address"
+                  value={searchField === "address" ? searchTerm : ""}
+                  onChange={(e) => {
+                    setSearchField("address");
+                    setSearchTerm(e.target.value);
+                  }}
+                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
+              </div>
             </div>
 
             {loading && (
