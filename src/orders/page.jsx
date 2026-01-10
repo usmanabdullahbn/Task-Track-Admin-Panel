@@ -508,7 +508,7 @@ const OrdersPage = () => {
                   </div>
 
                   {/* Project */}
-                  <div className="relative w-32 sm:w-50">
+                  <div className="relative w-32 sm:w-40">
                     <input
                       type="text"
                       placeholder="Search Project"
