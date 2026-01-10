@@ -4,7 +4,8 @@ import { apiClient } from "../lib/api-client";
 import { FaChevronLeft, FaChevronRight, FaThLarge, FaList } from "react-icons/fa";
 
 // Constants
-const START_HOUR = 0, END_HOUR = 23, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 60;
+const START_HOUR = 0, END_HOUR = 23, HOUR_WIDTH = 120, DAY_VIEW_HOUR_WIDTH = 45;
+const DISPLAY_HOURS = [0, 4, 8, 12, 16, 20, 24]; // Hours to display in day view
 const TASK_COLOR_MAP = {
   'High': 'bg-red-100 border-red-400 text-red-900',
   'Medium': 'bg-yellow-100 border-yellow-400 text-yellow-900',
@@ -607,23 +608,24 @@ const SchedulePage = () => {
               {/* Table Header - Frozen at top with sticky positioning */}
               <div className="flex border-b border-gray-200 bg-gray-50 sticky top-0 z-20">
                 {/* Header Left Column */}
-                <div className="w-80 shrink-0 border-r border-gray-200 p-4 bg-gray-50">
+                <div className="w-48 shrink-0 border-r border-gray-200 p-4 bg-gray-50">
                   <h3 className="font-semibold text-gray-900">Team Members</h3>
                 </div>
 
                 {/* Header Right Columns - No overflow, will match table scroll */}
                 <div className="flex-1 overflow-hidden" ref={headerRightRef}>
-                  <div className="flex min-w-max">
-                    {Array.from({ length: END_HOUR - START_HOUR + 1 }).map((_, i) => {
-                      const hour = START_HOUR + i;
+                  <div className="flex w-full">
+                    {DISPLAY_HOURS.slice(0, -1).map((hour, idx) => {
                       const displayHour24 = hour.toString().padStart(2, '0');
+                      const nextHour = DISPLAY_HOURS[idx + 1];
+                      const nextHour24 = nextHour.toString().padStart(2, '0');
                       return (
                         <div
-                          key={i}
-                          style={{ width: DAY_VIEW_HOUR_WIDTH }}
+                          key={hour}
+                          style={{ flex: 1, minWidth: 0 }}
                           className="border-r border-gray-200 p-3 text-center text-sm font-semibold text-gray-700"
                         >
-                          {displayHour24}:00
+                          {displayHour24}:00 - {nextHour24}:00
                         </div>
                       );
                     })}
@@ -634,7 +636,7 @@ const SchedulePage = () => {
               {/* Table Body - Unified vertical scrolling */}
               <div className="flex flex-1 overflow-hidden">
                 {/* Left Column - Frozen */}
-                <div className="w-80 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                   {employees.map((emp) => (
                     <div
                       key={emp._id || emp.id}
@@ -668,11 +670,11 @@ const SchedulePage = () => {
                           className="flex border-b border-gray-200 h-28 relative bg-white group hover:bg-gray-50 transition"
                         >
                           {/* Hour slots background */}
-                          {Array.from({ length: END_HOUR - START_HOUR + 1 }).map((_, i) => (
+                          {DISPLAY_HOURS.slice(0, -1).map((hour, idx) => (
                             <div
-                              key={i}
-                              style={{ width: DAY_VIEW_HOUR_WIDTH }}
-                              className={`border-r border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                              key={hour}
+                              style={{ flex: 1, minWidth: 0 }}
+                              className={`border-r border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
                             />
                           ))}
 
@@ -681,9 +683,11 @@ const SchedulePage = () => {
                             {empTasks.map((task) => {
                               const taskStart = new Date(task.start_time);
                               const startMinutesFromStart = getMinutesFromStart(task.start_time);
-                              const left = Math.max(0, (startMinutesFromStart / 60) * DAY_VIEW_HOUR_WIDTH);
+                              const startHours = startMinutesFromStart / 60;
                               const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
-                              const width = (durationMinutes / 60) * DAY_VIEW_HOUR_WIDTH;
+                              const totalHours = 24; // 24 hours (0-24)
+                              const left = (startHours / totalHours) * 100; // Position as % of 24-hour period
+                              const width = (durationMinutes / 60 / totalHours) * 100; // Width as % of 24-hour period
                               const isChecked = checkedTasks[task._id];
                               const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
                               const hours = Math.floor(durationMinutes / 60);
@@ -694,8 +698,8 @@ const SchedulePage = () => {
                                 <div
                                   key={task._id}
                                   style={{
-                                    left: `${left}px`,
-                                    width: `${Math.max(width, 100)}px`,
+                                    left: `${left}%`,
+                                    width: `${Math.max(width, 5)}%`,
                                   }}
                                   className={`absolute top-2 bottom-2 border-l-4 rounded px-2 py-1 text-xs flex flex-col justify-start hover:shadow-lg transition ${taskColor}`}
                                   title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}

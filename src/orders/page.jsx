@@ -196,16 +196,16 @@ const OrdersPage = () => {
   const fetchData = async (status = "all") => {
     try {
       setLoading(true);
-      
+
       // Fetch orders
       const ordersData = await apiClient.getOrders();
       let ordersList = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
-      
+
       // Fetch customers
       const customersData = await apiClient.getCustomers();
       const customersList = Array.isArray(customersData?.customers) ? customersData.customers : [];
       setCustomers(customersList);
-      
+
       // Fetch projects
       const projectsData = await apiClient.getProjects();
       const projectsList = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
