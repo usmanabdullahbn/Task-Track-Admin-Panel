@@ -460,8 +460,8 @@ const OrdersPage = () => {
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               {/* SEARCH SECTION */}
               <div className="border-b border-gray-200 p-4 sm:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {/* Title (matches first table column) */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Title */}
                   <input
                     type="text"
                     placeholder="Search Title"
@@ -470,10 +470,10 @@ const OrdersPage = () => {
                       setSearchField("title");
                       setSearchTerm(e.target.value);
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
 
-                  {/* Order # (matches second table column) */}
+                  {/* Order # */}
                   <input
                     type="text"
                     placeholder="Search Order #"
@@ -482,11 +482,11 @@ const OrdersPage = () => {
                       setSearchField("order");
                       setSearchTerm(e.target.value);
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
 
-                  {/* Customer Name (matches third table column) */}
-                  <div className="relative">
+                  {/* Customer */}
+                  <div className="relative w-32 sm:w-40">
                     <input
                       type="text"
                       placeholder="Search Customer"
@@ -496,7 +496,7 @@ const OrdersPage = () => {
                         setSearchTerm(e.target.value);
                       }}
                       list="customer-list"
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 w-full"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                     />
                     <datalist id="customer-list">
                       {customers
@@ -507,8 +507,8 @@ const OrdersPage = () => {
                     </datalist>
                   </div>
 
-                  {/* Project Name (matches fourth table column) */}
-                  <div className="relative">
+                  {/* Project */}
+                  <div className="relative w-32 sm:w-40">
                     <input
                       type="text"
                       placeholder="Search Project"
@@ -518,7 +518,7 @@ const OrdersPage = () => {
                         setSearchTerm(e.target.value);
                       }}
                       list="project-list"
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700 w-full"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                     />
                     <datalist id="project-list">
                       {projects
@@ -529,21 +529,20 @@ const OrdersPage = () => {
                     </datalist>
                   </div>
 
-                  {/* Status dropdown (matches sixth table column) */}
+                  {/* Status Dropdown */}
                   <select
                     value={searchField === "status" ? searchTerm : ""}
                     onChange={(e) => {
                       if (e.target.value) {
                         handleStatusFilterChange(e.target.value);
                       } else {
-                        // Clear status filter
                         setSearchField("title");
                         setSearchTerm("");
                         setStatusFilter("all");
                         setSearchParams({});
                       }
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   >
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
