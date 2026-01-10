@@ -470,7 +470,7 @@ const OrdersPage = () => {
                       setSearchField("title");
                       setSearchTerm(e.target.value);
                     }}
-                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-30 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
 
                   {/* Order # */}
@@ -482,7 +482,7 @@ const OrdersPage = () => {
                       setSearchField("order");
                       setSearchTerm(e.target.value);
                     }}
-                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-30 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
 
                   {/* Customer */}
@@ -508,7 +508,7 @@ const OrdersPage = () => {
                   </div>
 
                   {/* Project */}
-                  <div className="relative w-32 sm:w-40">
+                  <div className="relative w-32 sm:w-60">
                     <input
                       type="text"
                       placeholder="Search Project"
@@ -542,7 +542,7 @@ const OrdersPage = () => {
                         setSearchParams({});
                       }
                     }}
-                    className="w-32 sm:w-40 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                    className="w-32 sm:w-20 ml-20 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   >
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
