@@ -129,9 +129,11 @@ const OrderDetailsPage = () => {
     } catch (err) {
       console.error("Failed to delete task:", err);
       alert("Failed to delete task. Please try again.");
+    } finally {
       setIsDeleting(false);
     }
   };
+
 
   const handleCancelDelete = () => {
     setShowDeleteConfirm(false);
