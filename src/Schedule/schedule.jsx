@@ -442,11 +442,17 @@ const SchedulePage = () => {
                               <div
                                 key={task._id}
                                 className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                                title={`${task.title} - ${task.user?.name || 'Unknown'}`}
+                                title={`${task.order?.title || ''} ${task.title} - ${task.user?.name || 'Unknown'}${task.order?.order_number ? ` (Order #${task.order.order_number})` : ''}`}
                               >
                                 <div className="flex items-start gap-1">
                                   <span className="text-orange-500 mt-0.5">●</span>
                                   <div className="flex-1 min-w-0">
+                                    {task.order?.title && (
+                                      <div className="mb-1 text-xs font-medium opacity-90">
+                                        <p className="truncate">{task.order.title}</p>
+                                        <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
+                                      </div>
+                                    )}
                                     <p className="font-medium truncate">
                                       {task.title}
                                     </p>
