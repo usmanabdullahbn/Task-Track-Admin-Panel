@@ -482,7 +482,7 @@ const SchedulePage = () => {
               {/* Table Header - Frozen at top with sticky positioning */}
               <div className="flex border-b border-gray-200 bg-gray-50 sticky top-0 z-20">
                 {/* Header Left Column */}
-                <div className="w-80 shrink-0 border-r border-gray-200 p-4 bg-gray-50">
+                <div className="w-48 shrink-0 border-r border-gray-200 p-4 bg-gray-50">
                   <h3 className="font-semibold text-gray-900">Team Members</h3>
                 </div>
 
@@ -516,8 +516,8 @@ const SchedulePage = () => {
               {/* Table Body - Unified vertical scrolling */}
               <div className="flex flex-1 overflow-hidden">
                 {/* Left Column - Frozen */}
-                <div className="w-80 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  {employees.map((emp) => (
+                <div className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                     <div
                       key={emp._id || emp.id}
                       className="p-4 border-b border-gray-100 h-32 hover:bg-blue-50 transition flex flex-col justify-start bg-white"
@@ -537,73 +537,69 @@ const SchedulePage = () => {
                 {/* Right Columns - Horizontally and Vertically Scrollable */}
                 <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
                   <div className="flex min-w-max">
-                    {employees.map((emp) => {
-                      const weekDays = getWeekDays();
-                      return (
-                        <div key={`emp-${emp._id || emp.id}`} className="flex flex-col">
-                          {weekDays.map((date) => {
-                            const dayTasks = tasks.filter(
-                              (t) =>
-                                (t.user?._id || t.user?.id) === (emp._id || emp.id) &&
-                                new Date(t.start_time).toDateString() === date.toDateString()
-                            );
+                    {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
+                      <div key={`emp-${emp._id || emp.id}`} className="flex flex-col">
+                        {getWeekDays().map((date) => {
+                          const dayTasks = tasks.filter(
+                            (t) =>
+                              (t.user?._id || t.user?.id) === (emp._id || emp.id) &&
+                              new Date(t.start_time).toDateString() === date.toDateString()
+                          );
 
-                            return (
-                              <div
-                                key={date.toDateString()}
-                                className="w-48 h-32 border-r border-b border-gray-200 p-2 bg-white overflow-y-auto group hover:bg-gray-50 transition"
-                              >
-                                <div className="flex flex-col gap-1">
-                                  {dayTasks.map((task) => {
-                                    const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
-                                    const hours = Math.floor(durationMinutes / 60);
-                                    const mins = Math.floor(durationMinutes % 60);
-                                    const durationText = `${hours}h ${mins}m`;
-                                    const isChecked = checkedTasks[task._id];
-                                    const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
-                                    console.log("Week view task:", task);
+                          return (
+                            <div
+                              key={date.toDateString()}
+                              className="w-48 h-32 border-r border-b border-gray-200 p-2 bg-white overflow-y-auto group hover:bg-gray-50 transition"
+                            >
+                              <div className="flex flex-col gap-1">
+                                {dayTasks.map((task) => {
+                                  const durationMinutes = getDurationMinutes(task.start_time, task.end_time);
+                                  const hours = Math.floor(durationMinutes / 60);
+                                  const mins = Math.floor(durationMinutes % 60);
+                                  const durationText = `${hours}h ${mins}m`;
+                                  const isChecked = checkedTasks[task._id];
+                                  const taskColor = TASK_COLOR_MAP[task.priority] || TASK_COLOR_MAP['Medium'];
 
-                                    return (
-                                      <div
-                                        key={task._id}
-                                        className={`border-l-4 rounded px-2 py-1.5 text-xs ${taskColor}`}
-                                        title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
-                                      >
-                                        {task.order?.title && (
-                                          <div className="mb-1 text-xs font-medium opacity-90">
-                                            <p className="truncate">{task.order.title}</p>
-                                            <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
-                                          </div>
-                                        )}
-                                        <div className="flex items-start gap-1 mb-0.5">
-                                          <input
-                                            type="checkbox"
-                                            checked={isChecked || false}
-                                            onChange={(e) => {
-                                              e.stopPropagation();
-                                              setCheckedTasks(prev => ({
-                                                ...prev,
-                                                [task._id]: !prev[task._id]
-                                              }));
-                                            }}
-                                            className="w-3 h-3 cursor-pointer"
-                                          />
-                                          <p className="font-semibold truncate text-xs">{task.title}</p>
+                                  return (
+                                    <div
+                                      key={task._id}
+                                      className={`border-l-4 rounded px-2 py-1.5 text-xs ${taskColor}`}
+                                      title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
+                                    >
+                                      {task.order?.title && (
+                                        <div className="mb-1 text-xs font-medium opacity-90">
+                                          <p className="truncate">{task.order.title}</p>
+                                          <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
                                         </div>
-                                        <div className="text-xs opacity-85 pl-4">
-                                          <p className="truncate">{formatTime(task.start_time)} - {formatTime(task.end_time)}</p>
-                                          <p className="opacity-75 text-xs">{durationText}</p>
-                                        </div>
+                                      )}
+                                      <div className="flex items-start gap-1 mb-0.5">
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked || false}
+                                          onChange={(e) => {
+                                            e.stopPropagation();
+                                            setCheckedTasks(prev => ({
+                                              ...prev,
+                                              [task._id]: !prev[task._id]
+                                            }));
+                                          }}
+                                          className="w-3 h-3 cursor-pointer"
+                                        />
+                                        <p className="font-semibold truncate text-xs">{task.title}</p>
                                       </div>
-                                    );
-                                  })}
-                                </div>
+                                      <div className="text-xs opacity-85 pl-4">
+                                        <p className="truncate">{formatTime(task.start_time)} - {formatTime(task.end_time)}</p>
+                                        <p className="opacity-75 text-xs">{durationText}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -643,7 +639,7 @@ const SchedulePage = () => {
               <div className="flex flex-1 overflow-hidden">
                 {/* Left Column - Frozen */}
                 <div className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  {employees.map((emp) => (
+                  {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                     <div
                       key={emp._id || emp.id}
                       className="p-4 border-b border-gray-100 h-28 hover:bg-blue-50 transition flex flex-col justify-start bg-white"
@@ -663,7 +659,7 @@ const SchedulePage = () => {
                 {/* Right Columns - Horizontally and Vertically Scrollable */}
                 <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
                   <div className="flex flex-col min-w-max">
-                    {employees.map((emp) => {
+                    {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => {
                       const empTasks = tasks.filter(
                         (t) =>
                           (t.user?._id || t.user?.id) === (emp._id || emp.id) &&

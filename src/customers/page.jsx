@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../component/sidebar";
 import { Link } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaChevronDown } from "react-icons/fa";
 
 const CustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,6 +10,11 @@ const CustomersPage = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortField, setSortField] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
 
   // Get logged-in user's role from localStorage
   const getUserRole = () => {
@@ -49,7 +54,7 @@ const CustomersPage = () => {
     try {
       await apiClient.deleteCustomer(customerToDelete._id);
       setCustomers((prev) => prev.filter((cust) => cust._id !== customerToDelete._id));
-      
+
       // Show success modal
       setSuccessMessage(`Customer ${customerToDelete.name} has been deleted successfully`);
       setShowSuccessModal(true);
@@ -89,6 +94,26 @@ const CustomersPage = () => {
     loadCustomers();
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is inside the dropdown ref
+      if (dropdownRef.current && dropdownRef.current.contains(event.target)) {
+        return;
+      }
+
+      // Check if click is on a header
+      if (event.target.closest("th")) {
+        return;
+      }
+
+      setOpenDropdown(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Filter Logic
   const filteredCustomers = customers.filter((customer) => {
     const term = (searchTerm || "").toLowerCase();
@@ -107,6 +132,41 @@ const CustomersPage = () => {
         return true;
     }
   });
+
+  // Sort Logic
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    let aValue = a[sortField] || "";
+    let bValue = b[sortField] || "";
+
+    aValue = aValue.toString().toLowerCase();
+    bValue = bValue.toString().toLowerCase();
+
+    if (sortOrder === "asc") {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
+    }
+  });
+
+  const handleHeaderClick = (field) => {
+    setOpenDropdown(openDropdown === field ? null : field);
+    setDropdownSearchTerm(searchField === field ? searchTerm : "");
+  };
+
+  const handleApplyFilter = (field) => {
+    setSearchField(field);
+    setSearchTerm(dropdownSearchTerm);
+    setOpenDropdown(null);
+  };
+
+  const handleSortChange = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -130,58 +190,6 @@ const CustomersPage = () => {
 
           {/* Search Box */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 p-4 sm:p-6">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                {/* Name */}
-                <input
-                  type="text"
-                  placeholder="Search Name"
-                  value={searchField === "name" ? searchTerm : ""}
-                  onChange={(e) => {
-                    setSearchField("name");
-                    setSearchTerm(e.target.value);
-                  }}
-                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-
-                {/* Email */}
-                <input
-                  type="text"
-                  placeholder="Search Email"
-                  value={searchField === "email" ? searchTerm : ""}
-                  onChange={(e) => {
-                    setSearchField("email");
-                    setSearchTerm(e.target.value);
-                  }}
-                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-
-                {/* Phone */}
-                <input
-                  type="text"
-                  placeholder="Search Phone"
-                  value={searchField === "phone" ? searchTerm : ""}
-                  onChange={(e) => {
-                    setSearchField("phone");
-                    setSearchTerm(e.target.value);
-                  }}
-                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-
-                {/* Address */}
-                <input
-                  type="text"
-                  placeholder="Search Address"
-                  value={searchField === "address" ? searchTerm : ""}
-                  onChange={(e) => {
-                    setSearchField("address");
-                    setSearchTerm(e.target.value);
-                  }}
-                  className="w-32 sm:w-60 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                />
-              </div>
-            </div>
-
             {loading && (
               <p className="text-center py-6 text-gray-500">Loading customers...</p>
             )}
@@ -193,16 +201,204 @@ const CustomersPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left font-medium">Name</th>
-                      <th className="px-4 py-3 text-left font-medium">Email</th>
-                      <th className="px-4 py-3 text-left font-medium">Phone</th>
-                      <th className="px-4 py-3 text-left font-medium">Address</th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("name")}>
+                        <div className="flex items-center gap-2">
+                          Name
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "name" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "name" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-9999" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder={`Search...`}
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs z-99999 focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("name");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "name" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "name" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("name")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("email")}>
+                        <div className="flex items-center gap-2">
+                          Email
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "email" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "email" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder={`Search...`}
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("email");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "email" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "email" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("email")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("phone")}>
+                        <div className="flex items-center gap-2">
+                          Phone
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "phone" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "phone" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder={`Search...`}
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("phone");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "phone" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "phone" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("phone")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("address")}>
+                        <div className="flex items-center gap-2">
+                          Address
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "address" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "address" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder={`Search...`}
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("address");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "address" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "address" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("address")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
                       <th className="px-4 py-3 text-left font-medium">Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filteredCustomers.map((customer) => (
+                    {sortedCustomers.map((customer) => (
                       <tr key={customer._id} className="hover:bg-gray-50 border-b-0">
                         <td className="px-4 py-3">{customer.name}</td>
                         <td className="px-4 py-3">{customer.email}</td>
@@ -242,7 +438,7 @@ const CustomersPage = () => {
               </div>
             )}
 
-            {!loading && filteredCustomers.length === 0 && (
+            {!loading && sortedCustomers.length === 0 && (
               <p className="text-center text-gray-500 py-6">No customers found.</p>
             )}
           </div>
