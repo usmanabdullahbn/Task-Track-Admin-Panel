@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPrint, FaChevronDown } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 
 const AssetsPage = () => {
@@ -15,6 +15,11 @@ const AssetsPage = () => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFilesModal, setShowFilesModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [sortField, setSortField] = useState("title");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
 
   // -------------------------
   // GET USER ROLE
@@ -105,6 +110,45 @@ const AssetsPage = () => {
     setShowFilesModal(false);
     setSelectedAsset(null);
   };
+
+  // Dropdown and sorting handlers
+  const handleHeaderClick = (field) => {
+    setOpenDropdown(openDropdown === field ? null : field);
+    setDropdownSearchTerm("");
+  };
+
+  const handleApplyFilter = (field) => {
+    // Apply the dropdown search term to the main search
+    setSearchTerm(dropdownSearchTerm);
+    setOpenDropdown(null);
+  };
+
+  const handleSortChange = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  // Click outside handler for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && dropdownRef.current.contains(event.target)) {
+        return;
+      }
+
+      if (event.target.closest("th")) {
+        return;
+      }
+
+      setOpenDropdown(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // -------------------------  
   // PRINT ASSET
@@ -297,20 +341,52 @@ const AssetsPage = () => {
     `;
   };
 
-  // -------------------------
-  // FILTER
+  // -------------------------  
+  // FILTER & SORT
   // -------------------------
   const filteredAssets = assets.filter((asset) => {
+    if (!searchTerm) return true;
+
+    // For now, search across all fields since we removed the global search
     const title = asset.title || "";
     const customer = asset.customer?.name || asset.customer || "";
     const barcode = asset.barcode || "";
-    const search = (searchTerm || "").toLowerCase();
+    const search = searchTerm.toLowerCase();
 
     return (
       title.toLowerCase().includes(search) ||
       customer.toLowerCase().includes(search) ||
       barcode.toLowerCase().includes(search)
     );
+  });
+
+  // Sort Logic
+  const sortedAssets = [...filteredAssets].sort((a, b) => {
+    let aValue = "";
+    let bValue = "";
+
+    switch (sortField) {
+      case "customer_name":
+        aValue = a.customer?.name || a.customer || "";
+        bValue = b.customer?.name || b.customer || "";
+        break;
+      case "project_name":
+        aValue = a.project?.name || a.project_name || a.project || "";
+        bValue = b.project?.name || b.project_name || b.project || "";
+        break;
+      default:
+        aValue = a[sortField] || "";
+        bValue = b[sortField] || "";
+    }
+
+    aValue = aValue.toString().toLowerCase();
+    bValue = bValue.toString().toLowerCase();
+
+    if (sortOrder === "asc") {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
+    }
   });
 
   return (
@@ -336,107 +412,384 @@ const AssetsPage = () => {
             )}
           </div>
 
-          {/* Search */}
+          {/* Table */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 p-4 sm:p-6">
-              <input
-                type="text"
-                placeholder="Search assets by title, customer, or barcode..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-              />
-            </div>
-
-            {/* Table */}
             {loading ? (
               <p className="text-center text-gray-500 py-6">Loading assets...</p>
-            ) : filteredAssets.length === 0 ? (
-              <p className="text-center text-gray-500 py-6">No assets found.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left">Title</th>
-                      <th className="px-4 py-3 text-left">Customer</th>
-                      <th className="px-4 py-3 text-left">Project</th>
-                      <th className="px-4 py-3 text-left">Category</th>
-                      <th className="px-4 py-3 text-left">Manufacturer</th>
-                      <th className="px-4 py-3 text-left">Barcode</th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("title")}>
+                        <div className="flex items-center gap-2">
+                          Title
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "title" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("title");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "title" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "title" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("title")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("customer_name")}>
+                        <div className="flex items-center gap-2">
+                          Customer
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer_name" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "customer_name" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("customer_name");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "customer_name" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "customer_name" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("customer_name")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("project_name")}>
+                        <div className="flex items-center gap-2">
+                          Project
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project_name" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "project_name" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("project_name");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "project_name" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "project_name" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("project_name")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("category")}>
+                        <div className="flex items-center gap-2">
+                          Category
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "category" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "category" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("category");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "category" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "category" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("category")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("manufacturer")}>
+                        <div className="flex items-center gap-2">
+                          Manufacturer
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "manufacturer" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "manufacturer" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("manufacturer");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "manufacturer" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "manufacturer" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("manufacturer")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("barcode")}>
+                        <div className="flex items-center gap-2">
+                          Barcode
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "barcode" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "barcode" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("barcode");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "barcode" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "barcode" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("barcode")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
                       <th className="px-4 py-3 text-left">Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filteredAssets.map((asset) => (
-                      <tr
-                        key={asset.id || asset._id}
-                        className="border-b border-gray-200 hover:bg-gray-50"
-                      >
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {asset.title}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.customer?.name || asset.customer || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.project?.name || asset.project_name || asset.project || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.category || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.manufacturer || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {asset.barcode || "-"}
-                        </td>
-
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {/* VIEW FILES */}
-                            <button
-                              onClick={() => openFilesModal(asset)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
-                              title="View Files"
-                            >
-                              📁
-                            </button>
-
-                            {/* PRINT */}
-                            <button
-                              onClick={() => handlePrint(asset)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
-                              title="Print Asset Report"
-                            >
-                              <FaPrint size={14} />
-                            </button>
-
-                            {/* EDIT (Admin + Manager) */}
-                            {canEditAsset && (
-                              <Link
-                                to={`/assets/${asset.id || asset._id}`}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                              >
-                                <FaEdit size={14} />
-                              </Link>
-                            )}
-
-                            {/* DELETE (Admin + Manager) */}
-                            {canDeleteAsset && (
-                              <button
-                                onClick={() => openDeleteModal(asset)}
-                                disabled={deletingId === (asset.id || asset._id)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <FaTrash size={14} />
-                              </button>
-                            )}
-                          </div>
+                    {sortedAssets.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                          No assets found.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      sortedAssets.map((asset) => (
+                        <tr
+                          key={asset.id || asset._id}
+                          className="border-b border-gray-200 hover:bg-gray-50"
+                        >
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            {asset.title}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {asset.customer?.name || asset.customer || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {asset.project?.name || asset.project_name || asset.project || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {asset.category || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {asset.manufacturer || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {asset.barcode || "-"}
+                          </td>
+
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {/* VIEW FILES */}
+                              <button
+                                onClick={() => openFilesModal(asset)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                                title="View Files"
+                              >
+                                📁
+                              </button>
+
+                              {/* PRINT */}
+                              <button
+                                onClick={() => handlePrint(asset)}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
+                                title="Print Asset Report"
+                              >
+                                <FaPrint size={14} />
+                              </button>
+
+                              {/* EDIT (Admin + Manager) */}
+                              {canEditAsset && (
+                                <Link
+                                  to={`/assets/${asset.id || asset._id}`}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                >
+                                  <FaEdit size={14} />
+                                </Link>
+                              )}
+
+                              {/* DELETE (Admin + Manager) */}
+                              {canDeleteAsset && (
+                                <button
+                                  onClick={() => openDeleteModal(asset)}
+                                  disabled={deletingId === (asset.id || asset._id)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <FaTrash size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

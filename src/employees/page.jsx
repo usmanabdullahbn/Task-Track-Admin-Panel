@@ -1,14 +1,53 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { apiClient } from "../lib/api-client";
-import { FaEdit, FaTrash, FaClock } from "react-icons/fa";
+import { FaEdit, FaTrash, FaClock, FaChevronDown } from "react-icons/fa";
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortField, setSortField] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
+
+  // Handler functions for dropdown filtering and sorting
+  const handleHeaderClick = (field) => {
+    setOpenDropdown(openDropdown === field ? null : field);
+    setDropdownSearchTerm("");
+  };
+
+  const handleApplyFilter = (field, value) => {
+    // Apply the dropdown search term to the main search
+    setSearchTerm(dropdownSearchTerm);
+    setOpenDropdown(null);
+  };
+
+  const handleSortChange = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+    setOpenDropdown(null);
+  };
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+        setDropdownSearchTerm("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Delete popup states
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
@@ -104,11 +143,68 @@ const EmployeesPage = () => {
     setSuccessAction("");
   };
 
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employees.filter((employee) => {
+    if (!searchTerm) return true;
+
+    // Search across all fields
+    const name = employee.name || "";
+    const position = employee.position || "";
+    const role = employee.role || "";
+    const company = employee.company || "";
+    const email = employee.email || "";
+    const phone = employee.phone || "";
+    const search = searchTerm.toLowerCase();
+
+    return (
+      name.toLowerCase().includes(search) ||
+      position.toLowerCase().includes(search) ||
+      role.toLowerCase().includes(search) ||
+      company.toLowerCase().includes(search) ||
+      email.toLowerCase().includes(search) ||
+      phone.toLowerCase().includes(search)
+    );
+  });
+
+  // Sort Logic
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
+    let aValue = "";
+    let bValue = "";
+
+    switch (sortField) {
+      case "name":
+        aValue = a.name || "";
+        bValue = b.name || "";
+        break;
+      case "position":
+        aValue = a.position || "";
+        bValue = b.position || "";
+        break;
+      case "role":
+        aValue = a.role || "";
+        bValue = b.role || "";
+        break;
+      case "company":
+        aValue = a.company || "";
+        bValue = b.company || "";
+        break;
+      case "email":
+        aValue = a.email || "";
+        bValue = b.email || "";
+        break;
+      case "phone":
+        aValue = a.phone || "";
+        bValue = b.phone || "";
+        break;
+      default:
+        return 0;
+    }
+
+    if (sortOrder === "asc") {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
+    }
+  });
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50">
@@ -139,92 +235,367 @@ const EmployeesPage = () => {
           )}
 
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 p-4 sm:p-6">
-              <input
-                type="text"
-                placeholder="Search employees by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-              />
-            </div>
-
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="text-center py-12">Loading...</div>
-              ) : filteredEmployees.length === 0 ? (
-                <p className="text-center text-gray-500 py-6 text-sm sm:text-base">
-                  No employees found.
-                </p>
               ) : (
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 sm:px-6 py-3">Name</th>
-                      <th className="px-4 sm:px-6 py-3">Position</th>
-                      <th className="px-4 sm:px-6 py-3">Role</th>
-                      <th className="px-4 sm:px-6 py-3">Company</th>
-                      <th className="px-4 sm:px-6 py-3">Email</th>
-                      <th className="px-4 sm:px-6 py-3">Phone</th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("name")}>
+                        <div className="flex items-center gap-2">
+                          Name
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "name" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "name" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("name");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "name" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "name" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("name")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("position")}>
+                        <div className="flex items-center gap-2">
+                          Position
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "position" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "position" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("position");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "position" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "position" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("position")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("role")}>
+                        <div className="flex items-center gap-2">
+                          Role
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "role" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "role" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("role");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "role" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "role" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("role")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("company")}>
+                        <div className="flex items-center gap-2">
+                          Company
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "company" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "company" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("company");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "company" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "company" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("company")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("email")}>
+                        <div className="flex items-center gap-2">
+                          Email
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "email" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "email" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("email");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "email" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "email" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("email")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("phone")}>
+                        <div className="flex items-center gap-2">
+                          Phone
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "phone" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "phone" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("phone");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "phone" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "phone" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleApplyFilter("phone")}
+                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </th>
                       <th className="px-4 sm:px-6 py-3">Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filteredEmployees.map((employee) => (
-                      <tr
-                        key={employee._id}
-                        className="border-b border-gray-200 hover:bg-gray-50"
-                      >
-                        <td className="px-4 sm:px-6 py-3 font-medium text-gray-900">
-                          {employee.name}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3">{employee.designation || "—"}</td>
-                        <td className="px-4 sm:px-6 py-3">{employee.role || "—"}</td>
-                        <td className="px-4 sm:px-6 py-3">
-                          {employee.role === "employee" 
-                            ? (employee.customer?.name || "N/A") 
-                            : "Switchgear International"}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3">{employee.email}</td>
-                        <td className="px-4 sm:px-6 py-3">{employee.phone || "—"}</td>
-
-                        <td className="px-4 sm:px-6 py-3">
-                          <div className="flex items-center gap-2">
-                            {/* EDIT — ONLY ADMIN */}
-                            {canEditEmployee && (
-                              <Link
-                                to={`/employees/${employee._id}`}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
-                              >
-                                <FaEdit size={14} />
-                              </Link>
-                            )}
-
-                            {/* DELETE — ONLY ADMIN */}
-                            {canDeleteEmployee && (
-                              <button
-                                onClick={() => handleDeleteClick(employee)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
-                              >
-                                <FaTrash size={14} />
-                              </button>
-                            )}
-
-                            {/* TIMELINE — ONLY ADMIN */}
-                            {canEditEmployee && (
-                              <Link
-                                // to={`/employees/timeline/${employee._id}`}
-                                to={`/timeline`}
-                                className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
-                              >
-                                <FaClock size={14} />
-                              </Link>
-                            )}
-                          </div>
+                    {sortedEmployees.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                          No employees found.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      sortedEmployees.map((employee) => (
+                        <tr
+                          key={employee._id}
+                          className="border-b border-gray-200 hover:bg-gray-50"
+                        >
+                          <td className="px-4 sm:px-6 py-3 font-medium text-gray-900">
+                            {employee.name}
+                          </td>
+                          <td className="px-4 sm:px-6 py-3">{employee.designation || "—"}</td>
+                          <td className="px-4 sm:px-6 py-3">{employee.role || "—"}</td>
+                          <td className="px-4 sm:px-6 py-3">
+                            {employee.role === "employee" 
+                              ? (employee.customer?.name || "N/A") 
+                              : "Switchgear International"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-3">{employee.email}</td>
+                          <td className="px-4 sm:px-6 py-3">{employee.phone || "—"}</td>
+
+                          <td className="px-4 sm:px-6 py-3">
+                            <div className="flex items-center gap-2">
+                              {/* EDIT — ONLY ADMIN */}
+                              {canEditEmployee && (
+                                <Link
+                                  to={`/employees/${employee._id}`}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-400 hover:bg-teal-500 text-white"
+                                >
+                                  <FaEdit size={14} />
+                                </Link>
+                              )}
+
+                              {/* DELETE — ONLY ADMIN */}
+                              {canDeleteEmployee && (
+                                <button
+                                  onClick={() => handleDeleteClick(employee)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-red-400 hover:bg-red-500 text-white"
+                                >
+                                  <FaTrash size={14} />
+                                </button>
+                              )}
+
+                              {/* TIMELINE — ONLY ADMIN */}
+                              {canEditEmployee && (
+                                <Link
+                                  to={`/timeline`}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-400 hover:bg-blue-500 text-white"
+                                >
+                                  <FaClock size={14} />
+                                </Link>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               )}

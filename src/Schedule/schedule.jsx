@@ -570,6 +570,7 @@ const SchedulePage = () => {
                                         {task.order?.title && (
                                           <div className="mb-0.5 text-xs font-medium opacity-90 truncate">
                                             <p className="truncate">{task.order.title}</p>
+                                            <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
                                           </div>
                                         )}
                                         <div className="flex items-start gap-1 mb-0.5">
