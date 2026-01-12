@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaPrint, FaChevronDown } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPrint, FaChevronDown, FaFilter } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 import AddTaskModal from "./AddTaskModal";
 
@@ -18,6 +18,7 @@ const OrdersPage = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchField, setSearchField] = useState("title");
   const dropdownRef = useRef(null);
 
   // Modals & selection
@@ -42,7 +43,7 @@ const OrdersPage = () => {
   };
 
   const handleApplyFilter = (field) => {
-    // Apply the dropdown search term to the main search
+    setSearchField(field);
     setSearchTerm(dropdownSearchTerm);
     setOpenDropdown(null);
   };
@@ -423,25 +424,27 @@ const OrdersPage = () => {
   // FILTER & SORT
   // -------------------------
   const filteredOrders = orders.filter((order) => {
-    if (!searchTerm) return true;
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
 
-    // Search across all fields
-    const title = order.title || "";
-    const orderNumber = order.order_number || "";
-    const customer = order.customer?.name || order.customer_name || "";
-    const project = order.project?.name || order.project?.title || order.project_name || "";
-    const amount = String(order.amount?.value ?? order.amount?.$numberDecimal ?? "");
-    const status = normalizeStatus(order.status) || "";
-    const search = searchTerm.toLowerCase();
-
-    return (
-      title.toLowerCase().includes(search) ||
-      orderNumber.toLowerCase().includes(search) ||
-      customer.toLowerCase().includes(search) ||
-      project.toLowerCase().includes(search) ||
-      amount.includes(search) ||
-      status.toLowerCase().includes(search)
-    );
+    switch (searchField) {
+      case "title":
+        return (order.title || "").toLowerCase().includes(term);
+      case "order_number":
+        return (order.order_number || "").toLowerCase().includes(term);
+      case "customer":
+        return (order.customer?.name || order.customer_name || "").toLowerCase().includes(term);
+      case "project":
+        return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase().includes(term);
+      case "amount":
+        return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").includes(term);
+      case "status":
+        return (normalizeStatus(order.status) || "").toLowerCase().includes(term);
+      case "created_at":
+        return (order.created_at ? new Date(order.created_at).toLocaleDateString() : "").toLowerCase().includes(term);
+      default:
+        return true;
+    }
   });
 
   // Sort Logic
@@ -528,9 +531,10 @@ const OrdersPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("title")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "title" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                         <div className="flex items-center gap-2">
                           Title
+                          {searchField === "title" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "title" && (
@@ -541,6 +545,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("title"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -576,9 +581,10 @@ const OrdersPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("order_number")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "order_number" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("order_number")}>
                         <div className="flex items-center gap-2">
                           Order #
+                          {searchField === "order_number" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "order_number" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "order_number" && (
@@ -589,6 +595,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("order_number"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -624,9 +631,10 @@ const OrdersPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("customer")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "customer" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer")}>
                         <div className="flex items-center gap-2">
                           Customer
+                          {searchField === "customer" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "customer" && (
@@ -637,6 +645,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("customer"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -672,9 +681,10 @@ const OrdersPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("project")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "project" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project")}>
                         <div className="flex items-center gap-2">
                           Project
+                          {searchField === "project" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "project" && (
@@ -685,6 +695,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("project"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -721,9 +732,10 @@ const OrdersPage = () => {
                         )}
                       </th>
                       {/* <th className="px-4 py-3">ERP #</th> */}
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("amount")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "amount" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("amount")}>
                         <div className="flex items-center gap-2">
                           Amount
+                          {searchField === "amount" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "amount" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "amount" && (
@@ -734,6 +746,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("amount"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -769,9 +782,10 @@ const OrdersPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("status")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "status" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
                         <div className="flex items-center gap-2">
                           Status
+                          {searchField === "status" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "status" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "status" && (
@@ -782,6 +796,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("status"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -817,9 +832,10 @@ const OrdersPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("created_at")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "created_at" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
                         <div className="flex items-center gap-2">
                           Created
+                          {searchField === "created_at" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "created_at" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "created_at" && (
@@ -830,6 +846,7 @@ const OrdersPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("created_at"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -1055,10 +1072,23 @@ const OrdersPage = () => {
               </button>
               <button
                 onClick={() => {
-                  const w = window.open("", "_blank", "noopener,noreferrer");
-                  w.document.write(generatePrintDocument(printData));
-                  w.document.close();
-                  w.print();
+                  const printFrame = document.createElement('iframe');
+                  printFrame.style.display = 'none';
+                  printFrame.srcdoc = generatePrintDocument(printData);
+                  document.body.appendChild(printFrame);
+                  
+                  printFrame.onload = () => {
+                    try {
+                      printFrame.contentWindow.print();
+                      setTimeout(() => {
+                        document.body.removeChild(printFrame);
+                      }, 1000);
+                    } catch (error) {
+                      console.error('Print failed:', error);
+                      document.body.removeChild(printFrame);
+                      alert('Print failed. Please try again.');
+                    }
+                  };
                 }}
                 className="px-4 py-2 rounded bg-blue-600 text-white"
               >

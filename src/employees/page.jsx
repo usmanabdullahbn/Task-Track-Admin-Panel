@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { apiClient } from "../lib/api-client";
-import { FaEdit, FaTrash, FaClock, FaChevronDown } from "react-icons/fa";
+import { FaEdit, FaTrash, FaClock, FaChevronDown, FaFilter } from "react-icons/fa";
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
@@ -13,6 +13,7 @@ const EmployeesPage = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchField, setSearchField] = useState("name");
   const dropdownRef = useRef(null);
 
   // Handler functions for dropdown filtering and sorting
@@ -23,6 +24,7 @@ const EmployeesPage = () => {
 
   const handleApplyFilter = (field, value) => {
     // Apply the dropdown search term to the main search
+    setSearchField(field);
     setSearchTerm(dropdownSearchTerm);
     setOpenDropdown(null);
   };
@@ -144,25 +146,25 @@ const EmployeesPage = () => {
   };
 
   const filteredEmployees = employees.filter((employee) => {
-    if (!searchTerm) return true;
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
 
-    // Search across all fields
-    const name = employee.name || "";
-    const position = employee.position || "";
-    const role = employee.role || "";
-    const company = employee.company || "";
-    const email = employee.email || "";
-    const phone = employee.phone || "";
-    const search = searchTerm.toLowerCase();
-
-    return (
-      name.toLowerCase().includes(search) ||
-      position.toLowerCase().includes(search) ||
-      role.toLowerCase().includes(search) ||
-      company.toLowerCase().includes(search) ||
-      email.toLowerCase().includes(search) ||
-      phone.toLowerCase().includes(search)
-    );
+    switch (searchField) {
+      case "name":
+        return (employee.name || "").toLowerCase().includes(term);
+      case "position":
+        return (employee.position || "").toLowerCase().includes(term);
+      case "role":
+        return (employee.role || "").toLowerCase().includes(term);
+      case "company":
+        return (employee.company || "").toLowerCase().includes(term);
+      case "email":
+        return (employee.email || "").toLowerCase().includes(term);
+      case "phone":
+        return (employee.phone || "").toLowerCase().includes(term);
+      default:
+        return true;
+    }
   });
 
   // Sort Logic
@@ -242,9 +244,10 @@ const EmployeesPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("name")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("name")}>
                         <div className="flex items-center gap-2">
                           Name
+                          {searchField === "name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "name" && (
@@ -255,6 +258,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("name"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -290,9 +294,10 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("position")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "position" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("position")}>
                         <div className="flex items-center gap-2">
                           Position
+                          {searchField === "position" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "position" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "position" && (
@@ -303,6 +308,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("position"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -338,9 +344,10 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("role")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "role" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("role")}>
                         <div className="flex items-center gap-2">
                           Role
+                          {searchField === "role" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "role" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "role" && (
@@ -351,6 +358,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("role"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -386,9 +394,10 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("company")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "company" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("company")}>
                         <div className="flex items-center gap-2">
                           Company
+                          {searchField === "company" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "company" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "company" && (
@@ -399,6 +408,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("company"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -434,9 +444,10 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("email")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "email" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("email")}>
                         <div className="flex items-center gap-2">
                           Email
+                          {searchField === "email" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "email" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "email" && (
@@ -447,6 +458,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("email"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -482,9 +494,10 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("phone")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "phone" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("phone")}>
                         <div className="flex items-center gap-2">
                           Phone
+                          {searchField === "phone" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "phone" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "phone" && (
@@ -495,6 +508,7 @@ const EmployeesPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("phone"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">

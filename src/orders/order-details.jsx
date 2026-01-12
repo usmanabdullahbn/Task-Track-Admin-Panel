@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaPlus, FaPrint } from "react-icons/fa";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { apiClient } from "../lib/api-client";
 import EditTaskModal from "./EditTaskModal";
 import AddTaskModal from "./AddTaskModal";
@@ -147,6 +149,186 @@ const OrderDetailsPage = () => {
     }));
   };
 
+  const handlePrint = async () => {
+    try {
+      // Show loading state
+      const printButton = document.querySelector('button[title="Download Order Details as PDF"]');
+      if (printButton) {
+        printButton.disabled = true;
+        printButton.innerHTML = '<svg class="animate-spin" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="16" width="16"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
+      }
+
+      // Create a temporary div with clean HTML for PDF generation
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '800px';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.padding = '40px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.color = '#333';
+      tempDiv.style.fontSize = '12px';
+
+      // Build header HTML
+      const headerHtml = `
+        <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center;">Work Order Report</h1>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <tr>
+            <td style="padding: 5px;"><strong>Customer:</strong> ${order.customer?.name || '-'}</td>
+            <td style="padding: 5px;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><strong>Project:</strong> ${order.project?.name || '-'}</td>
+            <td style="padding: 5px;"><strong>Work Order #:</strong> ${order.order_number}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><strong>ERP Order #:</strong> ${order.erp_number || '-'}</td>
+            <td style="padding: 5px;"><strong>Created On:</strong> ${order.created_at ? new Date(order.created_at).toLocaleDateString() : '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><strong>Amount:</strong> ${order.amount?.$numberDecimal || '-'}</td>
+            <td style="padding: 5px;"><strong>Status:</strong> ${order.status || '-'}</td>
+          </tr>
+        </table>
+      `;
+
+      // Build tasks tables per asset
+      let tasksHtml = '';
+      Object.keys(groupedByAsset).forEach((assetName, index) => {
+        if (index > 0) {
+          tasksHtml += '<div style="page-break-before: always;"></div>';
+        }
+
+        tasksHtml += `
+          <h3 style="font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; color: #16a34a;">Asset: ${assetName}</h3>
+
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 30px;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Task</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Assigned To</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Start Time</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">End Time</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Remarks</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Attachment</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        groupedByAsset[assetName].forEach((task) => {
+          tasksHtml += `
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.title}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.user?.name || '-'}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">
+                ${task.start_time ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 8px;">
+                ${task.end_time ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.description || '-'}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.file_upload && task.file_upload.length > 0 ? 'Yes' : '-'}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.status}</td>
+            </tr>
+          `;
+        });
+
+        tasksHtml += `
+            </tbody>
+          </table>
+        `;
+      });
+
+      // Build footer HTML
+      const footerHtml = `
+        <div style="margin-top: 40px; border-top: 2px solid #333; padding-top: 20px;">
+          <p style="margin-bottom: 10px;"><strong>Total time to complete:</strong> __________</p>
+          <p style="margin-bottom: 10px;"><strong>Customer Feedback:</strong></p>
+          <div style="height: 60px; border: 1px solid #ccc; margin-bottom: 20px;"></div>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <div>
+              <p style="margin-bottom: 5px;"><strong>Customer Signature:</strong></p>
+              <div style="width: 200px; height: 60px; border: 1px solid #ccc;"></div>
+            </div>
+            <div>
+              <p style="margin-bottom: 5px;"><strong>Date:</strong></p>
+              <div style="width: 150px; height: 30px; border: 1px solid #ccc;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      tempDiv.innerHTML = headerHtml + tasksHtml + footerHtml;
+
+      document.body.appendChild(tempDiv);
+
+      // Generate canvas from the temporary div
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        width: tempDiv.offsetWidth,
+        height: tempDiv.offsetHeight
+      });
+
+      // Remove temporary div
+      document.body.removeChild(tempDiv);
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (imgHeight <= pageHeight) {
+        // Single page
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Multiple pages
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+      }
+
+      // Download the PDF
+      pdf.save(`Work-Order-${order.order_number}.pdf`);
+
+      // Reset button
+      if (printButton) {
+        printButton.disabled = false;
+        printButton.innerHTML = '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
+      }
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+
+      // Reset button on error
+      const printButton = document.querySelector('button[title="Download Order Details as PDF"]');
+      if (printButton) {
+        printButton.disabled = false;
+        printButton.innerHTML = '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
+      }
+    }
+  };
+
   const toggleTaskExpansion = (taskId) => {
     setExpandedTasks((prev) => ({
       ...prev,
@@ -233,12 +415,23 @@ const OrderDetailsPage = () => {
         </Link>
 
         {/* ===================== ORDER SECTION ===================== */}
-        <div className="bg-white shadow-sm border rounded-lg p-6 mb-10">
-          <h1 className="text-3xl font-bold mb-2 text-gray-900">
-            {order.title || `Order ${order.order_number}`}
-          </h1>
-
-          <p className="text-gray-600 mb-6">{order.description}</p>
+        <div className="bg-white shadow-sm border rounded-lg p-6 mb-10 relative">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2 text-gray-900">
+                {order.title || `Order ${order.order_number}`}
+              </h1>
+              <p className="text-gray-600">{order.description}</p>
+            </div>
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded flex items-center gap-2 transition ml-4"
+              title="Download Order Details as PDF"
+            >
+              <FaPrint size={16} />
+              Download PDF
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

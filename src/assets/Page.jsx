@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaPrint, FaChevronDown } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPrint, FaChevronDown, FaFilter } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 
 const AssetsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchField, setSearchField] = useState("title");
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -118,7 +119,7 @@ const AssetsPage = () => {
   };
 
   const handleApplyFilter = (field) => {
-    // Apply the dropdown search term to the main search
+    setSearchField(field);
     setSearchTerm(dropdownSearchTerm);
     setOpenDropdown(null);
   };
@@ -345,19 +346,25 @@ const AssetsPage = () => {
   // FILTER & SORT
   // -------------------------
   const filteredAssets = assets.filter((asset) => {
-    if (!searchTerm) return true;
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
 
-    // For now, search across all fields since we removed the global search
-    const title = asset.title || "";
-    const customer = asset.customer?.name || asset.customer || "";
-    const barcode = asset.barcode || "";
-    const search = searchTerm.toLowerCase();
-
-    return (
-      title.toLowerCase().includes(search) ||
-      customer.toLowerCase().includes(search) ||
-      barcode.toLowerCase().includes(search)
-    );
+    switch (searchField) {
+      case "title":
+        return (asset.title || "").toLowerCase().includes(term);
+      case "customer_name":
+        return (asset.customer?.name || asset.customer || "").toLowerCase().includes(term);
+      case "project_name":
+        return (asset.project?.title || asset.project || "").toLowerCase().includes(term);
+      case "category":
+        return (asset.category || "").toLowerCase().includes(term);
+      case "manufacturer":
+        return (asset.manufacturer || "").toLowerCase().includes(term);
+      case "barcode":
+        return (asset.barcode || "").toLowerCase().includes(term);
+      default:
+        return true;
+    }
   });
 
   // Sort Logic
@@ -421,9 +428,10 @@ const AssetsPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("title")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "title" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                         <div className="flex items-center gap-2">
                           Title
+                          {searchField === "title" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "title" && (
@@ -434,6 +442,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("title"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -469,9 +478,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("customer_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "customer_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer_name")}>
                         <div className="flex items-center gap-2">
                           Customer
+                          {searchField === "customer_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "customer_name" && (
@@ -482,6 +492,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("customer_name"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -517,9 +528,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("project_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "project_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project_name")}>
                         <div className="flex items-center gap-2">
                           Project
+                          {searchField === "project_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "project_name" && (
@@ -530,6 +542,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("project_name"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -565,9 +578,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("category")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "category" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("category")}>
                         <div className="flex items-center gap-2">
                           Category
+                          {searchField === "category" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "category" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "category" && (
@@ -578,6 +592,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("category"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -613,9 +628,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("manufacturer")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "manufacturer" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("manufacturer")}>
                         <div className="flex items-center gap-2">
                           Manufacturer
+                          {searchField === "manufacturer" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "manufacturer" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "manufacturer" && (
@@ -626,6 +642,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("manufacturer"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -661,9 +678,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative" onClick={() => handleHeaderClick("barcode")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "barcode" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("barcode")}>
                         <div className="flex items-center gap-2">
                           Barcode
+                          {searchField === "barcode" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "barcode" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "barcode" && (
@@ -674,6 +692,7 @@ const AssetsPage = () => {
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
                                 onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("barcode"); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
