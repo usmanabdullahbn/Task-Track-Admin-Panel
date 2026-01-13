@@ -30,6 +30,24 @@ const createDemoTasks = (employee, date) => DEMO_TASKS_DATA.map(task => ({
   end_time: new Date(date.getFullYear(), date.getMonth(), date.getDate(), task.endHours[0], task.endHours[1]).toISOString(),
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
 }));
+const getTotalMinutesForEmployee = (tasks, employeeId, startDate, endDate) => {
+  return tasks
+    .filter(task => {
+      const taskDate = new Date(task.start_time);
+      return taskDate >= startDate && taskDate < endDate && (task.user?._id === employeeId || task.user?.id === employeeId);
+    })
+    .reduce((total, task) => total + getDurationMinutes(task.start_time, task.end_time), 0);
+};
+const getWeekdaysInMonth = (year, month) => {
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  let count = 0;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) count++; // Mon-Fri
+  }
+  return count;
+};
 
 const SchedulePage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -43,6 +61,7 @@ const SchedulePage = () => {
   const [checkedTasks, setCheckedTasks] = useState({});
   const headerRightRef = React.useRef(null);
   const bodyRightRef = React.useRef(null);
+  const leftRef = React.useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -142,7 +161,8 @@ const SchedulePage = () => {
   const handleToday = () => setCurrentDate(new Date());
 
   // Sync header scroll with body scroll
-  const handleBodyScroll = (e) => {
+  const handleScroll = (e) => {
+    if (leftRef.current) leftRef.current.scrollTop = e.target.scrollTop;
     if (headerRightRef.current) headerRightRef.current.scrollLeft = e.target.scrollLeft;
   };
 
@@ -516,7 +536,7 @@ const SchedulePage = () => {
               {/* Table Body - One row per employee */}
               <div className="flex flex-1 overflow-hidden">
                 {/* Left Column - Frozen employee list */}
-                <div className="w-40 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="w-40 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={leftRef} onScroll={(e) => { if (bodyRightRef.current) bodyRightRef.current.scrollTop = e.target.scrollTop; }}>
                   {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                     <div
                       key={emp._id || emp.id}
@@ -526,7 +546,14 @@ const SchedulePage = () => {
                       <p className="text-xs text-gray-500">{emp.role || emp.designation || "Employee"}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600">
-                          {Math.floor(Math.random() * 100)}%
+                          {(() => {
+                            const weekStart = getWeekStart(currentDate);
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekEnd.getDate() + 7);
+                            const totalMinutes = getTotalMinutesForEmployee(tasks, emp._id || emp.id, weekStart, weekEnd);
+                            const utilization = Math.min(100, Math.round((totalMinutes / 3240) * 100));
+                            return utilization;
+                          })()}%
                         </div>
                       </div>
                     </div>
@@ -534,7 +561,7 @@ const SchedulePage = () => {
                 </div>
 
                 {/* Right Columns - 7 days x employee rows */}
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
+                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleScroll}>
                   <div className="flex flex-col">
                     {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                       <div key={`emp-${emp._id || emp.id}`} className="flex border-b border-gray-200 h-24 bg-white hover:bg-gray-50 transition">
@@ -641,7 +668,7 @@ const SchedulePage = () => {
               {/* Table Body - Unified vertical scrolling */}
               <div className="flex flex-1 overflow-hidden">
                 {/* Left Column - Frozen */}
-                <div className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="w-48 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={leftRef} onScroll={(e) => { if (bodyRightRef.current) bodyRightRef.current.scrollTop = e.target.scrollTop; }}>
                   {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                     <div
                       key={emp._id || emp.id}
@@ -652,7 +679,13 @@ const SchedulePage = () => {
                       {/* Progress circle */}
                       <div className="mt-2 flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600">
-                          {Math.floor(Math.random() * 100)}%
+                          {(() => {
+                            const dayStart = new Date(currentDate);
+                            const dayEnd = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+                            const totalMinutes = getTotalMinutesForEmployee(tasks, emp._id || emp.id, dayStart, dayEnd);
+                            const utilization = Math.min(100, Math.round((totalMinutes / 540) * 100));
+                            return utilization;
+                          })()}%
                         </div>
                       </div>
                     </div>
@@ -660,7 +693,7 @@ const SchedulePage = () => {
                 </div>
 
                 {/* Right Columns - Horizontally and Vertically Scrollable */}
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
+                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleScroll}>
                   <div className="flex flex-col min-w-max">
                     {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => {
                       const empTasks = tasks.filter(
