@@ -17,6 +17,7 @@ const ProjectsPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const [filters, setFilters] = useState({ title: "", customer_name: "", contact_name: "", contact_email: "", contact_phone: "", status: "", created_at: "" });
   const dropdownRef = useRef(null);
 
   // Delete confirmation modal states
@@ -104,12 +105,11 @@ const ProjectsPage = () => {
   // Dropdown and sorting handlers
   const handleHeaderClick = (field) => {
     setOpenDropdown(openDropdown === field ? null : field);
-    setDropdownSearchTerm("");
+    setDropdownSearchTerm(filters[field] || "");
   };
 
   const handleApplyFilter = (field) => {
-    setSearchField(field);
-    setSearchTerm(dropdownSearchTerm);
+    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
     setOpenDropdown(null);
   };
 
@@ -257,37 +257,33 @@ const ProjectsPage = () => {
   const statuses = Array.from(new Set(projects.map((p) => p.status).filter(Boolean)));
 
   const filteredProjects = projects.filter((project) => {
-    const q = (searchTerm || "").trim().toLowerCase();
-    if (q) {
-      let fieldValue = "";
-      switch (searchField) {
-        case "title":
-          fieldValue = project.title || "";
-          break;
-        case "customer_name":
-          fieldValue = project.customer?.name || "";
-          break;
-        case "contact_name":
-          fieldValue = project.contact_name || "";
-          break;
-        case "contact_email":
-          fieldValue = project.contact_email || "";
-          break;
-        case "contact_phone":
-          fieldValue = project.contact_phone || "";
-          break;
-        case "status":
-          fieldValue = project.status || "";
-          break;
-        case "created_at":
-          fieldValue = project.created_at ? new Date(project.created_at).toLocaleDateString() : "";
-          break;
-        default:
-          fieldValue = "";
+    for (const [field, term] of Object.entries(filters)) {
+      if (term) {
+        const value = (() => {
+          switch (field) {
+            case "title":
+              return (project.title || "").toLowerCase();
+            case "customer_name":
+              return (project.customer?.name || "").toLowerCase();
+            case "contact_name":
+              return (project.contact_name || "").toLowerCase();
+            case "contact_email":
+              return (project.contact_email || "").toLowerCase();
+            case "contact_phone":
+              return (project.contact_phone || "").toLowerCase();
+            case "status":
+              return (project.status || "").toLowerCase();
+            case "created_at":
+              return (project.created_at ? new Date(project.created_at).toLocaleDateString() : "").toLowerCase();
+            default:
+              return "";
+          }
+        })();
+        if (!value.includes(term.toLowerCase())) {
+          return false;
+        }
       }
-      if (!fieldValue.toLowerCase().includes(q)) return false;
     }
-
     return true;
   });
 
@@ -351,10 +347,10 @@ const ProjectsPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "title" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.title ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                         <div className="flex items-center gap-2">
                           Title
-                          {searchField === "title" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.title && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "title" && (
@@ -391,20 +387,31 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("title")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, title: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("title")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "customer_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.customer_name ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer_name")}>
                         <div className="flex items-center gap-2">
                           Customer Name
-                          {searchField === "customer_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.customer_name && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "customer_name" && (
@@ -441,20 +448,31 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("customer_name")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, customer_name: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("customer_name")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "contact_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.contact_name ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_name")}>
                         <div className="flex items-center gap-2">
                           Contact Name
-                          {searchField === "contact_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.contact_name && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "contact_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "contact_name" && (
@@ -491,20 +509,28 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("contact_name")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("contact_name")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("contact_name")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "contact_email" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_email")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.contact_email ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_email")}>
                         <div className="flex items-center gap-2">
                           Contact Email
-                          {searchField === "contact_email" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.contact_email && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "contact_email" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "contact_email" && (
@@ -541,20 +567,28 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("contact_email")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("contact_email")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("contact_email")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "contact_phone" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_phone")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.contact_phone ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("contact_phone")}>
                         <div className="flex items-center gap-2">
                           Contact Phone
-                          {searchField === "contact_phone" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.contact_phone && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "contact_phone" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "contact_phone" && (
@@ -591,20 +625,28 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("contact_phone")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("contact_phone")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("contact_phone")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "status" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.status ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
                         <div className="flex items-center gap-2">
                           Status
-                          {searchField === "status" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.status && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "status" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "status" && (
@@ -641,20 +683,28 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("status")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("status")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("status")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "created_at" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.created_at ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
                         <div className="flex items-center gap-2">
                           Created
-                          {searchField === "created_at" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.created_at && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "created_at" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "created_at" && (
@@ -691,12 +741,20 @@ const ProjectsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("created_at")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("created_at")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("created_at")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}

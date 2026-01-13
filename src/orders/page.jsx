@@ -17,8 +17,7 @@ const OrdersPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("title");
+  const [filters, setFilters] = useState({ title: "", order_number: "", customer: "", project: "", amount: "", status: "", created_at: "" });
   const dropdownRef = useRef(null);
 
   // Modals & selection
@@ -28,7 +27,7 @@ const OrdersPage = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskOrderId, setTaskOrderId] = useState(null); // which order the modal is creating task for
 
-  // Print preview
+  const [pageTitle, setPageTitle] = useState("Work Orders Management");
   const [printData, setPrintData] = useState(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
@@ -39,12 +38,11 @@ const OrdersPage = () => {
   // Handler functions for dropdown filtering and sorting
   const handleHeaderClick = (field) => {
     setOpenDropdown(openDropdown === field ? null : field);
-    setDropdownSearchTerm("");
+    setDropdownSearchTerm(filters[field] || "");
   };
 
   const handleApplyFilter = (field) => {
-    setSearchField(field);
-    setSearchTerm(dropdownSearchTerm);
+    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
     setOpenDropdown(null);
   };
 
@@ -249,13 +247,7 @@ const OrdersPage = () => {
       const projectsList = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
       setProjects(projectsList);
 
-      // Filter by status if specified
-      if (status !== "all") {
-        const normalizedFilterStatus = normalizeStatus(status);
-        ordersList = ordersList.filter(order =>
-          normalizeStatus(order.status) === normalizedFilterStatus
-        );
-      }
+      // No status filtering here, done in component
 
       setOrders(ordersList);
     } catch (err) {
@@ -272,9 +264,13 @@ const OrdersPage = () => {
   useEffect(() => {
     const statusParam = searchParams.get("status");
     if (statusParam) {
-      setSearchTerm(statusParam);
-      fetchData(statusParam);
+      const capitalizedStatus = statusParam.charAt(0).toUpperCase() + statusParam.slice(1).replace(/-/g, ' ');
+      setPageTitle(`${capitalizedStatus} Orders`);
+      setFilters(prev => ({ ...prev, status: statusParam }));
+      fetchData("all");
     } else {
+      setPageTitle("Work Orders Management");
+      setFilters(prev => ({ ...prev, status: "" }));
       fetchData("all");
     }
   }, [searchParams]);
@@ -424,27 +420,34 @@ const OrdersPage = () => {
   // FILTER & SORT
   // -------------------------
   const filteredOrders = orders.filter((order) => {
-    const term = (searchTerm || "").toLowerCase();
-    if (!term) return true;
-
-    switch (searchField) {
-      case "title":
-        return (order.title || "").toLowerCase().includes(term);
-      case "order_number":
-        return (order.order_number || "").toLowerCase().includes(term);
-      case "customer":
-        return (order.customer?.name || order.customer_name || "").toLowerCase().includes(term);
-      case "project":
-        return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase().includes(term);
-      case "amount":
-        return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").includes(term);
-      case "status":
-        return (normalizeStatus(order.status) || "").toLowerCase().includes(term);
-      case "created_at":
-        return (order.created_at ? new Date(order.created_at).toLocaleDateString() : "").toLowerCase().includes(term);
-      default:
-        return true;
+    for (const [field, term] of Object.entries(filters)) {
+      if (term) {
+        const value = (() => {
+          switch (field) {
+            case "title":
+              return (order.title || "").toLowerCase();
+            case "order_number":
+              return (order.order_number || "").toLowerCase();
+            case "customer":
+              return (order.customer?.name || order.customer_name || "").toLowerCase();
+            case "project":
+              return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase();
+            case "amount":
+              return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").toLowerCase();
+            case "status":
+              return (normalizeStatus(order.status) || "").toLowerCase();
+            case "created_at":
+              return (order.created_at ? new Date(order.created_at).toLocaleDateString() : "").toLowerCase();
+            default:
+              return "";
+          }
+        })();
+        if (!value.includes(term.toLowerCase())) {
+          return false;
+        }
+      }
     }
+    return true;
   });
 
   // Sort Logic
@@ -506,7 +509,7 @@ const OrdersPage = () => {
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Work Orders Management
+              {pageTitle}
             </h1>
 
             {/* ADD ORDER BUTTON */}
@@ -531,10 +534,10 @@ const OrdersPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "title" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.title ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                         <div className="flex items-center gap-2">
                           Title
-                          {searchField === "title" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.title && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "title" && (
@@ -571,20 +574,31 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("title")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, title: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("title")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "order_number" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("order_number")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.order_number ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("order_number")}>
                         <div className="flex items-center gap-2">
                           Order #
-                          {searchField === "order_number" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.order_number && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "order_number" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "order_number" && (
@@ -621,20 +635,31 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("order_number")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, order_number: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("order_number")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "customer" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.customer ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer")}>
                         <div className="flex items-center gap-2">
                           Customer
-                          {searchField === "customer" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.customer && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "customer" && (
@@ -671,20 +696,31 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("customer")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, customer: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("customer")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "project" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.project ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project")}>
                         <div className="flex items-center gap-2">
                           Project
-                          {searchField === "project" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.project && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "project" && (
@@ -721,21 +757,32 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("project")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, project: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("project")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
                       {/* <th className="px-4 py-3">ERP #</th> */}
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "amount" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("amount")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.amount ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("amount")}>
                         <div className="flex items-center gap-2">
                           Amount
-                          {searchField === "amount" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.amount && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "amount" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "amount" && (
@@ -772,20 +819,31 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("amount")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, amount: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("amount")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "status" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.status ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
                         <div className="flex items-center gap-2">
                           Status
-                          {searchField === "status" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.status && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "status" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "status" && (
@@ -822,20 +880,31 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("status")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, status: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("status")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "created_at" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.created_at ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
                         <div className="flex items-center gap-2">
                           Created
-                          {searchField === "created_at" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.created_at && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "created_at" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "created_at" && (
@@ -872,12 +941,23 @@ const OrdersPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("created_at")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, created_at: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("created_at")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}

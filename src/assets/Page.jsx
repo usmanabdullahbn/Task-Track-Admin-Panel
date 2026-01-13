@@ -20,6 +20,7 @@ const AssetsPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const [filters, setFilters] = useState({ title: "", customer_name: "", project_name: "", category: "", manufacturer: "", barcode: "" });
   const dropdownRef = useRef(null);
 
   // -------------------------
@@ -119,8 +120,12 @@ const AssetsPage = () => {
   };
 
   const handleApplyFilter = (field) => {
-    setSearchField(field);
-    setSearchTerm(dropdownSearchTerm);
+    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
+    setOpenDropdown(null);
+  };
+
+  const handleClearFilter = (field) => {
+    setFilters(prev => ({ ...prev, [field]: "" }));
     setOpenDropdown(null);
   };
 
@@ -346,25 +351,37 @@ const AssetsPage = () => {
   // FILTER & SORT
   // -------------------------
   const filteredAssets = assets.filter((asset) => {
-    const term = (searchTerm || "").toLowerCase();
-    if (!term) return true;
-
-    switch (searchField) {
-      case "title":
-        return (asset.title || "").toLowerCase().includes(term);
-      case "customer_name":
-        return (asset.customer?.name || asset.customer || "").toLowerCase().includes(term);
-      case "project_name":
-        return (asset.project?.title || asset.project || "").toLowerCase().includes(term);
-      case "category":
-        return (asset.category || "").toLowerCase().includes(term);
-      case "manufacturer":
-        return (asset.manufacturer || "").toLowerCase().includes(term);
-      case "barcode":
-        return (asset.barcode || "").toLowerCase().includes(term);
-      default:
-        return true;
+    for (const [field, term] of Object.entries(filters)) {
+      if (!term) continue;
+      const lowerTerm = term.toLowerCase();
+      let value = "";
+      switch (field) {
+        case "title":
+          value = (asset.title || "").toLowerCase();
+          break;
+        case "customer_name":
+          const customerVal = asset.customer?.name || asset.customer;
+          value = (typeof customerVal === 'string' ? customerVal : customerVal?.toString() || "").toLowerCase();
+          break;
+        case "project_name":
+          const projectVal = asset.project?.title || asset.project?.name || asset.project;
+          value = (typeof projectVal === 'string' ? projectVal : projectVal?.toString() || "").toLowerCase();
+          break;
+        case "category":
+          value = (asset.category || "").toLowerCase();
+          break;
+        case "manufacturer":
+          value = (asset.manufacturer || "").toLowerCase();
+          break;
+        case "barcode":
+          value = (asset.barcode || "").toLowerCase();
+          break;
+        default:
+          continue;
+      }
+      if (!value.includes(lowerTerm)) return false;
     }
+    return true;
   });
 
   // Sort Logic
@@ -428,10 +445,10 @@ const AssetsPage = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "title" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.title ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                         <div className="flex items-center gap-2">
                           Title
-                          {searchField === "title" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.title && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "title" && (
@@ -478,10 +495,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "customer_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.customer_name ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer_name")}>
                         <div className="flex items-center gap-2">
                           Customer
-                          {searchField === "customer_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.customer_name && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "customer_name" && (
@@ -528,10 +545,10 @@ const AssetsPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "project_name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project_name")}>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.project_name ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project_name")}>
                         <div className="flex items-center gap-2">
                           Project
-                          {searchField === "project_name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.project_name && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project_name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "project_name" && (
@@ -718,12 +735,23 @@ const AssetsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("barcode")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, barcode: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("barcode")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}

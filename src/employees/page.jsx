@@ -12,20 +12,18 @@ const EmployeesPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("name");
+  const [filters, setFilters] = useState({ name: "", position: "", role: "", company: "", email: "", phone: "" });
   const dropdownRef = useRef(null);
 
   // Handler functions for dropdown filtering and sorting
   const handleHeaderClick = (field) => {
     setOpenDropdown(openDropdown === field ? null : field);
-    setDropdownSearchTerm("");
+    setDropdownSearchTerm(filters[field] || "");
   };
 
   const handleApplyFilter = (field, value) => {
     // Apply the dropdown search term to the main search
-    setSearchField(field);
-    setSearchTerm(dropdownSearchTerm);
+    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
     setOpenDropdown(null);
   };
 
@@ -146,25 +144,32 @@ const EmployeesPage = () => {
   };
 
   const filteredEmployees = employees.filter((employee) => {
-    const term = (searchTerm || "").toLowerCase();
-    if (!term) return true;
-
-    switch (searchField) {
-      case "name":
-        return (employee.name || "").toLowerCase().includes(term);
-      case "position":
-        return (employee.position || "").toLowerCase().includes(term);
-      case "role":
-        return (employee.role || "").toLowerCase().includes(term);
-      case "company":
-        return (employee.company || "").toLowerCase().includes(term);
-      case "email":
-        return (employee.email || "").toLowerCase().includes(term);
-      case "phone":
-        return (employee.phone || "").toLowerCase().includes(term);
-      default:
-        return true;
+    for (const [field, term] of Object.entries(filters)) {
+      if (term) {
+        const value = (() => {
+          switch (field) {
+            case "name":
+              return (employee.name || "").toLowerCase();
+            case "position":
+              return (employee.position || "").toLowerCase();
+            case "role":
+              return (employee.role || "").toLowerCase();
+            case "company":
+              return (employee.company || "").toLowerCase();
+            case "email":
+              return (employee.email || "").toLowerCase();
+            case "phone":
+              return (employee.phone || "").toLowerCase();
+            default:
+              return "";
+          }
+        })();
+        if (!value.includes(term.toLowerCase())) {
+          return false;
+        }
+      }
     }
+    return true;
   });
 
   // Sort Logic
@@ -244,10 +249,10 @@ const EmployeesPage = () => {
                 <table className="w-full min-w-[600px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "name" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("name")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.name ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("name")}>
                         <div className="flex items-center gap-2">
                           Name
-                          {searchField === "name" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.name && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "name" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "name" && (
@@ -284,20 +289,31 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("name")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, name: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("name")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "position" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("position")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.position ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("position")}>
                         <div className="flex items-center gap-2">
                           Position
-                          {searchField === "position" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.position && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "position" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "position" && (
@@ -334,20 +350,28 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("position")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("position")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("position")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "role" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("role")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.role ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("role")}>
                         <div className="flex items-center gap-2">
                           Role
-                          {searchField === "role" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.role && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "role" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "role" && (
@@ -384,20 +408,28 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("role")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("role")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("role")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "company" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("company")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.company ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("company")}>
                         <div className="flex items-center gap-2">
                           Company
-                          {searchField === "company" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.company && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "company" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "company" && (
@@ -434,20 +466,28 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("company")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("company")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("company")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "email" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("email")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.email ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("email")}>
                         <div className="flex items-center gap-2">
                           Email
-                          {searchField === "email" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.email && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "email" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "email" && (
@@ -484,20 +524,28 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("email")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("email")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("email")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${searchField === "phone" && searchTerm ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("phone")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.phone ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("phone")}>
                         <div className="flex items-center gap-2">
                           Phone
-                          {searchField === "phone" && searchTerm && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.phone && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "phone" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "phone" && (
@@ -534,12 +582,20 @@ const EmployeesPage = () => {
                                   </button>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleApplyFilter("phone")}
-                                className="w-full px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
-                              >
-                                Apply
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleClearFilter("phone")}
+                                  className="flex-1 px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 transition-colors text-xs font-medium"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("phone")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
