@@ -392,9 +392,12 @@ const AddAssetsPage = () => {
             status: task.status || "Todo",
             plan_duration: plan_duration,
 
+            order_number: orderContext.order_number,
+
             order: {
               id: orderContext.id,
               title: orderContext.title,
+              order_number: orderContext.order_number,
             },
 
             customer: {
@@ -439,6 +442,8 @@ const AddAssetsPage = () => {
             fd.append('project[name]', taskPayload.project.name);
             fd.append('order[id]', taskPayload.order.id);
             fd.append('order[title]', taskPayload.order.title);
+            fd.append('order[order_number]', taskPayload.order.order_number);
+            fd.append('order_number', taskPayload.order_number);
             fd.append('asset[id]', taskPayload.asset.id);
             fd.append('asset[name]', taskPayload.asset.name);
             fd.append('user[id]', taskPayload.user.id);

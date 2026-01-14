@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaPrint } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPrint, FaChevronDown, FaFilter } from "react-icons/fa";
 import { apiClient } from "../lib/api-client";
 import AddTaskModal from "./AddTaskModal";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("title");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortField, setSortField] = useState("title");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
+  const [filters, setFilters] = useState({ title: "", order_number: "", customer: "", project: "", amount: "", status: "", created_at: "" });
+  const dropdownRef = useRef(null);
 
   // Modals & selection
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -24,13 +27,46 @@ const OrdersPage = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskOrderId, setTaskOrderId] = useState(null); // which order the modal is creating task for
 
-  // Print preview
+  const [pageTitle, setPageTitle] = useState("Work Orders Management");
   const [printData, setPrintData] = useState(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Expand order to show tasks
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [orderTasks, setOrderTasks] = useState({}); // { orderId: [tasks...] }
+
+  // Handler functions for dropdown filtering and sorting
+  const handleHeaderClick = (field) => {
+    setOpenDropdown(openDropdown === field ? null : field);
+    setDropdownSearchTerm(filters[field] || "");
+  };
+
+  const handleApplyFilter = (field) => {
+    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
+    setOpenDropdown(null);
+  };
+
+  const handleSortChange = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+    setOpenDropdown(null);
+  };
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+        setDropdownSearchTerm("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // -------------------------
   // PRINT DOCUMENT GENERATOR (styled like asset report)
@@ -211,13 +247,7 @@ const OrdersPage = () => {
       const projectsList = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
       setProjects(projectsList);
 
-      // Filter by status if specified
-      if (status !== "all") {
-        const normalizedFilterStatus = normalizeStatus(status);
-        ordersList = ordersList.filter(order =>
-          normalizeStatus(order.status) === normalizedFilterStatus
-        );
-      }
+      // No status filtering here, done in component
 
       setOrders(ordersList);
     } catch (err) {
@@ -234,27 +264,16 @@ const OrdersPage = () => {
   useEffect(() => {
     const statusParam = searchParams.get("status");
     if (statusParam) {
-      setSearchField("status");
-      setSearchTerm(statusParam);
-      setStatusFilter(statusParam);
-      fetchData(statusParam);
+      const capitalizedStatus = statusParam.charAt(0).toUpperCase() + statusParam.slice(1).replace(/-/g, ' ');
+      setPageTitle(`${capitalizedStatus} Orders`);
+      setFilters(prev => ({ ...prev, status: statusParam }));
+      fetchData("all");
     } else {
-      setStatusFilter("all");
+      setPageTitle("Work Orders Management");
+      setFilters(prev => ({ ...prev, status: "" }));
       fetchData("all");
     }
   }, [searchParams]);
-
-  // Handle status filter change
-  const handleStatusFilterChange = (newStatus) => {
-    setSearchField("status");
-    setSearchTerm(newStatus);
-    setStatusFilter(newStatus);
-    if (newStatus === "all" || newStatus === "") {
-      setSearchParams({});
-    } else {
-      setSearchParams({ status: newStatus });
-    }
-  };
 
   // -------------------------
   // FETCH TASKS FOR ORDER
@@ -397,30 +416,82 @@ const OrdersPage = () => {
     // Implement print task logic
   };
 
-  // -------------------------
-  // FILTERING
+  // -------------------------  
+  // FILTER & SORT
   // -------------------------
   const filteredOrders = orders.filter((order) => {
-    const searchValue = (searchTerm || "").toLowerCase();
-    if (!searchValue) return true;
+    for (const [field, term] of Object.entries(filters)) {
+      if (term) {
+        const value = (() => {
+          switch (field) {
+            case "title":
+              return (order.title || "").toLowerCase();
+            case "order_number":
+              return (order.order_number || "").toLowerCase();
+            case "customer":
+              return (order.customer?.name || order.customer_name || "").toLowerCase();
+            case "project":
+              return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase();
+            case "amount":
+              return String(order.amount?.value ?? order.amount?.$numberDecimal ?? "").toLowerCase();
+            case "status":
+              return (normalizeStatus(order.status) || "").toLowerCase();
+            case "created_at":
+              return (order.created_at ? new Date(order.created_at).toLocaleDateString() : "").toLowerCase();
+            default:
+              return "";
+          }
+        })();
+        if (!value.includes(term.toLowerCase())) {
+          return false;
+        }
+      }
+    }
+    return true;
+  });
 
-    switch (searchField) {
-      case "order":
-        return (order.order_number || "").toLowerCase().includes(searchValue);
+  // Sort Logic
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    let aValue = "";
+    let bValue = "";
+
+    switch (sortField) {
       case "title":
-        return (order.title || "").toLowerCase().includes(searchValue);
+        aValue = a.title || "";
+        bValue = b.title || "";
+        break;
+      case "order_number":
+        aValue = a.order_number || "";
+        bValue = b.order_number || "";
+        break;
       case "customer":
-        return (order.customer?.name || order.customer_name || "").toLowerCase().includes(searchValue);
+        aValue = a.customer?.name || a.customer_name || "";
+        bValue = b.customer?.name || b.customer_name || "";
+        break;
       case "project":
-        return (order.project?.name || order.project?.title || order.project_name || "").toLowerCase().includes(searchValue);
+        aValue = a.project?.name || a.project?.title || a.project_name || "";
+        bValue = b.project?.name || b.project?.title || b.project_name || "";
+        break;
       case "amount":
-        return String(
-          order.amount?.value ?? order.amount?.$numberDecimal ?? ""
-        ).includes(searchTerm);
+        aValue = String(a.amount?.value ?? a.amount?.$numberDecimal ?? 0);
+        bValue = String(b.amount?.value ?? b.amount?.$numberDecimal ?? 0);
+        break;
       case "status":
-        return normalizeStatus(order.status) === normalizeStatus(searchValue);
+        aValue = normalizeStatus(a.status) || "";
+        bValue = normalizeStatus(b.status) || "";
+        break;
+      case "created_at":
+        aValue = a.created_at || "";
+        bValue = b.created_at || "";
+        break;
       default:
-        return true;
+        return 0;
+    }
+
+    if (sortOrder === "asc") {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
     }
   });
 
@@ -438,7 +509,7 @@ const OrdersPage = () => {
           {/* HEADER */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Work Orders Management
+              {pageTitle}
             </h1>
 
             {/* ADD ORDER BUTTON */}
@@ -458,120 +529,445 @@ const OrdersPage = () => {
 
           {!loading && !error && (
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-              {/* SEARCH SECTION */}
-              <div className="border-b border-gray-200 p-4 sm:p-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  {/* Title */}
-                  <input
-                    type="text"
-                    placeholder="Search Title"
-                    value={searchField === "title" ? searchTerm : ""}
-                    onChange={(e) => {
-                      setSearchField("title");
-                      setSearchTerm(e.target.value);
-                    }}
-                    className="w-32 sm:w-30 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
-
-                  {/* Order # */}
-                  <input
-                    type="text"
-                    placeholder="Search Order #"
-                    value={searchField === "order" ? searchTerm : ""}
-                    onChange={(e) => {
-                      setSearchField("order");
-                      setSearchTerm(e.target.value);
-                    }}
-                    className="w-32 sm:w-30 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  />
-
-                  {/* Customer */}
-                  <div className="relative w-32 sm:w-40">
-                    <input
-                      type="text"
-                      placeholder="Search Customer"
-                      value={searchField === "customer" ? searchTerm : ""}
-                      onChange={(e) => {
-                        setSearchField("customer");
-                        setSearchTerm(e.target.value);
-                      }}
-                      list="customer-list"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                    <datalist id="customer-list">
-                      {customers
-                        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-                        .map((customer) => (
-                          <option key={customer._id} value={customer.name} />
-                        ))}
-                    </datalist>
-                  </div>
-
-                  {/* Project */}
-                  <div className="relative w-32 sm:w-40">
-                    <input
-                      type="text"
-                      placeholder="Search Project"
-                      value={searchField === "project" ? searchTerm : ""}
-                      onChange={(e) => {
-                        setSearchField("project");
-                        setSearchTerm(e.target.value);
-                      }}
-                      list="project-list"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                    <datalist id="project-list">
-                      {projects
-                        .sort((a, b) => ((a.name || a.title) || "").localeCompare((b.name || b.title) || ""))
-                        .map((project) => (
-                          <option key={project._id} value={project.name || project.title} />
-                        ))}
-                    </datalist>
-                  </div>
-
-                  {/* Status Dropdown */}
-                  <select
-                    value={searchField === "status" ? searchTerm : ""}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        handleStatusFilterChange(e.target.value);
-                      } else {
-                        setSearchField("title");
-                        setSearchTerm("");
-                        setStatusFilter("all");
-                        setSearchParams({});
-                      }
-                    }}
-                    className="w-32 sm:w-20 ml-20 rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
               {/* TABLE */}
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3">Title</th>
-                      <th className="px-4 py-3">Order #</th>
-                      <th className="px-4 py-3">Customer</th>
-                      <th className="px-4 py-3">Project</th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.title ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
+                        <div className="flex items-center gap-2">
+                          Title
+                          {filters.title && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "title" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "title" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("title"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("title");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "title" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "title" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, title: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("title")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.order_number ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("order_number")}>
+                        <div className="flex items-center gap-2">
+                          Order #
+                          {filters.order_number && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "order_number" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "order_number" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("order_number"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("order_number");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "order_number" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "order_number" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, order_number: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("order_number")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.customer ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("customer")}>
+                        <div className="flex items-center gap-2">
+                          Customer
+                          {filters.customer && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "customer" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "customer" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("customer"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("customer");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "customer" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "customer" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, customer: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("customer")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.project ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("project")}>
+                        <div className="flex items-center gap-2">
+                          Project
+                          {filters.project && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "project" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "project" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("project"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("project");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "project" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "project" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, project: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("project")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
                       {/* <th className="px-4 py-3">ERP #</th> */}
-                      <th className="px-4 py-3">Amount</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Created</th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.amount ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("amount")}>
+                        <div className="flex items-center gap-2">
+                          Amount
+                          {filters.amount && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "amount" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "amount" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("amount"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("amount");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "amount" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "amount" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, amount: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("amount")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.status ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("status")}>
+                        <div className="flex items-center gap-2">
+                          Status
+                          {filters.status && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "status" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "status" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("status"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("status");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "status" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "status" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, status: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("status")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
+                      <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.created_at ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("created_at")}>
+                        <div className="flex items-center gap-2">
+                          Created
+                          {filters.created_at && <FaFilter size={12} className="text-blue-600" />}
+                          <FaChevronDown size={12} className={`transition-transform ${openDropdown === "created_at" ? "rotate-180" : ""}`} />
+                        </div>
+                        {openDropdown === "created_at" && (
+                          <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={dropdownSearchTerm}
+                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("created_at"); }}
+                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSortChange("created_at");
+                                  }}
+                                  className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "created_at" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                    }`}
+                                >
+                                  Sort
+                                </button>
+                                {sortField === "created_at" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                  >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setFilters(prev => ({ ...prev, created_at: "" }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                                <button
+                                  onClick={() => handleApplyFilter("created_at")}
+                                  className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </th>
                       <th className="px-4 py-3">Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filteredOrders.map((order) => (
+                    {sortedOrders.map((order) => (
                       <tr
                         key={order._id}
                         className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
@@ -646,7 +1042,7 @@ const OrdersPage = () => {
                 </table>
               </div>
 
-              {filteredOrders.length === 0 && (
+              {sortedOrders.length === 0 && (
                 <p className="text-center text-gray-500 py-6 sm:text-base">
                   No orders found.
                 </p>
@@ -756,10 +1152,23 @@ const OrdersPage = () => {
               </button>
               <button
                 onClick={() => {
-                  const w = window.open("", "_blank", "noopener,noreferrer");
-                  w.document.write(generatePrintDocument(printData));
-                  w.document.close();
-                  w.print();
+                  const printFrame = document.createElement('iframe');
+                  printFrame.style.display = 'none';
+                  printFrame.srcdoc = generatePrintDocument(printData);
+                  document.body.appendChild(printFrame);
+                  
+                  printFrame.onload = () => {
+                    try {
+                      printFrame.contentWindow.print();
+                      setTimeout(() => {
+                        document.body.removeChild(printFrame);
+                      }, 1000);
+                    } catch (error) {
+                      console.error('Print failed:', error);
+                      document.body.removeChild(printFrame);
+                      alert('Print failed. Please try again.');
+                    }
+                  };
                 }}
                 className="px-4 py-2 rounded bg-blue-600 text-white"
               >

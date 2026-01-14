@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { apiClient } from "../lib/api-client";
+import { apiClient, FILE_BASE_URL } from "../lib/api-client";
 import EditTaskModal from "./EditTaskModal";
 
 const OrderTasksSection = ({
@@ -249,7 +249,7 @@ const OrderTasksSection = ({
                         {file.mimetype && file.mimetype.startsWith('image/') && (
                           <div className="">
                             <img
-                              src={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                              src={file.url.startsWith('http') ? file.url : `${FILE_BASE_URL}${file.url}`}
                               alt={file.originalname}
                               className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                             />
@@ -266,7 +266,7 @@ const OrderTasksSection = ({
 
                         {/* View Button */}
                         <a
-                          href={file.url.startsWith('http') ? file.url : `http://localhost:4000${file.url}`}
+                          href={file.url.startsWith('http') ? file.url : `${FILE_BASE_URL}${file.url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

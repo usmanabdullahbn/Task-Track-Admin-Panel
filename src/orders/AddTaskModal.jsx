@@ -18,6 +18,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
     order: {
       id: "",
       title: "",
+      order_number: "",
     },
     // customer data
     customer: {
@@ -79,6 +80,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
             order: {
               id: fetched._id || "",
               title: fetched.title || "",
+              order_number: fetched.order_number || "",
             },
             customer: {
               id: fetched.customer?.id || fetched.customer?._id || "",
@@ -232,16 +234,18 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
         return userName === formData.assigned_to;
       });
 
-      // Build task payload matching the structure from add-assets-with-tasks.jsx
       const taskPayload = {
         title: formData.title,
         description: formData.description,
         priority: formData.priority || "Medium",
         status: formData.status || "Todo",
 
+        order_number: formData.order.order_number,
+
         order: {
           id: formData.order.id,
           title: formData.order.title,
+          order_number: formData.order.order_number,
         },
 
         customer: {
@@ -288,6 +292,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, orderId }) => {
         fd.append('project[name]', taskPayload.project.name);
         fd.append('order[id]', taskPayload.order.id);
         fd.append('order[title]', taskPayload.order.title);
+        fd.append('order[order_number]', taskPayload.order.order_number);
+        fd.append('order_number', taskPayload.order_number);
         fd.append('asset[id]', taskPayload.asset.id);
         fd.append('asset[name]', taskPayload.asset.name);
         fd.append('user[id]', taskPayload.user.id);
