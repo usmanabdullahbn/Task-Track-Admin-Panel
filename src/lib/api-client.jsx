@@ -3,6 +3,8 @@
 // const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+export const FILE_BASE_URL = API_BASE_URL.replace('/api', '');
+
 export const apiClient = {
   // ============================
   //         DASHBOARD
