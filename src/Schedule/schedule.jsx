@@ -462,7 +462,7 @@ const SchedulePage = () => {
                               <div
                                 key={task._id}
                                 className="text-xs bg-orange-100 text-orange-800 p-1.5 rounded hover:bg-orange-200 transition cursor-pointer"
-                                title={`${task.order?.title || ''} ${task.title} - ${task.user?.name || 'Unknown'}${task.order?.order_number ? ` (Order #${task.order.order_number})` : ''}`}
+                                title={`${task.order?.title || ''} ${task.title} - ${task.user?.name || 'Unknown'}${task.order?.order_number ? ` (${task.order.order_number})` : ''}`}
                               >
                                 <div className="flex items-start gap-1">
                                   <span className="text-orange-500 mt-0.5">●</span>
@@ -470,7 +470,7 @@ const SchedulePage = () => {
                                     {task.order?.title && (
                                       <div className="mb-1 text-xs font-medium opacity-90">
                                         <p className="truncate">{task.order.title}</p>
-                                        <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
+                                        <p className="text-xs opacity-75">{task.order.order_number || 'N/A'}</p>
                                       </div>
                                     )}
                                     <p className="font-medium truncate">
@@ -592,12 +592,12 @@ const SchedulePage = () => {
                                       <div
                                         key={task._id}
                                         className={`border-l-4 rounded px-2 py-1 text-xs flex-shrink-0 ${taskColor}`}
-                                        title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
+                                        title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)} ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
                                       >
                                         {task.order?.title && (
                                           <div className="mb-0.5 text-xs font-medium opacity-90 truncate">
                                             <p className="truncate">{task.order.title}</p>
-                                            <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
+                                            <p className="text-xs opacity-75">{task.order.order_number || 'N/A'}</p>
                                           </div>
                                         )}
                                         <div className="flex items-start gap-1 mb-0.5">
@@ -740,13 +740,13 @@ const SchedulePage = () => {
                                     width: `${Math.max(width, 5)}%`,
                                   }}
                                   className={`absolute top-2 bottom-2 border-l-4 rounded px-2 py-1 text-xs flex flex-col justify-start hover:shadow-lg transition ${taskColor}`}
-                                  title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}
+                                  title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\n: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}\nDue: ${new Date(task.start_time).toLocaleDateString()}`}
                                 >
                                   {/* Order Info */}
                                   {task.order && (
                                     <div className="mb-1 text-xs font-medium opacity-90">
                                       <p className="truncate">{task.order.title}</p>
-                                      <p className="text-xs opacity-75">Order #{task.order.order_number || 'N/A'}</p>
+                                      <p className="text-xs opacity-75">{task.order.order_number || 'N/A'}</p>
                                     </div>
                                   )}
                                   {/* Checkbox */}
