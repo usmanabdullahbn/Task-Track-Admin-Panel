@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CustomerSidebar from "./customer-sidebar";
 import { apiClient } from "../../lib/api-client";
-import { FaExternalLinkAlt, FaPrint } from "react-icons/fa";
+import { handleExportData } from "../../lib/export-utils";
+import { FaExternalLinkAlt, FaPrint, FaFileExcel } from "react-icons/fa";
 
 const CustomerProjects = () => {
   const navigate = useNavigate();
@@ -10,6 +11,9 @@ const CustomerProjects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState({});
+  const [orders, setOrders] = useState([]);
+  const [assets, setAssets] = useState([]);
 
   // print states
   const [printData, setPrintData] = useState(null);
@@ -27,8 +31,10 @@ const CustomerProjects = () => {
     }
   };
 
+  const employee = JSON.parse(localStorage.getItem("User"))?.user;
+
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       const employeeId = getEmployeeId();
       if (!employeeId) {
         setError("employee ID not found");
@@ -38,22 +44,48 @@ const CustomerProjects = () => {
 
       try {
         setLoading(true);
-        const data = await apiClient.getProjectsByCustomerEmployeeId(employeeId);
-        // console.log("API Response:", data);
-        
-        // Handle both direct array and wrapped response
-        const projectsArray = Array.isArray(data) ? data : (data.projects || []);
-        setProjects(projectsArray);
-        // console.log("Processed Projects:", projectsArray);
+        const [projectsRes, ordersRes, assetsRes] = await Promise.all([
+          apiClient.getProjectsByCustomerEmployeeId(employeeId),
+          apiClient.getOrdersByCustomerEmployeeId(employeeId),
+          apiClient.getAssetsByCustomerEmployeeId(employeeId),
+        ]);
+
+        const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
+        const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
+        const assets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.assets || []);
+
+        setProjects(projects);
+        setOrders(orders);
+        setAssets(assets);
+
+        const totalProjects = projects.length;
+        const activeProjects = projects.filter(p => p.status === "Active").length;
+        const completedProjects = projects.filter(p => p.status === "Completed").length;
+
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(o => o.status === "Pending").length;
+        const completedOrders = orders.filter(o => o.status === "Completed").length;
+
+        const totalAssets = assets.length;
+
+        setStats({
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalOrders,
+          pendingOrders,
+          completedOrders,
+          totalAssets,
+        });
       } catch (err) {
-        setError(err.message || "Failed to load projects");
-        console.error("Error fetching projects:", err);
+        setError(err.message || "Failed to load data");
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchData();
   }, []);
 
   // -------------------------
@@ -277,6 +309,18 @@ const CustomerProjects = () => {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Export Button - Fixed Bottom Right */}
+        <div className="fixed bottom-4 right-4 z-10">
+          <button
+            onClick={() => handleExportData(stats, projects, orders, assets, employee)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
+            title="Export Customer Data"
+          >
+            <FaFileExcel size={16} />
+            Export Data
+          </button>
         </div>
       </main>
 

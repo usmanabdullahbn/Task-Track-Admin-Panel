@@ -7,9 +7,11 @@ import {
   FaShoppingCart,
   FaSpinner,
   FaClock,
+  FaFileExcel,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../lib/api-client";
+import { handleExportData } from "../../lib/export-utils";
 import CustomerSidebar from "./customer-sidebar";
 import Logo1 from "../../images/logo 1.png";
 import Logo2 from "../../images/logo 2.png";
@@ -18,9 +20,11 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [assets, setAssets] = useState([]);
   const user = JSON.parse(localStorage.getItem("User"));
   const employee = user?.user;
-  console.log(employee._id)
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -41,6 +45,10 @@ const CustomerDashboard = () => {
         const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
         const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
         const assets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.assets || []);
+
+        setProjects(projects);
+        setOrders(orders);
+        setAssets(assets);
 
         const totalProjects = projects.length;
         const activeProjects = projects.filter(p => p.status === "Active").length;
@@ -78,7 +86,7 @@ const CustomerDashboard = () => {
     };
 
     fetchStats();
-  }, [employee?._id]);
+  }, [employee && employee._id]);
 
   const topRoutes = {
     "Total Projects": "/customer-projects",
@@ -119,11 +127,13 @@ const CustomerDashboard = () => {
               alt="Company Logo"
               className="h-10 md:h-16 object-contain"
             />
-            <img
-              src={Logo2}
-              alt="Brand Logo"
-              className="h-10 md:h-16 object-contain"
-            />
+            <div className="flex items-center gap-4">
+              <img
+                src={Logo2}
+                alt="Brand Logo"
+                className="h-10 md:h-16 object-contain"
+              />
+            </div>
           </div>
 
           <div className="space-y-10">
@@ -169,6 +179,17 @@ const CustomerDashboard = () => {
                 />
               ))}
             </Section>
+          </div>
+
+          <div className="fixed bottom-4 right-4 z-10">
+            <button
+              onClick={() => handleExportData(stats, projects, orders, assets, employee)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
+              title="Export Customer Data"
+            >
+              <FaFileExcel size={16} />
+              Export Data
+            </button>
           </div>
         </div>
       </main>

@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaPrint, FaExternalLinkAlt } from "react-icons/fa";
+import { FaPrint, FaExternalLinkAlt, FaFileExcel } from "react-icons/fa";
 import { apiClient } from "../../lib/api-client";
+import { handleExportData } from "../../lib/export-utils";
 import CustomerSidebar from "./customer-sidebar";
 
 const CustomerOrder = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("order");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [stats, setStats] = useState({});
+  const [projects, setProjects] = useState([]);
+  const [assets, setAssets] = useState([]);
 
   // per-order print states
   const [printData, setPrintData] = useState(null);
@@ -27,64 +30,87 @@ const CustomerOrder = () => {
     }
   };
 
+  const employee = JSON.parse(localStorage.getItem("User"))?.user;
+
   // -------------------------
   // FETCH WORK ORDERS
   // -------------------------
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       const employeeId = getEmployeeId();
       if (!employeeId) {
         setError("employee ID not found");
         setOrders([]);
+        setProjects([]);
+        setAssets([]);
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const data = await apiClient.getOrdersByCustomerEmployeeId(employeeId);
-        console.log("Orders API response:", data);
+        const [projectsRes, ordersRes, assetsRes] = await Promise.all([
+          apiClient.getProjectsByCustomerEmployeeId(employeeId),
+          apiClient.getOrdersByCustomerEmployeeId(employeeId),
+          apiClient.getAssetsByCustomerEmployeeId(employeeId),
+        ]);
 
-        // support both array and wrapped response { success: true, orders: [...] }
-        const ordersArray = Array.isArray(data) ? data : data?.orders || [];
-        setOrders(ordersArray);
+        const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
+        const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
+        const assets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.assets || []);
+
+        setProjects(projects);
+        setOrders(orders);
+        setAssets(assets);
+
+        const totalProjects = projects.length;
+        const activeProjects = projects.filter(p => p.status === "Active").length;
+        const completedProjects = projects.filter(p => p.status === "Completed").length;
+
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(o => o.status === "Pending").length;
+        const completedOrders = orders.filter(o => o.status === "Completed").length;
+
+        const totalAssets = assets.length;
+
+        setStats({
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalOrders,
+          pendingOrders,
+          completedOrders,
+          totalAssets,
+        });
       } catch (err) {
-        setError(err?.message || "Failed to load orders");
-        setOrders([]);
-        console.error("Error fetching orders:", err);
+        setError(err?.message || "Failed to load data");
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchOrders();
+    fetchData();
   }, []);
 
   // -------------------------
   // FILTERING
   // -------------------------
   const filteredOrders = (orders || []).filter((order) => {
-    const searchValue = (searchTerm || "").toLowerCase();
+    const orderNumber = (order.order_number || "").toLowerCase();
+    const projectName = (
+      order.project?.title ||
+      order.project?.name ||
+      order.project_id ||
+      ""
+    ).toString().toLowerCase();
+    const amount = (order.amount?.$numberDecimal || order.amount?.value || "").toString().toLowerCase();
+    const search = (searchTerm || "").toLowerCase();
 
-    switch (searchField) {
-      case "order":
-        return (order.order_number || "").toLowerCase().includes(searchValue);
-      case "project":
-        return (
-          order.project?.title ||
-          order.project?.name ||
-          order.project_id ||
-          ""
-        )
-          .toString()
-          .toLowerCase()
-          .includes(searchValue);
-      case "amount":
-        return (order.amount?.$numberDecimal || order.amount?.value || "")
-          .toString()
-          .includes(searchTerm);
-      default:
-        return true;
-    }
+    return (
+      orderNumber.includes(search) ||
+      projectName.includes(search) ||
+      amount.includes(search)
+    );
   });
 
   // -------------------------
@@ -230,34 +256,13 @@ const CustomerOrder = () => {
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               {/* SEARCH SECTION */}
               <div className="border-b border-gray-200 p-4 sm:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4">
-                  {[
-                    {
-                      field: "order",
-                      placeholder: "Search Order #",
-                    },
-                    {
-                      field: "project",
-                      placeholder: "Search Project",
-                    },
-                    {
-                      field: "amount",
-                      placeholder: "Search Amount",
-                    },
-                  ].map(({ field, placeholder }) => (
-                    <input
-                      key={field}
-                      type="text"
-                      placeholder={placeholder}
-                      value={searchField === field ? searchTerm : ""}
-                      onChange={(e) => {
-                        setSearchField(field);
-                        setSearchTerm(e.target.value);
-                      }}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                    />
-                  ))}
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search orders by order number, project, or amount..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:text-base focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                />
               </div>
 
               {/* TABLE */}
@@ -265,12 +270,12 @@ const CustomerOrder = () => {
                 <table className="w-full min-w-[700px] text-sm sm:text-base">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3">Project</th>
-                      <th className="px-4 py-3">Order #</th>
-                      <th className="px-4 py-3">Amount</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Created</th>
-                      <th className="px-4 py-3">Action</th>
+                      <th className="px-4 py-3 text-left">Project</th>
+                      <th className="px-4 py-3 text-left">Order #</th>
+                      <th className="px-4 py-3 text-left">Amount</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Created</th>
+                      <th className="px-4 py-3 text-left">Action</th>
                     </tr>
                   </thead>
 
@@ -335,6 +340,18 @@ const CustomerOrder = () => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Export Button - Fixed Bottom Right */}
+        <div className="fixed bottom-4 right-4 z-10">
+          <button
+            onClick={() => handleExportData(stats, projects, orders, assets, employee)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
+            title="Export Customer Data"
+          >
+            <FaFileExcel size={16} />
+            Export Data
+          </button>
         </div>
       </main>
 

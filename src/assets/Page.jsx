@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
 import { FaEdit, FaTrash, FaPrint, FaChevronDown, FaFilter } from "react-icons/fa";
 import { apiClient, FILE_BASE_URL } from "../lib/api-client";
+import * as XLSX from "xlsx";
 
 const AssetsPage = () => {
   const [assets, setAssets] = useState([]);
@@ -109,6 +110,43 @@ const AssetsPage = () => {
   const closeFilesModal = () => {
     setShowFilesModal(false);
     setSelectedAsset(null);
+  };
+
+  // -------------------------  
+  // EXCEL EXPORT
+  // -------------------------
+  const handleExportExcel = () => {
+    const excelData = assets.map((item) => ({
+      "Customer": item.customer?.name || item.customer || "",
+      "Project": item.project?.name || item.project || "",
+      "Asset Type": item.category || "",
+      "Asset Location": item.area || "",
+      "Asset": item.title || "",
+      "Work Order": item.work_order || "",
+      "Task": item.task || "",
+      "Employee": item.assigned_employee?.name || "",
+      "Plan start": item.plan_start
+        ? new Date(item.plan_start).toLocaleString()
+        : "",
+      "Plan end": item.plan_end
+        ? new Date(item.plan_end).toLocaleString()
+        : "",
+      "Plan time (Hours)": item.plan_hours || "",
+      "Actual Start": item.actual_start
+        ? new Date(item.actual_start).toLocaleString()
+        : "",
+      "Actual end": item.actual_end
+        ? new Date(item.actual_end).toLocaleString()
+        : "",
+      "Actual time (Hours)": item.actual_hours || "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Assets");
+
+    XLSX.writeFile(workbook, "Assets_Report.xlsx");
   };
 
   // Dropdown and sorting handlers
@@ -423,15 +461,17 @@ const AssetsPage = () => {
               Assets
             </h1>
 
-            {/* ADD ASSET (Admin + Manager + Supervisor) */}
-            {canAddAsset && (
-              <Link
-                to="/assets/new"
-                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
-              >
-                + Add Asset
-              </Link>
-            )}
+            <div className="flex gap-2">
+              {/* ADD ASSET (Admin + Manager + Supervisor) */}
+              {canAddAsset && (
+                <Link
+                  to="/assets/new"
+                  className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors"
+                >
+                  + Add Asset
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Table */}

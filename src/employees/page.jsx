@@ -22,9 +22,18 @@ const EmployeesPage = () => {
   };
 
   const handleApplyFilter = (field, value) => {
-    // Apply the dropdown search term to the main search
-    setFilters(prev => ({ ...prev, [field]: dropdownSearchTerm }));
+    // Close the dropdown
     setOpenDropdown(null);
+  };
+
+  const handleClearFilter = (field) => {
+    setFilters(prev => ({ ...prev, [field]: "" }));
+    setOpenDropdown(null);
+  };
+
+  const handleInputChange = (field, value) => {
+    setDropdownSearchTerm(value);
+    setFilters(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSortChange = (field) => {
@@ -151,11 +160,13 @@ const EmployeesPage = () => {
             case "name":
               return (employee.name || "").toLowerCase();
             case "position":
-              return (employee.position || "").toLowerCase();
+              return (employee.designation || "").toLowerCase();
             case "role":
               return (employee.role || "").toLowerCase();
             case "company":
-              return (employee.company || "").toLowerCase();
+              return employee.role === "employee" 
+                ? (employee.customer?.name || "").toLowerCase()
+                : "switchgear international";
             case "email":
               return (employee.email || "").toLowerCase();
             case "phone":
@@ -183,16 +194,16 @@ const EmployeesPage = () => {
         bValue = b.name || "";
         break;
       case "position":
-        aValue = a.position || "";
-        bValue = b.position || "";
+        aValue = a.designation || "";
+        bValue = b.designation || "";
         break;
       case "role":
         aValue = a.role || "";
         bValue = b.role || "";
         break;
       case "company":
-        aValue = a.company || "";
-        bValue = b.company || "";
+        aValue = a.role === "employee" ? (a.customer?.name || "") : "Switchgear International";
+        bValue = b.role === "employee" ? (b.customer?.name || "") : "Switchgear International";
         break;
       case "email":
         aValue = a.email || "";
@@ -262,8 +273,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("name"); }}
+                                onChange={(e) => handleInputChange("name", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -323,8 +334,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("position"); }}
+                                onChange={(e) => handleInputChange("position", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -381,8 +392,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("role"); }}
+                                onChange={(e) => handleInputChange("role", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -439,8 +450,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("company"); }}
+                                onChange={(e) => handleInputChange("company", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -497,8 +508,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("email"); }}
+                                onChange={(e) => handleInputChange("email", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
@@ -555,8 +566,8 @@ const EmployeesPage = () => {
                                 type="text"
                                 placeholder="Search..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => setDropdownSearchTerm(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("phone"); }}
+                                onChange={(e) => handleInputChange("phone", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
                               <div className="flex gap-2">
