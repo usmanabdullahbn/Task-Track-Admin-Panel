@@ -12,13 +12,15 @@ const EmployeesPage = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState("");
-  const [filters, setFilters] = useState({ name: "", position: "", role: "", company: "", email: "", phone: "" });
+  const [filters, setFilters] = useState({ name: "", position: "", role: [], company: "", email: "", phone: "" });
   const dropdownRef = useRef(null);
 
   // Handler functions for dropdown filtering and sorting
   const handleHeaderClick = (field) => {
     setOpenDropdown(openDropdown === field ? null : field);
-    setDropdownSearchTerm(filters[field] || "");
+    if (field !== "role") {
+      setDropdownSearchTerm(filters[field] || "");
+    }
   };
 
   const handleApplyFilter = (field, value) => {
@@ -27,13 +29,22 @@ const EmployeesPage = () => {
   };
 
   const handleClearFilter = (field) => {
-    setFilters(prev => ({ ...prev, [field]: "" }));
+    setFilters(prev => ({ ...prev, [field]: field === "role" ? [] : "" }));
     setOpenDropdown(null);
   };
 
   const handleInputChange = (field, value) => {
     setDropdownSearchTerm(value);
     setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRoleChange = (role, checked) => {
+    setFilters(prev => ({
+      ...prev,
+      role: checked
+        ? [...prev.role, role.toLowerCase()]
+        : prev.role.filter(r => r !== role.toLowerCase())
+    }));
   };
 
   const handleSortChange = (field) => {
@@ -154,7 +165,7 @@ const EmployeesPage = () => {
 
   const filteredEmployees = employees.filter((employee) => {
     for (const [field, term] of Object.entries(filters)) {
-      if (term) {
+      if (term && (Array.isArray(term) ? term.length > 0 : term)) {
         const value = (() => {
           switch (field) {
             case "name":
@@ -175,7 +186,11 @@ const EmployeesPage = () => {
               return "";
           }
         })();
-        if (!value.includes(term.toLowerCase())) {
+        if (field === "role") {
+          if (!term.includes(employee.role?.toLowerCase())) {
+            return false;
+          }
+        } else if (!value.includes(term.toLowerCase())) {
           return false;
         }
       }
@@ -379,23 +394,62 @@ const EmployeesPage = () => {
                           </div>
                         )}
                       </th>
-                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.role ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("role")}>
+                      <th className={`px-4 sm:px-6 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.role.length > 0 ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("role")}>
                         <div className="flex items-center gap-2">
                           Role
-                          {filters.role && <FaFilter size={12} className="text-blue-600" />}
+                          {filters.role.length > 0 && <FaFilter size={12} className="text-blue-600" />}
                           <FaChevronDown size={12} className={`transition-transform ${openDropdown === "role" ? "rotate-180" : ""}`} />
                         </div>
                         {openDropdown === "role" && (
                           <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
                             <div className="space-y-2">
-                              <input
-                                type="text"
-                                placeholder="Search..."
-                                value={dropdownSearchTerm}
-                                onChange={(e) => handleInputChange("role", e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
-                                className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
-                              />
+                              <div className="space-y-1">
+                                <label className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.role.includes("admin")}
+                                    onChange={(e) => handleRoleChange("admin", e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  Admin
+                                </label>
+                                <label className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.role.includes("employee")}
+                                    onChange={(e) => handleRoleChange("employee", e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  Employee
+                                </label>
+                                <label className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.role.includes("technician")}
+                                    onChange={(e) => handleRoleChange("technician", e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  Technician
+                                </label>
+                                <label className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.role.includes("supervisor")}
+                                    onChange={(e) => handleRoleChange("supervisor", e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  Supervisor
+                                </label>
+                                <label className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.role.includes("manager")}
+                                    onChange={(e) => handleRoleChange("manager", e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  Manager
+                                </label>
+                              </div>
                               <div className="flex gap-2">
                                 <button
                                   onClick={(e) => {
@@ -446,11 +500,31 @@ const EmployeesPage = () => {
                         {openDropdown === "company" && (
                           <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
                             <div className="space-y-2">
+                              <label className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.company === "switchgear international"}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setFilters(prev => ({ ...prev, company: "switchgear international" }));
+                                      setDropdownSearchTerm("");
+                                    } else {
+                                      setFilters(prev => ({ ...prev, company: "" }));
+                                      setDropdownSearchTerm("");
+                                    }
+                                  }}
+                                  className="rounded"
+                                />
+                                SGI (Switchgear International)
+                              </label>
                               <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder="Search other companies..."
                                 value={dropdownSearchTerm}
-                                onChange={(e) => handleInputChange("company", e.target.value)}
+                                onChange={(e) => {
+                                  setDropdownSearchTerm(e.target.value);
+                                  setFilters(prev => ({ ...prev, company: e.target.value }));
+                                }}
                                 onKeyDown={(e) => { if (e.key === 'Enter') setOpenDropdown(null); }}
                                 className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                               />
