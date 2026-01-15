@@ -161,8 +161,7 @@ const SchedulePage = () => {
   const handleToday = () => setCurrentDate(new Date());
 
   // Sync header scroll with body scroll
-  const handleScroll = (e) => {
-    if (leftRef.current) leftRef.current.scrollTop = e.target.scrollTop;
+  const handleBodyScroll = (e) => {
     if (headerRightRef.current) headerRightRef.current.scrollLeft = e.target.scrollLeft;
   };
 
@@ -498,7 +497,7 @@ const SchedulePage = () => {
             </div>
           ) : viewMode === "week" ? (
             // WEEK VIEW - Single Unified Table with Frozen Left Column
-            <div className="border-t bg-white overflow-hidden flex flex-col h-[calc(100vh-300px)]">
+            <div className="border-t bg-white overflow-hidden flex flex-col">
               {/* Table Header - Frozen at top with sticky positioning */}
               <div className="flex border-b border-gray-200 bg-gray-50 shrink-0">
                 {/* Header Left Column */}
@@ -534,9 +533,9 @@ const SchedulePage = () => {
               </div>
 
               {/* Table Body - One row per employee */}
-              <div className="flex flex-1 overflow-hidden">
+              <div className="flex">
                 {/* Left Column - Frozen employee list */}
-                <div className="w-40 shrink-0 border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={leftRef} onScroll={(e) => { if (bodyRightRef.current) bodyRightRef.current.scrollTop = e.target.scrollTop; }}>
+                <div className="w-40 shrink-0 border-r border-gray-200 bg-white">
                   {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                     <div
                       key={emp._id || emp.id}
@@ -561,7 +560,7 @@ const SchedulePage = () => {
                 </div>
 
                 {/* Right Columns - 7 days x employee rows */}
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleScroll}>
+                <div className="flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
                   <div className="flex flex-col">
                     {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => (
                       <div key={`emp-${emp._id || emp.id}`} className="flex border-b border-gray-200 h-24 bg-white hover:bg-gray-50 transition">
@@ -592,7 +591,7 @@ const SchedulePage = () => {
                                       <div
                                         key={task._id}
                                         className={`border-l-4 rounded px-2 py-1 text-xs flex-shrink-0 ${taskColor}`}
-                                        title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)} ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
+                                        title={`${task.order?.title || ''} ${task.title} ${formatTime(task.start_time)} - ${formatTime(task.end_time)}\nOrder #: ${task.order?.order_number || 'N/A'}\nDuration: ${durationText}`}
                                       >
                                         {task.order?.title && (
                                           <div className="mb-0.5 text-xs font-medium opacity-90 truncate">
@@ -633,7 +632,7 @@ const SchedulePage = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div >
           ) : (
             // DAY VIEW - Single Unified Table with Frozen Left Column
             <div className="border-t bg-white overflow-hidden flex flex-col">
@@ -693,7 +692,7 @@ const SchedulePage = () => {
                 </div>
 
                 {/* Right Columns - Horizontally and Vertically Scrollable */}
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleScroll}>
+                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" ref={bodyRightRef} onScroll={handleBodyScroll}>
                   <div className="flex flex-col min-w-max">
                     {(selectedEmployee === "all" ? employees : employees.filter(emp => (emp._id || emp.id) === selectedEmployee)).map((emp) => {
                       const empTasks = tasks.filter(
