@@ -37,6 +37,7 @@ import CustomerOrder from "./CustomerScreens/CustomerDash/customer-order";
 import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
 import AddAssetsPage from "./orders/add-assets-with-tasks";
 import SchedulePage from "./Schedule/schedule";
+import TasksPage from "./tasks/page";
 
 
 // Optional: A simple 404 page
@@ -187,14 +188,14 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        {/* <Route
+        <Route
           path="/tasks"
           element={
             <ProtectedRoute allowedRoles={["admin", "manager", "supervisor", "technician"]}>
               <TasksPage />
             </ProtectedRoute>
           }
-        /> */}
+        />
         <Route
           path="/employees"
           element={

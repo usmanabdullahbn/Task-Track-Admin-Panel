@@ -31,10 +31,10 @@ const DashboardStats = ({ stats = {} }) => {
   };
 
   const taskRoutes = {
-    "Completed Tasks": "/tasks?status=completed",
-    "Todo Tasks": "/tasks?status=todo",
-    "In Progress Tasks": "/tasks?status=in-progress",
-    "On Hold Tasks": "/tasks?status=on-hold",
+    "Todo Tasks": "/tasks?status=Todo",
+    "In Progress Tasks": "/tasks?status=In Progress",
+    "Completed Tasks": "/tasks?status=Completed",
+    "On Hold Tasks": "/tasks?status=On Hold",
   };
 
   return (
