@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import { FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaPlus, FaPrint } from "react-icons/fa";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import {
+  FaEdit,
+  FaTrash,
+  FaChevronDown,
+  FaChevronUp,
+  FaPlus,
+  FaPrint,
+} from "react-icons/fa";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { apiClient, FILE_BASE_URL } from "../lib/api-client";
 import EditTaskModal from "./EditTaskModal";
 import AddTaskModal from "./AddTaskModal";
+
+import header from "../images/order_pdf_header.jpeg";
+import footer from "../images/order_pdf_footer.jpeg";
 
 const OrderDetailsPage = () => {
   const { id } = useParams();
@@ -103,7 +113,7 @@ const OrderDetailsPage = () => {
 
   const handleTaskUpdated = (updatedTask) => {
     setTasks((prevTasks) =>
-      prevTasks.map((t) => (t._id === updatedTask._id ? updatedTask : t))
+      prevTasks.map((t) => (t._id === updatedTask._id ? updatedTask : t)),
     );
     handleCloseModal();
   };
@@ -120,7 +130,7 @@ const OrderDetailsPage = () => {
     try {
       await apiClient.deleteTask(deleteConfirmTask._id);
       setTasks((prevTasks) =>
-        prevTasks.filter((t) => t._id !== deleteConfirmTask._id)
+        prevTasks.filter((t) => t._id !== deleteConfirmTask._id),
       );
       setDeleteSuccess(deleteConfirmTask.title);
       setShowDeleteConfirm(false);
@@ -135,7 +145,6 @@ const OrderDetailsPage = () => {
       setIsDeleting(false);
     }
   };
-
 
   const handleCancelDelete = () => {
     setShowDeleteConfirm(false);
@@ -152,50 +161,78 @@ const OrderDetailsPage = () => {
   const handlePrint = async () => {
     try {
       // Show loading state
-      const printButton = document.querySelector('button[title="Download Order Details as PDF"]');
+      const printButton = document.querySelector(
+        'button[title="Download Order Details as PDF"]',
+      );
       if (printButton) {
         printButton.disabled = true;
-        printButton.innerHTML = '<svg class="animate-spin" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="16" width="16"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
+        printButton.innerHTML =
+          '<svg class="animate-spin" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="16" width="16"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
       }
 
+      // Convert images to data URLs
+      const getImageDataUrl = (imgPath) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/jpeg"));
+          };
+          img.onerror = () => resolve(null);
+          img.src = imgPath;
+        });
+      };
+
+      const headerDataUrl = await getImageDataUrl(header);
+      const footerDataUrl = await getImageDataUrl(footer);
+
       // Create a temporary div with clean HTML for PDF generation
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '800px';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.padding = '40px';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.color = '#333';
-      tempDiv.style.fontSize = '12px';
+      const tempDiv = document.createElement("div");
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.top = "-9999px";
+      tempDiv.style.width = "800px";
+      tempDiv.style.backgroundColor = "white";
+      tempDiv.style.padding = "40px";
+      tempDiv.style.fontFamily = "Arial, sans-serif";
+      tempDiv.style.color = "#333";
+      tempDiv.style.fontSize = "12px";
 
       // Build header HTML
       const headerHtml = `
+        <div style="margin-bottom: 20px;">
+          ${headerDataUrl ? `<img src="${headerDataUrl}" alt="Header" style="width: 100%; height: auto; display: block; margin-bottom: 20px;" />` : ""}
+        </div>
+
         <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center;">Work Order Report</h1>
 
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
           <tr>
-            <td style="padding: 5px;"><strong>Customer:</strong> ${order.customer?.name || '-'}</td>
+            <td style="padding: 5px;"><strong>Customer:</strong> ${order.customer?.name || "-"}</td>
             <td style="padding: 5px;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</td>
           </tr>
           <tr>
-            <td style="padding: 5px;"><strong>Project:</strong> ${order.project?.name || '-'}</td>
+            <td style="padding: 5px;"><strong>Project:</strong> ${order.project?.name || "-"}</td>
             <td style="padding: 5px;"><strong>Work Order #:</strong> ${order.order_number}</td>
           </tr>
           <tr>
-            <td style="padding: 5px;"><strong>ERP Order #:</strong> ${order.erp_number || '-'}</td>
-            <td style="padding: 5px;"><strong>Created On:</strong> ${order.created_at ? new Date(order.created_at).toLocaleDateString() : '-'}</td>
+            <td style="padding: 5px;"><strong>ERP Order #:</strong> ${order.erp_number || "-"}</td>
+            <td style="padding: 5px;"><strong>Created On:</strong> ${order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</td>
           </tr>
           <tr>
-            <td style="padding: 5px;"><strong>Amount:</strong> ${order.amount?.$numberDecimal || '-'}</td>
-            <td style="padding: 5px;"><strong>Status:</strong> ${order.status || '-'}</td>
+            <td style="padding: 5px;"><strong>Amount:</strong> ${order.amount?.$numberDecimal || "-"}</td>
+            <td style="padding: 5px;"><strong>Status:</strong> ${order.status || "-"}</td>
           </tr>
         </table>
       `;
 
       // Build tasks tables per asset
-      let tasksHtml = '';
+      let tasksHtml = "";
       Object.keys(groupedByAsset).forEach((assetName, index) => {
         if (index > 0) {
           tasksHtml += '<div style="page-break-before: always;"></div>';
@@ -223,15 +260,15 @@ const OrderDetailsPage = () => {
           tasksHtml += `
             <tr>
               <td style="border: 1px solid #ddd; padding: 8px;">${task.title}</td>
-              <td style="border: 1px solid #ddd; padding: 8px;">${task.user?.name || '-'}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.user?.name || "-"}</td>
               <td style="border: 1px solid #ddd; padding: 8px;">
-                ${task.start_time ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                ${task.start_time ? new Date(task.start_time).toLocaleString([], { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
               </td>
               <td style="border: 1px solid #ddd; padding: 8px;">
-                ${task.end_time ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                ${task.end_time ? new Date(task.end_time).toLocaleString([], { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
               </td>
-              <td style="border: 1px solid #ddd; padding: 8px;">${task.description || '-'}</td>
-              <td style="border: 1px solid #ddd; padding: 8px;">${task.file_upload && task.file_upload.length > 0 ? 'Yes' : '-'}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.description || "-"}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.file_upload && task.file_upload.length > 0 ? "Yes" : "-"}</td>
               <td style="border: 1px solid #ddd; padding: 8px;">${task.status}</td>
             </tr>
           `;
@@ -243,14 +280,19 @@ const OrderDetailsPage = () => {
         `;
       });
 
-      // Build footer HTML
+      // Build footer HTML (without the image, just signature fields)
       const footerHtml = `
-        <div style="margin-top: 40px; border-top: 2px solid #333; padding-top: 20px;">
+        <div style="
+          margin-top: 40px;
+          border-top: 2px solid #333;
+          padding-top: 20px;
+          page-break-before: always;
+        ">
           <p style="margin-bottom: 10px;"><strong>Total time to complete:</strong> __________</p>
           <p style="margin-bottom: 10px;"><strong>Customer Feedback:</strong></p>
           <div style="height: 60px; border: 1px solid #ccc; margin-bottom: 20px;"></div>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; margin-top: 20px; margin-bottom: 40px;">
             <div>
               <p style="margin-bottom: 5px;"><strong>Customer Signature:</strong></p>
               <div style="width: 200px; height: 60px; border: 1px solid #ccc;"></div>
@@ -271,38 +313,51 @@ const OrderDetailsPage = () => {
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
+        allowTaint: true,
+        backgroundColor: "#ffffff",
         width: tempDiv.offsetWidth,
-        height: tempDiv.offsetHeight
+        height: tempDiv.offsetHeight,
       });
 
       // Remove temporary div
       document.body.removeChild(tempDiv);
 
       // Create PDF
-      const imgData = canvas.toDataURL('image/png', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL("image/png", 0.95);
+      const pdf = new jsPDF("p", "mm", "a4");
 
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 295; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      // Function to add footer image on each page
+      const addFooterImage = (pdfDoc, pageNum, totalPages) => {
+        if (footerDataUrl) {
+          // Add footer image at bottom of page
+          pdfDoc.addImage(footerDataUrl, "JPEG", 10, 270, 190, 20);
+        }
+      };
+
       if (imgHeight <= pageHeight) {
         // Single page
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        addFooterImage(pdf, 1, 1);
       } else {
         // Multiple pages
         let heightLeft = imgHeight;
         let position = 0;
+        let pageNum = 1;
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        addFooterImage(pdf, pageNum, Math.ceil(imgHeight / pageHeight));
         heightLeft -= pageHeight;
 
         while (heightLeft > 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          pageNum++;
+          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+          addFooterImage(pdf, pageNum, Math.ceil(imgHeight / pageHeight));
           heightLeft -= pageHeight;
         }
       }
@@ -313,18 +368,21 @@ const OrderDetailsPage = () => {
       // Reset button
       if (printButton) {
         printButton.disabled = false;
-        printButton.innerHTML = '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
+        printButton.innerHTML =
+          '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
       }
-
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
 
       // Reset button on error
-      const printButton = document.querySelector('button[title="Download Order Details as PDF"]');
+      const printButton = document.querySelector(
+        'button[title="Download Order Details as PDF"]',
+      );
       if (printButton) {
         printButton.disabled = false;
-        printButton.innerHTML = '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
+        printButton.innerHTML =
+          '<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M448 192V77.25c0-8.49-3.37-16.62-9.37-22.63L393.37 9.37c-6-6-14.14-9.37-22.63-9.37H96C78.33 0 64 14.33 64 32v160c-35.35 0-64 28.65-64 64v112c0 8.84 7.16 16 16 16h48v96c0 17.67 14.33 32 32 32h320c17.67 0 32-14.33 32-32v-96h48c8.84 0 16-7.16 16-16V256c0-35.35-28.65-64-64-64zm-64 256H128v-96h256v96zm0-224H128V64h192v48c0 8.84 7.16 16 16 16h48v96zm48 72c-13.25 0-24-10.75-24-24 0-13.26 10.75-24 24-24s24 10.74 24 24c0 13.25-10.75 24-24 24z"></path></svg> Download PDF';
       }
     }
   };
@@ -405,7 +463,9 @@ const OrderDetailsPage = () => {
     <div className="flex h-screen">
       <Sidebar />
 
-      <main className={`flex-1 overflow-y-auto bg-gray-50 p-6 md:p-8 ${isModalOpen || isAddTaskModalOpen ? "blur-sm" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto bg-gray-50 p-6 md:p-8 ${isModalOpen || isAddTaskModalOpen ? "blur-sm" : ""}`}
+      >
         {/* BACK BUTTON */}
         <Link
           to="/orders"
@@ -474,12 +534,13 @@ const OrderDetailsPage = () => {
                 Status
               </label>
               <span
-                className={`px-3 py-1 text-xs rounded-full font-semibold ${order.status === "Completed"
+                className={`px-3 py-1 text-xs rounded-full font-semibold ${
+                  order.status === "Completed"
                     ? "bg-green-100 text-green-800"
                     : order.status === "Active"
                       ? "bg-blue-100 text-blue-800"
                       : "bg-gray-100 text-gray-800"
-                  }`}
+                }`}
               >
                 {order.status}
               </span>
@@ -494,11 +555,16 @@ const OrderDetailsPage = () => {
               </label>
               <div className="mt-1">
                 {(() => {
-                  const lastFile = order.file_upload[order.file_upload.length - 1];
+                  const lastFile =
+                    order.file_upload[order.file_upload.length - 1];
                   console.log(lastFile.url);
                   return (
                     <img
-                      src={lastFile.url.startsWith('http') ? lastFile.url : `${FILE_BASE_URL}${lastFile.url}`}
+                      src={
+                        lastFile.url.startsWith("http")
+                          ? lastFile.url
+                          : `${FILE_BASE_URL}${lastFile.url}`
+                      }
                       alt="Signature"
                       className="w-24 h-24 object-contain rounded border"
                     />
@@ -593,12 +659,13 @@ const OrderDetailsPage = () => {
                             <td className="px-4 py-3">
                               <span
                                 className={`px-2 py-1 text-xs font-semibold rounded-full 
-                        ${task.status === "Completed"
-                                    ? "bg-green-100 text-green-700"
-                                    : task.status === "Active"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-gray-100 text-gray-700"
-                                  }`}
+                        ${
+                          task.status === "Completed"
+                            ? "bg-green-100 text-green-700"
+                            : task.status === "Active"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-700"
+                        }`}
                               >
                                 {task.status}
                               </span>
@@ -606,22 +673,38 @@ const OrderDetailsPage = () => {
 
                             <td className="px-4 py-3">{task.priority}</td>
 
-                            <td className="px-4 py-3">{task.user?.name || "-"}</td>
+                            <td className="px-4 py-3">
+                              {task.user?.name || "-"}
+                            </td>
 
                             <td className="px-4 py-3">
                               {task.start_time
-                                ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                ? new Date(task.start_time).toLocaleString([], {
+                                    year: "numeric",
+                                    month: "numeric",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
                                 : "-"}
                             </td>
 
                             <td className="px-4 py-3">
                               {task.end_time
-                                ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                ? new Date(task.end_time).toLocaleString([], {
+                                    year: "numeric",
+                                    month: "numeric",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
                                 : "-"}
                             </td>
 
                             <td className="px-4 py-3 text-gray-600">
-                              {task.created_at ? new Date(task.created_at).toLocaleDateString() : "-"}
+                              {task.created_at
+                                ? new Date(task.created_at).toLocaleDateString()
+                                : "-"}
                             </td>
 
                             {/* ACTION BUTTONS WITH ICONS */}
@@ -659,7 +742,10 @@ const OrderDetailsPage = () => {
                           {/* Expanded Task Details Row */}
                           {expandedTasks[task._id] && (
                             <tr className="border-b">
-                              <td colSpan="8" className="px-6 py-8  from-blue-50 to-indigo-50">
+                              <td
+                                colSpan="8"
+                                className="px-6 py-8  from-blue-50 to-indigo-50"
+                              >
                                 <div className="max-w-6xl mx-auto">
                                   {/* Task Title Card */}
                                   <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-blue-100">
@@ -679,7 +765,10 @@ const OrderDetailsPage = () => {
                                     {/* Status & Priority Card */}
                                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
                                       <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-blue-500">📊</span> Status & Priority
+                                        <span className="text-blue-500">
+                                          📊
+                                        </span>{" "}
+                                        Status & Priority
                                       </h5>
                                       <div className="space-y-4">
                                         <div>
@@ -692,7 +781,8 @@ const OrderDetailsPage = () => {
                                                 ? "bg-green-100 text-green-800"
                                                 : task.status === "Active"
                                                   ? "bg-blue-100 text-blue-800"
-                                                  : task.status === "In Progress"
+                                                  : task.status ===
+                                                      "In Progress"
                                                     ? "bg-yellow-100 text-yellow-800"
                                                     : "bg-gray-100 text-gray-800"
                                             }`}
@@ -704,7 +794,9 @@ const OrderDetailsPage = () => {
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Priority
                                           </label>
-                                          <p className="text-gray-900 font-medium">{task.priority}</p>
+                                          <p className="text-gray-900 font-medium">
+                                            {task.priority}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
@@ -712,20 +804,29 @@ const OrderDetailsPage = () => {
                                     {/* Assignment & Duration Card */}
                                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
                                       <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-green-500">👤</span> Assignment & Duration
+                                        <span className="text-green-500">
+                                          👤
+                                        </span>{" "}
+                                        Assignment & Duration
                                       </h5>
                                       <div className="space-y-4">
                                         <div>
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Assigned To
                                           </label>
-                                          <p className="text-gray-900 font-medium">{task.user?.name || "-"}</p>
+                                          <p className="text-gray-900 font-medium">
+                                            {task.user?.name || "-"}
+                                          </p>
                                         </div>
                                         <div>
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Planned Duration
                                           </label>
-                                          <p className="text-gray-900 font-medium">{task.plan_duration ? `${task.plan_duration} hours` : "-"}</p>
+                                          <p className="text-gray-900 font-medium">
+                                            {task.plan_duration
+                                              ? `${task.plan_duration} hours`
+                                              : "-"}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
@@ -733,7 +834,10 @@ const OrderDetailsPage = () => {
                                     {/* Timings Card */}
                                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
                                       <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-purple-500">⏰</span> Timings
+                                        <span className="text-purple-500">
+                                          ⏰
+                                        </span>{" "}
+                                        Timings
                                       </h5>
                                       <div className="space-y-4">
                                         <div>
@@ -742,7 +846,15 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.start_time
-                                              ? new Date(task.start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                              ? new Date(
+                                                  task.start_time,
+                                                ).toLocaleString([], {
+                                                  year: "numeric",
+                                                  month: "numeric",
+                                                  day: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
                                               : "-"}
                                           </p>
                                         </div>
@@ -752,7 +864,15 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.end_time
-                                              ? new Date(task.end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                              ? new Date(
+                                                  task.end_time,
+                                                ).toLocaleString([], {
+                                                  year: "numeric",
+                                                  month: "numeric",
+                                                  day: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
                                               : "-"}
                                           </p>
                                         </div>
@@ -760,7 +880,9 @@ const OrderDetailsPage = () => {
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Total Planned Hours
                                           </label>
-                                          <p className="text-gray-900 font-semibold text-lg">{computePlannedHours(task)}</p>
+                                          <p className="text-gray-900 font-semibold text-lg">
+                                            {computePlannedHours(task)}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
@@ -768,7 +890,10 @@ const OrderDetailsPage = () => {
                                     {/* Actuals Card */}
                                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 lg:col-span-2">
                                       <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-orange-500">✅</span> Actual Performance
+                                        <span className="text-orange-500">
+                                          ✅
+                                        </span>{" "}
+                                        Actual Performance
                                       </h5>
                                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
@@ -777,7 +902,15 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_start_time
-                                              ? new Date(task.actual_start_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                              ? new Date(
+                                                  task.actual_start_time,
+                                                ).toLocaleString([], {
+                                                  year: "numeric",
+                                                  month: "numeric",
+                                                  day: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
                                               : "-"}
                                           </p>
                                         </div>
@@ -787,7 +920,15 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_end_time
-                                              ? new Date(task.actual_end_time).toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                              ? new Date(
+                                                  task.actual_end_time,
+                                                ).toLocaleString([], {
+                                                  year: "numeric",
+                                                  month: "numeric",
+                                                  day: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
                                               : "-"}
                                           </p>
                                         </div>
@@ -795,7 +936,9 @@ const OrderDetailsPage = () => {
                                           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                             Total Actual Hours
                                           </label>
-                                          <p className="text-gray-900 font-semibold text-lg">{computeActualHours(task)}</p>
+                                          <p className="text-gray-900 font-semibold text-lg">
+                                            {computeActualHours(task)}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
@@ -803,7 +946,10 @@ const OrderDetailsPage = () => {
                                     {/* Metadata Card */}
                                     <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
                                       <h5 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <span className="text-gray-500">📅</span> Metadata
+                                        <span className="text-gray-500">
+                                          📅
+                                        </span>{" "}
+                                        Metadata
                                       </h5>
                                       <div className="space-y-4">
                                         <div>
@@ -812,7 +958,9 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.created_at
-                                              ? new Date(task.created_at).toLocaleString()
+                                              ? new Date(
+                                                  task.created_at,
+                                                ).toLocaleString()
                                               : "-"}
                                           </p>
                                         </div>
@@ -822,7 +970,9 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <p className="text-gray-900 text-sm">
                                             {task.updated_at
-                                              ? new Date(task.updated_at).toLocaleString()
+                                              ? new Date(
+                                                  task.updated_at,
+                                                ).toLocaleString()
                                               : "-"}
                                           </p>
                                         </div>
@@ -910,7 +1060,9 @@ const OrderDetailsPage = () => {
           <div className="rounded-lg bg-white shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-900">Files for {selectedTask.title}</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                Files for {selectedTask.title}
+              </h2>
               <button
                 onClick={closeFilesModal}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -921,16 +1073,24 @@ const OrderDetailsPage = () => {
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-6">
-              {selectedTask.file_upload && selectedTask.file_upload.length > 0 ? (
+              {selectedTask.file_upload &&
+              selectedTask.file_upload.length > 0 ? (
                 <div className="space-y-4">
                   {selectedTask.file_upload.map((file, index) => (
-                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                    <div
+                      key={index}
+                      className="p-4 border border-gray-200 rounded-lg"
+                    >
                       <div className="flex items-start gap-4">
                         {/* File Preview */}
-                        {file.mimetype === 'application/pdf' && (
+                        {file.mimetype === "application/pdf" && (
                           <div className="w-20 h-20 border border-gray-200 rounded-lg overflow-hidden">
                             <embed
-                              src={file.url.startsWith('http') ? file.url : `${FILE_BASE_URL}${file.url}`}
+                              src={
+                                file.url.startsWith("http")
+                                  ? file.url
+                                  : `${FILE_BASE_URL}${file.url}`
+                              }
                               type="application/pdf"
                               width="80"
                               height="80"
@@ -938,44 +1098,64 @@ const OrderDetailsPage = () => {
                             />
                           </div>
                         )}
-                        {file.mimetype && file.mimetype.startsWith('image/') && (
-                          <div className="">
-                            <img
-                              src={file.url.startsWith('http') ? file.url : `${FILE_BASE_URL}${file.url}`}
-                              alt={file.originalname}
-                              className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-                            />
-                          </div>
-                        )}
-                        {!file.mimetype || (!file.mimetype.startsWith('image/') && file.mimetype !== 'application/pdf') && (
-                          <div className="w-20 h-20 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-500 text-xs">File</span>
-                          </div>
-                        )}
+                        {file.mimetype &&
+                          file.mimetype.startsWith("image/") && (
+                            <div className="">
+                              <img
+                                src={
+                                  file.url.startsWith("http")
+                                    ? file.url
+                                    : `${FILE_BASE_URL}${file.url}`
+                                }
+                                alt={file.originalname}
+                                className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                              />
+                            </div>
+                          )}
+                        {!file.mimetype ||
+                          (!file.mimetype.startsWith("image/") &&
+                            file.mimetype !== "application/pdf" && (
+                              <div className="w-20 h-20 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center">
+                                <span className="text-gray-500 text-xs">
+                                  File
+                                </span>
+                              </div>
+                            ))}
 
                         {/* File Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{file.originalname}</p>
+                          <p className="font-medium text-gray-900 truncate">
+                            {file.originalname}
+                          </p>
                           <p className="text-sm text-gray-500">
-                            Size: {(file.size / 1024).toFixed(2)} KB • Type: {file.mimetype}
+                            Size: {(file.size / 1024).toFixed(2)} KB • Type:{" "}
+                            {file.mimetype}
                           </p>
                         </div>
 
                         {/* View/Download Button */}
                         <a
-                          href={file.url.startsWith('http') ? file.url : `${FILE_BASE_URL}${file.url}`}
+                          href={
+                            file.url.startsWith("http")
+                              ? file.url
+                              : `${FILE_BASE_URL}${file.url}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
-                          {file.mimetype === 'application/pdf' ? 'View' : 'Download'}
+                          {file.mimetype === "application/pdf"
+                            ? "View"
+                            : "Download"}
                         </a>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-8">No files attached to this task.</p>
+                <p className="text-center text-gray-500 py-8">
+                  No files attached to this task.
+                </p>
               )}
             </div>
 
