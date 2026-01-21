@@ -1,58 +1,114 @@
 import { apiClient } from "./api-client";
+import * as XLSX from "xlsx";
 
-// Utility function to export customer data to CSV
-export const handleExportData = (stats, projects, orders, assets, employee) => {
-  // Prepare data for export
-  const data = {
-    stats,
-    projects,
-    orders,
-    assets,
-  };
+// Utility function to export user tasks to CSV
+export const handleExportData = async (employee, tasks = []) => {
+  // Create CSV header with all task fields
+  const headers = ["Customer", "Employee", "Project", "Asset", "Order", "Order #", "Task Title", "Plan Duration (Hours)", "Start Time", "End Time", "Actual Start Time", "Actual End Time", "Priority", "Status"];
+  let csv = headers.join(",") + "\n";
 
-  // Convert to CSV
-  let csv = "Section,Field,Value\n";
+  // Use tasks passed as parameter, or fetch if not provided
+  let allTasks = tasks;
+  
+  if (!allTasks || allTasks.length === 0) {
+    try {
+      const userId = employee?.id || employee?._id;
+      console.log(`Fetching tasks for user ID: ${userId}`);
+      const response = await apiClient.getTasksByUserId(userId);
+      console.log(`Full response for user ${userId}:`, response);
+      
+      // Handle different response formats
+      if (Array.isArray(response)) {
+        allTasks = response;
+      } else if (response?.data && Array.isArray(response.data)) {
+        allTasks = response.data;
+      } else if (response?.tasks && Array.isArray(response.tasks)) {
+        allTasks = response.tasks;
+      }
+      
+      console.log(`Fetched ${allTasks.length} tasks for user ${userId}`);
+    } catch (err) {
+      console.error(`Failed to fetch tasks for user:`, err);
+      allTasks = [];
+    }
+  }
 
-  // Stats
-  csv += "Stats,Total Projects," + (stats.totalProjects || 0) + "\n";
-  csv += "Stats,Active Projects," + (stats.activeProjects || 0) + "\n";
-  csv += "Stats,Completed Projects," + (stats.completedProjects || 0) + "\n";
-  csv += "Stats,Total Orders," + (stats.totalOrders || 0) + "\n";
-  csv += "Stats,Pending Orders," + (stats.pendingOrders || 0) + "\n";
-  csv += "Stats,Completed Orders," + (stats.completedOrders || 0) + "\n";
-  csv += "Stats,Total Assets," + (stats.totalAssets || 0) + "\n";
+  // Build CSV rows from all tasks
+  if (allTasks && allTasks.length > 0) {
+    allTasks.forEach((task) => {
+      // Calculate duration in hours from start_time and end_time
+      let planDurationHours = "";
+      if (task.start_time && task.end_time) {
+        const start = new Date(task.start_time);
+        const end = new Date(task.end_time);
+        planDurationHours = ((end - start) / (1000 * 60 * 60)).toFixed(2);
+      }
 
-  // Projects
-  projects.forEach((p, i) => {
-    csv += `Project ${i+1},Title,${p.title || ""}\n`;
-    csv += `Project ${i+1},Status,${p.status || ""}\n`;
-    csv += `Project ${i+1},Created,${p.created_at ? new Date(p.created_at).toLocaleDateString() : ""}\n`;
-  });
+      const row = [
+        task.customer?.name || "",
+        task.user?.name || "",
+        task.project?.name || "",
+        task.asset?.name || "",
+        task.order?.title || "",
+        task.order?.order_number || "",
+        task.title || "",
+        planDurationHours,
+        task.start_time ? new Date(task.start_time).toLocaleString() : "",
+        task.end_time ? new Date(task.end_time).toLocaleString() : "",
+        task.actual_start_time ? new Date(task.actual_start_time).toLocaleString() : "",
+        task.actual_end_time ? new Date(task.actual_end_time).toLocaleString() : "",
+        task.priority || "",
+        task.status || ""
+      ];
+      csv += row.map(cell => `"${cell}"`).join(",") + "\n";
+    });
+  }
 
-  // Orders
-  orders.forEach((o, i) => {
-    csv += `Order ${i+1},Title,${o.title || ""}\n`;
-    csv += `Order ${i+1},Order Number,${o.order_number || ""}\n`;
-    csv += `Order ${i+1},Status,${o.status || ""}\n`;
-    csv += `Order ${i+1},Amount,${o.amount || ""}\n`;
-  });
+  // Create workbook and worksheet
+  const data = [headers];
+  if (allTasks && allTasks.length > 0) {
+    allTasks.forEach((task) => {
+      // Calculate duration in hours from start_time and end_time
+      let planDurationHours = "";
+      if (task.start_time && task.end_time) {
+        const start = new Date(task.start_time);
+        const end = new Date(task.end_time);
+        planDurationHours = ((end - start) / (1000 * 60 * 60)).toFixed(2);
+      }
 
-  // Assets
-  assets.forEach((a, i) => {
-    csv += `Asset ${i+1},Title,${a.title || ""}\n`;
-    csv += `Asset ${i+1},Category,${a.category || ""}\n`;
-    csv += `Asset ${i+1},Manufacturer,${a.manufacturer || ""}\n`;
-    csv += `Asset ${i+1},Barcode,${a.barcode || ""}\n`;
-  });
+      const row = [
+        task.customer?.name || "",
+        task.user?.name || "",
+        task.project?.name || "",
+        task.asset?.name || "",
+        task.order?.title || "",
+        task.order?.order_number || "",
+        task.title || "",
+        planDurationHours,
+        task.start_time ? new Date(task.start_time).toLocaleString() : "",
+        task.end_time ? new Date(task.end_time).toLocaleString() : "",
+        task.actual_start_time ? new Date(task.actual_start_time).toLocaleString() : "",
+        task.actual_end_time ? new Date(task.actual_end_time).toLocaleString() : "",
+        task.priority || "",
+        task.status || ""
+      ];
+      data.push(row);
+    });
+  }
 
-  // Download CSV
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Customer_Data_${employee.name || "Customer"}_${new Date().toISOString().split('T')[0]}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  // Create workbook and apply bold formatting to header
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+  
+  // Make header row bold
+  for (let i = 0; i < headers.length; i++) {
+    const cellRef = XLSX.utils.encode_col(i) + "1";
+    if (!worksheet[cellRef]) worksheet[cellRef] = {};
+    worksheet[cellRef].font = { bold: true };
+  }
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
+  
+  // Download Excel file
+  XLSX.writeFile(workbook, `Customer_Data_${employee.name || "Customer"}_${new Date().toISOString().split('T')[0]}.xlsx`);
 };

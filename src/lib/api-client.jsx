@@ -1,7 +1,4 @@
 // const API_BASE_URL = "http://localhost:4000/api";
-
-
-
 // const API_BASE_URL = "http://192.168.10.10:4000/api"; // Qatar IP
 // const API_BASE_URL = "https://backend-task-track.onrender.com/api";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -470,6 +467,12 @@ export const apiClient = {
 
     const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch user tasks");
+    return response.json();
+  },
+
+  async getTasksByCustomerId(customerId) {
+    const response = await fetch(`${API_BASE_URL}/tasks/customer/${customerId}`);
+    if (!response.ok) throw new Error("Failed to fetch customer tasks");
     return response.json();
   },
 

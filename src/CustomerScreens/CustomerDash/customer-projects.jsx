@@ -14,6 +14,7 @@ const CustomerProjects = () => {
   const [stats, setStats] = useState({});
   const [orders, setOrders] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   // print states
   const [printData, setPrintData] = useState(null);
@@ -44,19 +45,23 @@ const CustomerProjects = () => {
 
       try {
         setLoading(true);
-        const [projectsRes, ordersRes, assetsRes] = await Promise.all([
+        const customerId = employee?.customer?.id || employee?.customerId;
+        const [projectsRes, ordersRes, assetsRes, tasksRes] = await Promise.all([
           apiClient.getProjectsByCustomerEmployeeId(employeeId),
           apiClient.getOrdersByCustomerEmployeeId(employeeId),
           apiClient.getAssetsByCustomerEmployeeId(employeeId),
+          apiClient.getTasksByCustomerId(customerId),
         ]);
 
         const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.projects || []);
         const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
         const assets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.assets || []);
+        const tasks = Array.isArray(tasksRes) ? tasksRes : (tasksRes.tasks || []);
 
         setProjects(projects);
         setOrders(orders);
         setAssets(assets);
+        setTasks(tasks);
 
         const totalProjects = projects.length;
         const activeProjects = projects.filter(p => p.status === "Active").length;
@@ -314,7 +319,7 @@ const CustomerProjects = () => {
         {/* Export Button - Fixed Bottom Right */}
         <div className="fixed bottom-4 right-4 z-10">
           <button
-            onClick={() => handleExportData(stats, projects, orders, assets, employee)}
+            onClick={() => handleExportData(employee, tasks)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
             title="Export Customer Data"
           >
