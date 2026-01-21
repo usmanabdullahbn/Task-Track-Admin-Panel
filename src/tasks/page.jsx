@@ -278,6 +278,66 @@ const TasksPage = () => {
               <table className="w-full min-w-[900px] text-sm sm:text-base">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.order ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("order")}>
+                      <div className="flex items-center gap-2">
+                        Order Number
+                        {filters.order && <FaFilter size={12} className="text-blue-600" />}
+                        <FaChevronDown size={12} className={`transition-transform ${openDropdown === "order" ? "rotate-180" : ""}`} />
+                      </div>
+                      {openDropdown === "order" && (
+                        <div ref={dropdownRef} onClick={(e) => e.stopPropagation()} className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-[9999]" style={{ minWidth: "200px" }}>
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              placeholder="Search..."
+                              value={dropdownSearchTerm}
+                              onChange={(e) => setDropdownSearchTerm(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleApplyFilter("order"); }}
+                              className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSortChange("order");
+                                }}
+                                className={`flex-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortField === "order" ? "bg-green-700 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"}`}
+                              >
+                                Sort
+                              </button>
+                              {sortField === "order" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                                  }}
+                                  className="px-2 py-1 rounded text-xs font-medium bg-blue-700 text-white hover:bg-blue-800"
+                                >
+                                  {sortOrder === "asc" ? "↑" : "↓"}
+                                </button>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setFilters(prev => ({ ...prev, order: "" }));
+                                  setOpenDropdown(null);
+                                }}
+                                className="flex-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                              >
+                                Clear
+                              </button>
+                              <button
+                                onClick={() => handleApplyFilter("order")}
+                                className="flex-1 px-2 py-1 rounded bg-green-700 text-white hover:bg-green-800 transition-colors text-xs font-medium"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </th>
                     <th className={`px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 transition-colors relative ${filters.title ? "bg-blue-100" : ""}`} onClick={() => handleHeaderClick("title")}>
                       <div className="flex items-center gap-2">
                         Title
@@ -709,6 +769,10 @@ const TasksPage = () => {
                       key={task.id || task._id}
                       className="border-b border-gray-200 hover:bg-gray-50"
                     >
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {task.order?.order_number || "-"}
+                      </td>
+
                       <td className="px-4 py-3 font-medium text-gray-900">
                         {task.title}
                       </td>
