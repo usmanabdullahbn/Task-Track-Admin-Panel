@@ -160,6 +160,10 @@ const OrderDetailsPage = () => {
 
   const handlePrint = async () => {
     try {
+      console.log("Starting PDF generation...");
+      console.log("FILE_BASE_URL:", FILE_BASE_URL);
+      console.log("Tasks:", tasks);
+      
       // Show loading state
       const printButton = document.querySelector(
         'button[title="Download Order Details as PDF"]',
@@ -268,10 +272,51 @@ const OrderDetailsPage = () => {
                 ${task.end_time ? new Date(task.end_time).toLocaleString([], { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
               </td>
               <td style="border: 1px solid #ddd; padding: 8px;">${task.description || "-"}</td>
-              <td style="border: 1px solid #ddd; padding: 8px;">${task.file_upload && task.file_upload.length > 0 ? "Yes" : "-"}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${task.file_upload && task.file_upload.length > 0 ? `${task.file_upload.length} file(s)` : "-"}</td>
               <td style="border: 1px solid #ddd; padding: 8px;">${task.status}</td>
             </tr>
           `;
+
+          // Add uploaded files as images if they exist
+          if (task.file_upload && task.file_upload.length > 0) {
+            tasksHtml += `
+              <tr>
+                <td colspan="7" style="border: 1px solid #ddd; padding: 12px; background-color: #f9f9f9;">
+                  <strong style="display: block; margin-bottom: 8px;">Uploaded Files:</strong>
+            `;
+            
+            task.file_upload.forEach((file, fileIndex) => {
+              const fileUrl = file.url || file;
+              const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
+              
+              // Check if file is an image
+              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+              const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+              
+              if (isImage) {
+                // For images, render with proper URL handling
+                tasksHtml += `
+                  <div style="margin-top: ${fileIndex > 0 ? '12px' : '0'}; padding: 8px; background-color: white; border: 1px solid #ddd;">
+                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 11px;">${fileName}</p>
+                    <img src="${
+                      fileUrl.startsWith("http")
+                        ? fileUrl
+                        : `${FILE_BASE_URL}${fileUrl}`
+                    }" alt="${fileName}" style="max-width: 100%; max-height: 300px; border: 1px solid #ccc;" crossorigin="anonymous" />
+                  </div>
+                `;
+              } else {
+                tasksHtml += `
+                  <p style="margin: 5px 0; font-size: 11px;">📎 ${fileName}</p>
+                `;
+              }
+            });
+            
+            tasksHtml += `
+                </td>
+              </tr>
+            `;
+          }
         });
 
         tasksHtml += `
@@ -317,6 +362,15 @@ const OrderDetailsPage = () => {
         backgroundColor: "#ffffff",
         width: tempDiv.offsetWidth,
         height: tempDiv.offsetHeight,
+        logging: false,
+        onclone: (doc) => {
+          // Ensure all images are loaded
+          const imgs = doc.querySelectorAll('img');
+          imgs.forEach(img => {
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '300px';
+          });
+        }
       });
 
       // Remove temporary div
@@ -373,7 +427,8 @@ const OrderDetailsPage = () => {
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
+      console.error("Error stack:", error.stack);
+      alert("Failed to generate PDF. Please try again.\n\nError: " + error.message);
 
       // Reset button on error
       const printButton = document.querySelector(

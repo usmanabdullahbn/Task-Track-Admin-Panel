@@ -534,4 +534,48 @@ export const apiClient = {
     if (!response.ok) throw new Error("Failed to change task status");
     return response.json();
   },
+
+  // ============================
+  //       EMPLOYEE TIMELINES
+  // ============================
+
+  async saveEmployeeTimeline(timelineData) {
+    const response = await fetch(`${API_BASE_URL}/employee/timeline`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(timelineData),
+    });
+
+    if (!response.ok) throw new Error("Failed to save employee timeline");
+    return response.json();
+  },
+
+  async getAllTimelines() {
+    const response = await fetch(`${API_BASE_URL}/employee/timeline/all`);
+    if (!response.ok) throw new Error("Failed to fetch all timelines");
+    return response.json();
+  },
+
+  async getTimelineByDate(date) {
+    const response = await fetch(`${API_BASE_URL}/employee/timeline/date?date=${date}`);
+    if (!response.ok) throw new Error("Failed to fetch timelines by date");
+    return response.json();
+  },
+
+  async getTimelineByEmployeeId(employeeId) {
+    const response = await fetch(
+      `${API_BASE_URL}/employee/timeline/employee?employeeId=${employeeId}`,
+    );
+    if (!response.ok) throw new Error("Failed to fetch timelines by employee");
+    return response.json();
+  },
+
+  async getTimelineByEmployeeIdAndDate(employeeId, date) {
+    const response = await fetch(
+      `${API_BASE_URL}/employee/timeline/employee-date?employeeId=${employeeId}&date=${date}`,
+    );
+    if (!response.ok)
+      throw new Error("Failed to fetch timeline by employee and date");
+    return response.json();
+  },
 };
