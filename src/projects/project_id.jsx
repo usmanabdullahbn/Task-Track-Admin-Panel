@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../component/sidebar";
-import MapComponent from "../component/map";
-import LeafletLocationPickerModal from "../component/LeafletLocationPickerModal";
+import GoogleMapComponent from "../component/GoogleMapComponent";
+import GoogleMapsLocationPickerModal from "../component/GoogleMapsLocationPickerModal";
 import { apiClient } from "../lib/api-client";
 
 const EditProjectPage = () => {
@@ -398,7 +398,7 @@ const EditProjectPage = () => {
             {/* Map Section */}
             <div className="lg:col-span-1">
               <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm h-96">
-                <MapComponent
+                <GoogleMapComponent
                   lat={parseFloat(formData.latitude) || 31.3700}
                   lng={parseFloat(formData.longitude) || 74.2200}
                 />
@@ -442,7 +442,7 @@ const EditProjectPage = () => {
         </div>
       )}
 
-      <LeafletLocationPickerModal
+      <GoogleMapsLocationPickerModal
         isOpen={showLocationPicker}
         initialLat={parseFloat(formData.latitude)}
         initialLng={parseFloat(formData.longitude)}

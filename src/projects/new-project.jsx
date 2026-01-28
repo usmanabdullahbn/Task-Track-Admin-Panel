@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../component/sidebar";
-import MapComponent from "../component/map";
+import GoogleMapComponent from "../component/GoogleMapComponent";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
 import { toast } from "react-toastify";
-import LocationPickerModal from "../component/LeafletLocationPickerModal";
+import GoogleMapsLocationPickerModal from "../component/GoogleMapsLocationPickerModal";
 
 const NewProjectPage = () => {
   const navigate = useNavigate();
@@ -384,7 +384,7 @@ const NewProjectPage = () => {
             {/* MAP SECTION */}
             <div className="lg:col-span-1">
               <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm h-96">
-                <MapComponent
+                <GoogleMapComponent
                   lat={parseFloat(formData.latitude)}
                   lng={parseFloat(formData.longitude)}
                 />
@@ -425,7 +425,7 @@ const NewProjectPage = () => {
           </div>
         </div>
       )}
-      <LocationPickerModal
+      <GoogleMapsLocationPickerModal
         isOpen={showLocationPicker}
         initialLat={parseFloat(formData.latitude)}
         initialLng={parseFloat(formData.longitude)}

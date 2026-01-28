@@ -38,6 +38,7 @@ import CustomerProjects from "./CustomerScreens/CustomerDash/customer-projects";
 import AddAssetsPage from "./orders/add-assets-with-tasks";
 import SchedulePage from "./Schedule/schedule";
 import TasksPage from "./tasks/page";
+import EmployeeDayTimelinePageGoogleMaps from "./component/EmployeeDayTimelinePageGoogleMaps";
 
 
 // Optional: A simple 404 page
@@ -212,11 +213,19 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/timeline"
           element={
             <ProtectedRoute allowedRoles={["admin", "manager", "supervisor", "technician"]}>
               <EmployeeDayTimelinePage />
+            </ProtectedRoute>
+          }
+        /> */}
+        <Route
+          path="/timeline"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager", "supervisor", "technician"]}>
+              <EmployeeDayTimelinePageGoogleMaps />
             </ProtectedRoute>
           }
         />
