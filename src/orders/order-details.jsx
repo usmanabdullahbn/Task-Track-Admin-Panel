@@ -276,47 +276,6 @@ const OrderDetailsPage = () => {
               <td style="border: 1px solid #ddd; padding: 8px;">${task.status}</td>
             </tr>
           `;
-
-          // Add uploaded files as images if they exist
-          if (task.file_upload && task.file_upload.length > 0) {
-            tasksHtml += `
-              <tr>
-                <td colspan="7" style="border: 1px solid #ddd; padding: 12px; background-color: #f9f9f9;">
-                  <strong style="display: block; margin-bottom: 8px;">Uploaded Files:</strong>
-            `;
-            
-            task.file_upload.forEach((file, fileIndex) => {
-              const fileUrl = file.url || file;
-              const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
-              
-              // Check if file is an image
-              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-              const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-              
-              if (isImage) {
-                // For images, render with proper URL handling
-                tasksHtml += `
-                  <div style="margin-top: ${fileIndex > 0 ? '12px' : '0'}; padding: 8px; background-color: white; border: 1px solid #ddd;">
-                    <p style="margin: 0 0 8px 0; font-weight: bold; font-size: 11px;">${fileName}</p>
-                    <img src="${
-                      fileUrl.startsWith("http")
-                        ? fileUrl
-                        : `${FILE_BASE_URL}${fileUrl}`
-                    }" alt="${fileName}" style="max-width: 100%; max-height: 300px; border: 1px solid #ccc;" crossorigin="anonymous" />
-                  </div>
-                `;
-              } else {
-                tasksHtml += `
-                  <p style="margin: 5px 0; font-size: 11px;">📎 ${fileName}</p>
-                `;
-              }
-            });
-            
-            tasksHtml += `
-                </td>
-              </tr>
-            `;
-          }
         });
 
         tasksHtml += `
@@ -325,36 +284,64 @@ const OrderDetailsPage = () => {
         `;
       });
 
-      // Build footer HTML (without the image, just signature fields)
-      const footerHtml = `
+      // Count images for later processing
+      let imageCount = 0;
+      tasks.forEach((task) => {
+        if (task.file_upload && task.file_upload.length > 0) {
+          task.file_upload.forEach((file) => {
+            const fileUrl = file.url || file;
+            const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
+            
+            // Check if file is an image
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+            const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+            
+            if (isImage) {
+              imageCount++;
+            }
+          });
+        }
+      });
+
+      // Build signature section HTML
+      let signatureImageHtml = "";
+      if (order.file_upload && order.file_upload.length > 0) {
+        const lastFile = order.file_upload[order.file_upload.length - 1];
+        const signatureUrl = lastFile.url.startsWith("http")
+          ? lastFile.url
+          : `${FILE_BASE_URL}${lastFile.url}`;
+        signatureImageHtml = `
+          <div style="margin-bottom: 30px; flex: 1;">
+            <p style="margin-bottom: 10px; font-weight: bold;">Customer Signature:</p>
+            <div style="border: 2px solid #333; padding: 10px; background-color: #f9f9f9; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+              <img src="${signatureUrl}" alt="Signature" style="max-width: 100%; max-height: 120px; object-fit: contain;" crossorigin="anonymous" />
+            </div>
+          </div>
+        `;
+      }
+
+      const signatureHtml = `
         <div style="
           margin-top: 40px;
           border-top: 2px solid #333;
           padding-top: 20px;
-          page-break-before: always;
         ">
           <p style="margin-bottom: 10px;"><strong>Total time to complete:</strong> __________</p>
           <p style="margin-bottom: 10px;"><strong>Customer Feedback:</strong></p>
           <div style="height: 60px; border: 1px solid #ccc; margin-bottom: 20px;"></div>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 20px; margin-bottom: 40px;">
-            <div>
-              <p style="margin-bottom: 5px;"><strong>Customer Signature:</strong></p>
-              <div style="width: 200px; height: 60px; border: 1px solid #ccc;"></div>
-            </div>
-            <div>
-              <p style="margin-bottom: 5px;"><strong>Date:</strong></p>
-              <div style="width: 150px; height: 30px; border: 1px solid #ccc;"></div>
-            </div>
+          <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 20px; margin-bottom: 40px;">
+            ${signatureImageHtml || '<div style="flex: 1;"><p style="margin-bottom: 5px; font-weight: bold;">Customer Signature:</p><div style="width: 70%; height: 90px; border: 1px solid #ccc;"></div></div>'}
           </div>
         </div>
       `;
+      // Create HTML without images for main content
+      const mainContentHtml = headerHtml + tasksHtml + signatureHtml;
 
-      tempDiv.innerHTML = headerHtml + tasksHtml + footerHtml;
-
+      tempDiv.innerHTML = mainContentHtml;
       document.body.appendChild(tempDiv);
 
-      // Generate canvas from the temporary div
+      // Generate canvas from main content
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
@@ -363,14 +350,6 @@ const OrderDetailsPage = () => {
         width: tempDiv.offsetWidth,
         height: tempDiv.offsetHeight,
         logging: false,
-        onclone: (doc) => {
-          // Ensure all images are loaded
-          const imgs = doc.querySelectorAll('img');
-          imgs.forEach(img => {
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '300px';
-          });
-        }
       });
 
       // Remove temporary div
@@ -385,9 +364,8 @@ const OrderDetailsPage = () => {
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       // Function to add footer image on each page
-      const addFooterImage = (pdfDoc, pageNum, totalPages) => {
+      const addFooterImage = (pdfDoc) => {
         if (footerDataUrl) {
-          // Add footer image at bottom of page
           pdfDoc.addImage(footerDataUrl, "JPEG", 10, 270, 190, 20);
         }
       };
@@ -395,24 +373,88 @@ const OrderDetailsPage = () => {
       if (imgHeight <= pageHeight) {
         // Single page
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        addFooterImage(pdf, 1, 1);
+        addFooterImage(pdf);
       } else {
         // Multiple pages
         let heightLeft = imgHeight;
         let position = 0;
-        let pageNum = 1;
 
         pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        addFooterImage(pdf, pageNum, Math.ceil(imgHeight / pageHeight));
+        addFooterImage(pdf);
         heightLeft -= pageHeight;
 
         while (heightLeft > 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
-          pageNum++;
           pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          addFooterImage(pdf, pageNum, Math.ceil(imgHeight / pageHeight));
+          addFooterImage(pdf);
           heightLeft -= pageHeight;
+        }
+      }
+
+      // Now add each image on a separate page
+      if (imageCount > 0) {
+        const uploadedImages = [];
+        tasks.forEach((task) => {
+          if (task.file_upload && task.file_upload.length > 0) {
+            task.file_upload.forEach((file) => {
+              const fileUrl = file.url || file;
+              const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
+              
+              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+              const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+              
+              if (isImage) {
+                uploadedImages.push({
+                  url: fileUrl.startsWith("http") ? fileUrl : `${FILE_BASE_URL}${fileUrl}`,
+                  name: fileName
+                });
+              }
+            });
+          }
+        });
+
+        // Add each image on a new page
+        for (const uploadedImage of uploadedImages) {
+          try {
+            const imgDataUrl = await getImageDataUrl(uploadedImage.url);
+            if (imgDataUrl) {
+              pdf.addPage();
+              
+              // Add image heading
+              pdf.setFontSize(16);
+              pdf.text(uploadedImage.name, 105, 20, { align: 'center' });
+              
+              // Add a line under the heading
+              pdf.setDrawColor(22, 163, 74); // green color
+              pdf.line(10, 28, 200, 28);
+              
+              // Calculate image dimensions to fit on page
+              const maxWidth = 190;
+              const maxHeight = 220;
+              
+              // Load image to get dimensions
+              const tempImg = new Image();
+              tempImg.src = imgDataUrl;
+              await new Promise(resolve => tempImg.onload = resolve);
+              
+              let imgW = maxWidth;
+              let imgH = (tempImg.height * maxWidth) / tempImg.width;
+              
+              if (imgH > maxHeight) {
+                imgH = maxHeight;
+                imgW = (tempImg.width * maxHeight) / tempImg.height;
+              }
+              
+              const x = (210 - imgW) / 2; // Center horizontally
+              const y = 35;
+              
+              pdf.addImage(imgDataUrl, 'PNG', x, y, imgW, imgH);
+              addFooterImage(pdf);
+            }
+          } catch (err) {
+            console.error('Error adding image to PDF:', uploadedImage.name, err);
+          }
         }
       }
 
