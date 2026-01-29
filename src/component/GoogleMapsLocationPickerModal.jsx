@@ -20,6 +20,9 @@ const GoogleMapsLocationPickerModal = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [mapLoading, setMapLoading] = useState(true);
+
+  const apiKey = import.meta.env.VITE_API_GOOGLE_MAPS_API_KEY;
 
   const mapCenter = {
     lat: selectedLocation.lat,
@@ -39,11 +42,11 @@ const GoogleMapsLocationPickerModal = ({
     setSearchError("");
 
     try {
-      // Using Nominatim API (OpenStreetMap's geocoding service)
+      // Using Google Geocoding API
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           searchQuery
-        )}&limit=1`
+        )}&key=${import.meta.env.VITE_API_GOOGLE_MAPS_API_KEY}`
       );
 
       if (!response.ok) {
@@ -51,15 +54,42 @@ const GoogleMapsLocationPickerModal = ({
       }
 
       const data = await response.json();
+      console.log("Geocoding API response:", data);
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        const lat = parseFloat(result.lat);
-        const lng = parseFloat(result.lon);
+      // Check API status
+      if (data.status === "REQUEST_DENIED") {
+        setSearchError("API request denied. Check API key & billing.");
+        return;
+      }
+
+      if (data.status === "ZERO_RESULTS") {
+        setSearchError("Location not found. Try a different search term.");
+        return;
+      }
+
+      if (data.status === "OVER_QUERY_LIMIT") {
+        setSearchError("Search quota exceeded. Please try again later.");
+        return;
+      }
+
+      if (data.status === "INVALID_REQUEST") {
+        setSearchError("Invalid search request. Please try again.");
+        return;
+      }
+
+      if (data.status !== "OK") {
+        setSearchError(`Error: ${data.status}`);
+        return;
+      }
+
+      // If results found
+      if (data.results && data.results.length > 0) {
+        const result = data.results[0];
+        const lat = result.geometry.location.lat;
+        const lng = result.geometry.location.lng;
 
         setSelectedLocation({ lat, lng });
-      } else {
-        setSearchError("Location not found. Try a different search term.");
+        console.log("Location found:", { lat, lng, address: result.formatted_address });
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -139,25 +169,35 @@ const GoogleMapsLocationPickerModal = ({
           <div className="mb-4">
             <div
               style={containerStyle}
-              className="rounded-lg border border-gray-300 overflow-hidden"
+              className="rounded-lg border border-gray-300 overflow-hidden relative bg-gray-100"
             >
-              <LoadScript googleMapsApiKey={import.meta.env.VITE_API_GOOGLE_MAPS_API_KEY}>
-                <GoogleMap
-                  mapContainerStyle={containerStyle}
-                  center={mapCenter}
-                  zoom={15}
-                  onClick={handleMapClick}
+              {!apiKey && (
+                <div className="absolute inset-0 flex items-center justify-center bg-red-50 z-10">
+                  <p className="text-red-600 font-semibold">Google Maps API Key not configured</p>
+                </div>
+              )}
+              {apiKey && (
+                <LoadScript 
+                  googleMapsApiKey={apiKey}
+                  onLoad={() => setMapLoading(false)}
                 >
-                  {/* Location Marker */}
-                  <Marker
-                    position={{
-                      lat: selectedLocation.lat,
-                      lng: selectedLocation.lng,
-                    }}
-                    title={`Lat: ${selectedLocation.lat.toFixed(6)}, Lng: ${selectedLocation.lng.toFixed(6)}`}
-                  />
-                </GoogleMap>
-              </LoadScript>
+                  <GoogleMap
+                    mapContainerStyle={containerStyle}
+                    center={mapCenter}
+                    zoom={15}
+                    onClick={handleMapClick}
+                  >
+                    {/* Location Marker */}
+                    <Marker
+                      position={{
+                        lat: selectedLocation.lat,
+                        lng: selectedLocation.lng,
+                      }}
+                      title={`Lat: ${selectedLocation.lat.toFixed(6)}, Lng: ${selectedLocation.lng.toFixed(6)}`}
+                    />
+                  </GoogleMap>
+                </LoadScript>
+              )}
             </div>
           </div>
 
