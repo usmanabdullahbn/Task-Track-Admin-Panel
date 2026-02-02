@@ -163,7 +163,7 @@ const OrderDetailsPage = () => {
       console.log("Starting PDF generation...");
       console.log("FILE_BASE_URL:", FILE_BASE_URL);
       console.log("Tasks:", tasks);
-      
+
       // Show loading state
       const printButton = document.querySelector(
         'button[title="Download Order Details as PDF"]',
@@ -291,11 +291,11 @@ const OrderDetailsPage = () => {
           task.file_upload.forEach((file) => {
             const fileUrl = file.url || file;
             const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
-            
+
             // Check if file is an image
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
             const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-            
+
             if (isImage) {
               imageCount++;
             }
@@ -400,10 +400,10 @@ const OrderDetailsPage = () => {
             task.file_upload.forEach((file) => {
               const fileUrl = file.url || file;
               const fileName = file.originalname || (typeof fileUrl === 'string' ? fileUrl.split("/").pop() : "File");
-              
+
               const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
               const isImage = imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-              
+
               if (isImage) {
                 uploadedImages.push({
                   url: fileUrl.startsWith("http") ? fileUrl : `${FILE_BASE_URL}${fileUrl}`,
@@ -420,35 +420,35 @@ const OrderDetailsPage = () => {
             const imgDataUrl = await getImageDataUrl(uploadedImage.url);
             if (imgDataUrl) {
               pdf.addPage();
-              
+
               // Add image heading
               pdf.setFontSize(16);
               pdf.text(uploadedImage.name, 105, 20, { align: 'center' });
-              
+
               // Add a line under the heading
               pdf.setDrawColor(22, 163, 74); // green color
               pdf.line(10, 28, 200, 28);
-              
+
               // Calculate image dimensions to fit on page
               const maxWidth = 190;
               const maxHeight = 220;
-              
+
               // Load image to get dimensions
               const tempImg = new Image();
               tempImg.src = imgDataUrl;
               await new Promise(resolve => tempImg.onload = resolve);
-              
+
               let imgW = maxWidth;
               let imgH = (tempImg.height * maxWidth) / tempImg.width;
-              
+
               if (imgH > maxHeight) {
                 imgH = maxHeight;
                 imgW = (tempImg.width * maxHeight) / tempImg.height;
               }
-              
+
               const x = (210 - imgW) / 2; // Center horizontally
               const y = 35;
-              
+
               pdf.addImage(imgDataUrl, 'PNG', x, y, imgW, imgH);
               addFooterImage(pdf);
             }
@@ -631,13 +631,12 @@ const OrderDetailsPage = () => {
                 Status
               </label>
               <span
-                className={`px-3 py-1 text-xs rounded-full font-semibold ${
-                  order.status === "Completed"
+                className={`px-3 py-1 text-xs rounded-full font-semibold ${order.status === "Completed"
                     ? "bg-green-100 text-green-800"
                     : order.status === "Active"
                       ? "bg-blue-100 text-blue-800"
                       : "bg-gray-100 text-gray-800"
-                }`}
+                  }`}
               >
                 {order.status}
               </span>
@@ -756,13 +755,12 @@ const OrderDetailsPage = () => {
                             <td className="px-4 py-3">
                               <span
                                 className={`px-2 py-1 text-xs font-semibold rounded-full 
-                        ${
-                          task.status === "Completed"
-                            ? "bg-green-100 text-green-700"
-                            : task.status === "Active"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
-                        }`}
+                        ${task.status === "Completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : task.status === "Active"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-gray-100 text-gray-700"
+                                  }`}
                               >
                                 {task.status}
                               </span>
@@ -777,24 +775,26 @@ const OrderDetailsPage = () => {
                             <td className="px-4 py-3">
                               {task.start_time
                                 ? new Date(task.start_time).toLocaleString([], {
-                                    year: "numeric",
-                                    month: "numeric",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
+                                  year: "numeric",
+                                  month: "numeric",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })
                                 : "-"}
                             </td>
 
                             <td className="px-4 py-3">
                               {task.end_time
                                 ? new Date(task.end_time).toLocaleString([], {
-                                    year: "numeric",
-                                    month: "numeric",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
+                                  year: "numeric",
+                                  month: "numeric",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })
                                 : "-"}
                             </td>
 
@@ -873,16 +873,15 @@ const OrderDetailsPage = () => {
                                             Status
                                           </label>
                                           <span
-                                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                              task.status === "Completed"
+                                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${task.status === "Completed"
                                                 ? "bg-green-100 text-green-800"
                                                 : task.status === "Active"
                                                   ? "bg-blue-100 text-blue-800"
                                                   : task.status ===
-                                                      "In Progress"
+                                                    "In Progress"
                                                     ? "bg-yellow-100 text-yellow-800"
                                                     : "bg-gray-100 text-gray-800"
-                                            }`}
+                                              }`}
                                           >
                                             {task.status}
                                           </span>
@@ -944,14 +943,15 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.start_time
                                               ? new Date(
-                                                  task.start_time,
-                                                ).toLocaleString([], {
-                                                  year: "numeric",
-                                                  month: "numeric",
-                                                  day: "numeric",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                })
+                                                task.start_time,
+                                              ).toLocaleString([], {
+                                                year: "numeric",
+                                                month: "numeric",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: false,
+                                              })
                                               : "-"}
                                           </p>
                                         </div>
@@ -962,14 +962,15 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.end_time
                                               ? new Date(
-                                                  task.end_time,
-                                                ).toLocaleString([], {
-                                                  year: "numeric",
-                                                  month: "numeric",
-                                                  day: "numeric",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                })
+                                                task.end_time,
+                                              ).toLocaleString([], {
+                                                year: "numeric",
+                                                month: "numeric",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: false,
+                                              })
                                               : "-"}
                                           </p>
                                         </div>
@@ -1000,14 +1001,15 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_start_time
                                               ? new Date(
-                                                  task.actual_start_time,
-                                                ).toLocaleString([], {
-                                                  year: "numeric",
-                                                  month: "numeric",
-                                                  day: "numeric",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                })
+                                                task.actual_start_time,
+                                              ).toLocaleString([], {
+                                                year: "numeric",
+                                                month: "numeric",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: false,
+                                              })
                                               : "-"}
                                           </p>
                                         </div>
@@ -1018,14 +1020,15 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.actual_end_time
                                               ? new Date(
-                                                  task.actual_end_time,
-                                                ).toLocaleString([], {
-                                                  year: "numeric",
-                                                  month: "numeric",
-                                                  day: "numeric",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                })
+                                                task.actual_end_time,
+                                              ).toLocaleString([], {
+                                                year: "numeric",
+                                                month: "numeric",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: false,
+                                              })
                                               : "-"}
                                           </p>
                                         </div>
@@ -1056,8 +1059,8 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.created_at
                                               ? new Date(
-                                                  task.created_at,
-                                                ).toLocaleString()
+                                                task.created_at,
+                                              ).toLocaleString()
                                               : "-"}
                                           </p>
                                         </div>
@@ -1068,8 +1071,8 @@ const OrderDetailsPage = () => {
                                           <p className="text-gray-900 text-sm">
                                             {task.updated_at
                                               ? new Date(
-                                                  task.updated_at,
-                                                ).toLocaleString()
+                                                task.updated_at,
+                                              ).toLocaleString()
                                               : "-"}
                                           </p>
                                         </div>
@@ -1171,7 +1174,7 @@ const OrderDetailsPage = () => {
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-6">
               {selectedTask.file_upload &&
-              selectedTask.file_upload.length > 0 ? (
+                selectedTask.file_upload.length > 0 ? (
                 <div className="space-y-4">
                   {selectedTask.file_upload.map((file, index) => (
                     <div
