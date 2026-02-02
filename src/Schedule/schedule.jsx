@@ -38,6 +38,21 @@ const getTotalMinutesForEmployee = (tasks, employeeId, startDate, endDate) => {
     })
     .reduce((total, task) => total + getDurationMinutes(task.start_time, task.end_time), 0);
 };
+
+const getHoursDueVsTotal = (tasks, employeeId, startDate, endDate) => {
+  const employeeTasks = tasks.filter(task => {
+    const taskDate = new Date(task.start_time);
+    return taskDate >= startDate && taskDate < endDate && (task.user?._id === employeeId || task.user?.id === employeeId);
+  });
+
+  const hoursDue = Math.max(0, employeeTasks.reduce((total, task) => total + getDurationMinutes(task.start_time, task.end_time), 0) / 60);
+
+  // Calculate number of days in the range and multiply by 12 hours per day
+  const days = (endDate - startDate) / (1000 * 60 * 60 * 24);
+  const totalAvailableHours = Math.max(1, days * 12);
+
+  return { hoursDue, totalHours: totalAvailableHours };
+};
 const getWeekdaysInMonth = (year, month) => {
   const start = new Date(year, month, 1);
   const end = new Date(year, month + 1, 0);
@@ -544,15 +559,27 @@ const SchedulePage = () => {
                       <p className="font-medium text-gray-900 text-sm">{emp.name}</p>
                       <p className="text-xs text-gray-500">{emp.role || emp.designation || "Employee"}</p>
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600">
-                          {(() => {
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold relative" style={{
+                          background: (() => {
                             const weekStart = getWeekStart(currentDate);
                             const weekEnd = new Date(weekStart);
                             weekEnd.setDate(weekEnd.getDate() + 7);
-                            const totalMinutes = getTotalMinutesForEmployee(tasks, emp._id || emp.id, weekStart, weekEnd);
-                            const utilization = Math.min(100, Math.round((totalMinutes / 3240) * 100));
-                            return utilization;
-                          })()}%
+                            const { hoursDue, totalHours } = getHoursDueVsTotal(tasks, emp._id || emp.id, weekStart, weekEnd);
+                            const percentage = Math.max(0, Math.min(100, (hoursDue / totalHours) * 100));
+                            return `conic-gradient(rgb(34, 197, 94) 0deg ${percentage * 3.6}deg, rgb(209, 213, 219) ${percentage * 3.6}deg 360deg)`;
+                          })(),
+                          padding: '2px'
+                        }}>
+                          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-600">
+                            {(() => {
+                              const weekStart = getWeekStart(currentDate);
+                              const weekEnd = new Date(weekStart);
+                              weekEnd.setDate(weekEnd.getDate() + 7);
+                              const { hoursDue, totalHours } = getHoursDueVsTotal(tasks, emp._id || emp.id, weekStart, weekEnd);
+                              const percentage = Math.max(0, Math.min(100, (hoursDue / totalHours) * 100));
+                              return percentage.toFixed(1);
+                            })()}%
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -677,14 +704,25 @@ const SchedulePage = () => {
                       <p className="text-sm text-gray-500">{emp.role || emp.designation || "Employee"}</p>
                       {/* Progress circle */}
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-xs font-semibold text-gray-600">
-                          {(() => {
-                            const dayStart = new Date(currentDate);
-                            const dayEnd = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
-                            const totalMinutes = getTotalMinutesForEmployee(tasks, emp._id || emp.id, dayStart, dayEnd);
-                            const utilization = Math.min(100, Math.round((totalMinutes / 540) * 100));
-                            return utilization;
-                          })()}%
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold relative" style={{
+                          background: (() => {
+                            const dayStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
+                            const dayEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999);
+                            const { hoursDue, totalHours } = getHoursDueVsTotal(tasks, emp._id || emp.id, dayStart, dayEnd);
+                            const percentage = Math.max(0, Math.min(100, (hoursDue / totalHours) * 100));
+                            return `conic-gradient(rgb(34, 197, 94) 0deg ${percentage * 3.6}deg, rgb(209, 213, 219) ${percentage * 3.6}deg 360deg)`;
+                          })(),
+                          padding: '2px'
+                        }}>
+                          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-600">
+                            {(() => {
+                              const dayStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0);
+                              const dayEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999);
+                              const { hoursDue, totalHours } = getHoursDueVsTotal(tasks, emp._id || emp.id, dayStart, dayEnd);
+                              const percentage = Math.max(0, Math.min(100, (hoursDue / totalHours) * 100));
+                              return percentage.toFixed(1);
+                            })()}%
+                          </div>
                         </div>
                       </div>
                     </div>
