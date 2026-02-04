@@ -49,7 +49,7 @@ const getHoursDueVsTotal = (tasks, employeeId, startDate, endDate) => {
 
   // Calculate number of days in the range and multiply by 12 hours per day
   const days = (endDate - startDate) / (1000 * 60 * 60 * 24);
-  const totalAvailableHours = Math.max(1, days * 12);
+  const totalAvailableHours = Math.max(1, days * 9);
 
   return { hoursDue, totalHours: totalAvailableHours };
 };
