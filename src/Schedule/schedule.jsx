@@ -47,9 +47,16 @@ const getHoursDueVsTotal = (tasks, employeeId, startDate, endDate) => {
 
   const hoursDue = Math.max(0, employeeTasks.reduce((total, task) => total + getDurationMinutes(task.start_time, task.end_time), 0) / 60);
 
-  // Calculate number of days in the range and multiply by 9 hours per day
+  // Calculate number of days in the range and determine total available hours
   const days = (endDate - startDate) / (1000 * 60 * 60 * 24);
-  const totalAvailableHours = Math.max(1, days * 9);
+  
+  // Day view: 9 hours per day, Week view: 54 hours per week
+  let totalAvailableHours;
+  if (days <= 1.5) {
+    totalAvailableHours = 9;
+  } else {
+    totalAvailableHours = Math.max(1, (days / 7) * 54);
+  }
 
   return { hoursDue, totalHours: totalAvailableHours };
 };
