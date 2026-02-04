@@ -578,4 +578,29 @@ export const apiClient = {
       throw new Error("Failed to fetch timeline by employee and date");
     return response.json();
   },
+
+  async updateTaskEndTime(employeeId, date, taskTitle, end_time) {
+    const response = await fetch(`${API_BASE_URL}/timeline/end-time`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        employeeId,
+        date,
+        taskTitle,
+        end_time,
+      }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to update task end time";
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch (e) {
+        errorMessage += ` (${response.status})`;
+      }
+      throw new Error(errorMessage);
+    }
+    return response.json();
+  },
 };
