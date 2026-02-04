@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
 const containerStyle = {
@@ -20,9 +20,17 @@ const GoogleMapsLocationPickerModal = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [mapLoading, setMapLoading] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const apiKey = import.meta.env.VITE_API_GOOGLE_MAPS_API_KEY;
+
+  // Set mapLoaded to true after a short delay to ensure the script loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMapLoaded(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const mapCenter = {
     lat: selectedLocation.lat,
@@ -168,21 +176,29 @@ const GoogleMapsLocationPickerModal = ({
 
           <div className="mb-4">
             <div
-              style={containerStyle}
               className="rounded-lg border border-gray-300 overflow-hidden relative bg-gray-100"
+              style={{ width: "100%", height: "400px" }}
             >
               {!apiKey && (
                 <div className="absolute inset-0 flex items-center justify-center bg-red-50 z-10">
                   <p className="text-red-600 font-semibold">Google Maps API Key not configured</p>
                 </div>
               )}
+              {!mapLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading map...</p>
+                  </div>
+                </div>
+              )}
               {apiKey && (
-                <LoadScript 
+                <LoadScript
                   googleMapsApiKey={apiKey}
-                  onLoad={() => setMapLoading(false)}
+                  onLoad={() => setMapLoaded(true)}
                 >
                   <GoogleMap
-                    mapContainerStyle={containerStyle}
+                    mapContainerStyle={{ width: "100%", height: "100%" }}
                     center={mapCenter}
                     zoom={15}
                     onClick={handleMapClick}
