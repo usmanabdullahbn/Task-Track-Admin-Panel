@@ -120,14 +120,14 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
         setError(null)
         const response = await apiClient.getUsers()
         console.log("Users response:", response)
-        
+
         // Handle the actual response structure: { Users: [...], success: true, total: 12 }
         const userList = response.Users || response.users || response.data || []
-        
+
         if (userList.length === 0) {
           throw new Error("No users found")
         }
-        
+
         // Map users to have both _id and id for compatibility, and filter by designation
         const mappedUsers = userList
           .map(user => ({
@@ -138,13 +138,13 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
             const designation = (user.designation || "").toLowerCase()
             return designation.includes("technician") || designation.includes("supervisor")
           })
-        
+
         if (mappedUsers.length === 0) {
           throw new Error("No technicians or supervisors found")
         }
-        
+
         setUsers(mappedUsers)
-        
+
         // Set default selected user to the first one
         setSelectedUserId(mappedUsers[0].id)
       } catch (err) {
@@ -173,9 +173,9 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
           selectedUserId,
           selectedDate
         )
-        
+
         const timeline = response.timeline || response.data
-        
+
         if (timeline) {
           setSelectedUser({
             id: timeline.employeeId,
@@ -189,10 +189,10 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
         }
       } catch (err) {
         console.error("Failed to fetch timeline:", err)
-        
+
         // Get user info from the users list
         const user = users.find(u => String(u.id) === String(selectedUserId))
-        
+
         // If no timeline found, show empty timeline with office location
         if (user) {
           setSelectedUser({
@@ -351,21 +351,15 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                       )}
                     </Marker>
 
-                    {/* Task Markers */}
+                    {/* Task Markers - Blue Location Icons */}
                     {selectedUser.tasks.map((task, index) => (
                       <Marker
                         key={index}
                         position={{ lat: task.lat, lng: task.lng }}
                         onClick={() => setSelectedMarker({ type: "task", data: task, index })}
-                        label={{
-                          text: String(index + 1),
-                          color: "#ffffff",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
                         icon={{
-                          path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z",
-                          fillColor: "#1f2937",
+                          path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                          fillColor: "#2563eb",
                           fillOpacity: 1,
                           strokeColor: "#ffffff",
                           strokeWeight: 2,
@@ -390,14 +384,70 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
 
                     {/* Route Line */}
                     {routePath.length > 1 && (
-                      <Polyline
-                        path={routePath}
-                        options={{
-                          strokeColor: "#15803d",
-                          strokeOpacity: 1,
-                          strokeWeight: 4,
-                        }}
-                      />
+                      <>
+                        <Polyline
+                          path={routePath}
+                          options={{
+                            strokeColor: "#15803d",
+                            strokeOpacity: 1,
+                            strokeWeight: 4,
+                          }}
+                        />
+                        {/* Start Point Marker */}
+                        <Marker
+                          position={routePath[0]}
+                          label={{
+                            text: "S",
+                            color: "#ffffff",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                          }}
+                          icon={{
+                            path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                            fillColor: "#2563eb",
+                            fillOpacity: 1,
+                            strokeColor: "#ffffff",
+                            strokeWeight: 2,
+                            scale: 1.2,
+                          }}
+                          onClick={() => setSelectedMarker({ type: "startPoint", data: { title: "Start Point" } })}
+                        >
+                          {selectedMarker?.type === "startPoint" && (
+                            <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                              <div className="text-sm">
+                                <strong>Start Point</strong>
+                              </div>
+                            </InfoWindow>
+                          )}
+                        </Marker>
+                        {/* End Point Marker */}
+                        <Marker
+                          position={routePath[routePath.length - 1]}
+                          label={{
+                            text: "E",
+                            color: "#ffffff",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                          }}
+                          icon={{
+                            path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                            fillColor: "#2563eb",
+                            fillOpacity: 1,
+                            strokeColor: "#ffffff",
+                            strokeWeight: 2,
+                            scale: 1.2,
+                          }}
+                          onClick={() => setSelectedMarker({ type: "endPoint", data: { title: "End Point" } })}
+                        >
+                          {selectedMarker?.type === "endPoint" && (
+                            <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                              <div className="text-sm">
+                                <strong>End Point</strong>
+                              </div>
+                            </InfoWindow>
+                          )}
+                        </Marker>
+                      </>
                     )}
                   </GoogleMap>
                 </LoadScript>

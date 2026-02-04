@@ -132,14 +132,14 @@ const EmployeeDayTimelinePage = () => {
         setError(null)
         const response = await apiClient.getUsers()
         console.log("Users response:", response)
-        
+
         // Handle the actual response structure: { Users: [...], success: true, total: 12 }
         const userList = response.Users || response.users || response.data || []
-        
+
         if (userList.length === 0) {
           throw new Error("No users found")
         }
-        
+
         // Map users to have both _id and id for compatibility, and filter by designation
         const mappedUsers = userList
           .map(user => ({
@@ -150,13 +150,13 @@ const EmployeeDayTimelinePage = () => {
             const designation = (user.designation || "").toLowerCase()
             return designation.includes("technician") || designation.includes("supervisor")
           })
-        
+
         if (mappedUsers.length === 0) {
           throw new Error("No technicians or supervisors found")
         }
-        
+
         setUsers(mappedUsers)
-        
+
         // Set default selected user to the first one
         setSelectedUserId(mappedUsers[0].id)
       } catch (err) {
@@ -185,9 +185,9 @@ const EmployeeDayTimelinePage = () => {
           selectedUserId,
           selectedDate
         )
-        
+
         const timeline = response.timeline || response.data
-        
+
         if (timeline) {
           setSelectedUser({
             id: timeline.employeeId,
@@ -201,10 +201,10 @@ const EmployeeDayTimelinePage = () => {
         }
       } catch (err) {
         console.error("Failed to fetch timeline:", err)
-        
+
         // Get user info from the users list
         const user = users.find(u => String(u.id) === String(selectedUserId))
-        
+
         // If no timeline found, show empty timeline with office location
         if (user) {
           setSelectedUser({
