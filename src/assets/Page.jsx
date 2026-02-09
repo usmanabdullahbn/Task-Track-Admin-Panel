@@ -354,7 +354,7 @@ const AssetsPage = () => {
           <div class="details-grid">
             <div>
               <div class="detail-item">
-                <div class="detail-label">Model</div>
+                <div class="detail-label">Panel Builder</div>
                 <div class="detail-value">${printData.model || "N/A"}</div>
               </div>
             </div>

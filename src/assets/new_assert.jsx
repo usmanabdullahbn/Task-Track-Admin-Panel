@@ -374,10 +374,10 @@ const NewAssetPage = () => {
                 </label>
                 <input
                   type="text"
-                  name="model"
+                  name="Panel Builder"
                   value={formData.model}
                   onChange={handleInputChange}
-                  placeholder="Enter model"
+                  placeholder="Enter Panel Builder"
                   className="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
                 />
               </div>

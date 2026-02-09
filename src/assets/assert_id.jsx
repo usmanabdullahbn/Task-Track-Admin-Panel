@@ -191,7 +191,7 @@ const EditAssetPage = () => {
                 </label>
                 <input
                   type="text"
-                  name="model"
+                  name="Panel Builderl"
                   value={formData.model}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
