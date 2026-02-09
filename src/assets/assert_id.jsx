@@ -187,11 +187,11 @@ const EditAssetPage = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Model
+                  Panel Builder
                 </label>
                 <input
                   type="text"
-                  name="Panel Builderl"
+                  name="model"
                   value={formData.model}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"

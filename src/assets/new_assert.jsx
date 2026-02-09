@@ -370,11 +370,11 @@ const NewAssetPage = () => {
               {/* Model */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Model
+                  Panel Builder
                 </label>
                 <input
                   type="text"
-                  name="Panel Builder"
+                  name="model"
                   value={formData.model}
                   onChange={handleInputChange}
                   placeholder="Enter Panel Builder"
