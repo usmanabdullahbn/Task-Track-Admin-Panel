@@ -531,9 +531,9 @@ const OrderDetailsPage = () => {
     if (task.actual_start_time && task.actual_end_time) {
       const s = new Date(task.actual_start_time);
       const e = new Date(task.actual_end_time);
-      const diffHours = (e - s) / (1000 * 60 * 60);
-      if (!Number.isFinite(diffHours)) return "-";
-      return diffHours.toFixed(2);
+      const diffMinutes = (e - s) / (1000 * 60);
+      if (!Number.isFinite(diffMinutes)) return "-";
+      return diffMinutes;
     }
 
     return "-";
@@ -548,12 +548,30 @@ const OrderDetailsPage = () => {
     if (task.start_time && task.end_time) {
       const s = new Date(task.start_time);
       const e = new Date(task.end_time);
-      const diffHours = (e - s) / (1000 * 60 * 60);
-      if (!Number.isFinite(diffHours)) return "-";
-      return diffHours.toFixed(2);
+      const diffMinutes = (e - s) / (1000 * 60);
+      if (!Number.isFinite(diffMinutes)) return "-";
+      return diffMinutes;
     }
 
     return "-";
+  };
+
+  const formatDuration = (durationInMinutes) => {
+    if (durationInMinutes === "-" || durationInMinutes === undefined || durationInMinutes === null) {
+      return "-";
+    }
+
+    const minutes = parseFloat(durationInMinutes);
+    if (!Number.isFinite(minutes)) return "-";
+
+    if (minutes < 1) {
+      const seconds = Math.round(minutes * 60);
+      return `${seconds} seconds`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = Math.round(minutes % 60);
+      return `${hours} hours ${remainingMinutes} minutes`;
+    }
   };
 
   return (
@@ -632,10 +650,10 @@ const OrderDetailsPage = () => {
               </label>
               <span
                 className={`px-3 py-1 text-xs rounded-full font-semibold ${order.status === "Completed"
-                    ? "bg-green-100 text-green-800"
-                    : order.status === "Active"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-800"
+                  ? "bg-green-100 text-green-800"
+                  : order.status === "Active"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
                   }`}
               >
                 {order.status}
@@ -874,13 +892,13 @@ const OrderDetailsPage = () => {
                                           </label>
                                           <span
                                             className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${task.status === "Completed"
-                                                ? "bg-green-100 text-green-800"
-                                                : task.status === "Active"
-                                                  ? "bg-blue-100 text-blue-800"
-                                                  : task.status ===
-                                                    "In Progress"
-                                                    ? "bg-yellow-100 text-yellow-800"
-                                                    : "bg-gray-100 text-gray-800"
+                                              ? "bg-green-100 text-green-800"
+                                              : task.status === "Active"
+                                                ? "bg-blue-100 text-blue-800"
+                                                : task.status ===
+                                                  "In Progress"
+                                                  ? "bg-yellow-100 text-yellow-800"
+                                                  : "bg-gray-100 text-gray-800"
                                               }`}
                                           >
                                             {task.status}
@@ -919,9 +937,7 @@ const OrderDetailsPage = () => {
                                             Planned Duration
                                           </label>
                                           <p className="text-gray-900 font-medium">
-                                            {task.plan_duration
-                                              ? `${task.plan_duration} hours`
-                                              : "-"}
+                                            {formatDuration(computePlannedHours(task))}
                                           </p>
                                         </div>
                                       </div>
@@ -972,14 +988,6 @@ const OrderDetailsPage = () => {
                                                 hour12: false,
                                               })
                                               : "-"}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                                            Total Planned Hours
-                                          </label>
-                                          <p className="text-gray-900 font-semibold text-lg">
-                                            {computePlannedHours(task)}
                                           </p>
                                         </div>
                                       </div>
@@ -1037,7 +1045,7 @@ const OrderDetailsPage = () => {
                                             Total Actual Hours
                                           </label>
                                           <p className="text-gray-900 font-semibold text-lg">
-                                            {computeActualHours(task)}
+                                            {formatDuration(computeActualHours(task))}
                                           </p>
                                         </div>
                                       </div>
