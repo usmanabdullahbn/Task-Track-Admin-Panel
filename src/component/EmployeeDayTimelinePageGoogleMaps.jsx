@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"
-import { GoogleMap, LoadScript, Marker, Polyline, InfoWindow } from "@react-google-maps/api"
+import React, { useState, useEffect, useMemo } from "react"
+import { GoogleMap, LoadScript, Marker, InfoWindow, DirectionsRenderer } from "@react-google-maps/api"
 import Sidebar from "../component/sidebar"
 import { Link } from "react-router-dom"
 import { apiClient } from "../lib/api-client"
@@ -111,6 +111,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [selectedMarker, setSelectedMarker] = useState(null)
+  const [directions, setDirections] = useState(null)
 
   // Fetch all users (technical and supervisor) on mount
   useEffect(() => {
@@ -200,9 +201,9 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
             name: user.name,
             date: selectedDate,
             office: {
-              lat: 24.8607,  // Default office location
-              lng: 67.0011,
-              title: "Head Office"
+              lat: 25.2854,  // Doha, Qatar
+              lng: 51.5310,
+              title: "Head Office - Doha"
             },
             tasks: [],  // No tasks scheduled
           })
@@ -229,17 +230,58 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     setSelectedUserId(selectedId)
   }
 
-  const routePath = selectedUser ? [
-    { lat: selectedUser.office.lat, lng: selectedUser.office.lng },
-    ...selectedUser.tasks.map((t) => ({ lat: t.lat, lng: t.lng })),
-  ] : []
+  // Memoize routePath to prevent infinite recalculation
+  const routePath = useMemo(() => {
+    if (!selectedUser) return []
+
+    return [
+      { lat: selectedUser.office.lat, lng: selectedUser.office.lng },
+      ...selectedUser.tasks.map((t) => ({
+        lat: t.lat,
+        lng: t.lng,
+      })),
+    ]
+  }, [selectedUser])
+
+  // Reset directions when user or date changes
+  useEffect(() => {
+    setDirections(null)
+  }, [selectedUserId, selectedDate])
+
+  // Fetch directions when user data loads
+  useEffect(() => {
+    if (!selectedUser) return
+    if (routePath.length <= 1) return
+    if (directions) return // Prevent recalculation if already fetched
+
+    const directionsService = new window.google.maps.DirectionsService()
+
+    const waypoints = selectedUser.tasks.slice(0, -1).map(task => ({
+      location: { lat: task.lat, lng: task.lng },
+      stopover: true
+    }))
+
+    directionsService.route(
+      {
+        origin: routePath[0],
+        destination: routePath[routePath.length - 1],
+        waypoints: waypoints,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result)
+        }
+      }
+    )
+  }, [selectedUser])
 
   const mapCenter = selectedUser ? {
     lat: selectedUser.office.lat,
     lng: selectedUser.office.lng,
   } : {
-    lat: 24.8607,
-    lng: 67.0011,
+    lat: 25.2854,   // Doha, Qatar
+    lng: 51.5310,
   }
 
   const mapContainerStyle = {
@@ -324,7 +366,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                   <GoogleMap
                     mapContainerStyle={mapContainerStyle}
                     center={mapCenter}
-                    zoom={12}
+                    zoom={selectedUser?.tasks?.length ? 12 : 13}
                   >
                     {/* Office Marker */}
                     <Marker
@@ -382,72 +424,19 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                       </Marker>
                     ))}
 
-                    {/* Route Line */}
-                    {routePath.length > 1 && (
-                      <>
-                        <Polyline
-                          path={routePath}
-                          options={{
+                    {/* Real Road Route using DirectionsRenderer */}
+                    {directions && (
+                      <DirectionsRenderer
+                        options={{
+                          directions: directions,
+                          polylineOptions: {
                             strokeColor: "#15803d",
                             strokeOpacity: 1,
-                            strokeWeight: 4,
-                          }}
-                        />
-                        {/* Start Point Marker */}
-                        <Marker
-                          position={routePath[0]}
-                          label={{
-                            text: "S",
-                            color: "#ffffff",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                          }}
-                          icon={{
-                            path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
-                            fillColor: "#2563eb",
-                            fillOpacity: 1,
-                            strokeColor: "#ffffff",
-                            strokeWeight: 2,
-                            scale: 1.2,
-                          }}
-                          onClick={() => setSelectedMarker({ type: "startPoint", data: { title: "Start Point" } })}
-                        >
-                          {selectedMarker?.type === "startPoint" && (
-                            <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
-                              <div className="text-sm">
-                                <strong>Start Point</strong>
-                              </div>
-                            </InfoWindow>
-                          )}
-                        </Marker>
-                        {/* End Point Marker */}
-                        <Marker
-                          position={routePath[routePath.length - 1]}
-                          label={{
-                            text: "E",
-                            color: "#ffffff",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                          }}
-                          icon={{
-                            path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
-                            fillColor: "#2563eb",
-                            fillOpacity: 1,
-                            strokeColor: "#ffffff",
-                            strokeWeight: 2,
-                            scale: 1.2,
-                          }}
-                          onClick={() => setSelectedMarker({ type: "endPoint", data: { title: "End Point" } })}
-                        >
-                          {selectedMarker?.type === "endPoint" && (
-                            <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
-                              <div className="text-sm">
-                                <strong>End Point</strong>
-                              </div>
-                            </InfoWindow>
-                          )}
-                        </Marker>
-                      </>
+                            strokeWeight: 5,
+                          },
+                          suppressMarkers: true, // Don't show default markers
+                        }}
+                      />
                     )}
                   </GoogleMap>
                 </LoadScript>
