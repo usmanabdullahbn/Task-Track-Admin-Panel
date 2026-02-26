@@ -603,4 +603,14 @@ export const apiClient = {
     }
     return response.json();
   },
+
+  // ============================
+  //         TRACKING
+  // ============================
+
+  async getTimeline(workerId, date) {
+    const response = await fetch(`${API_BASE_URL}/tracking/timeline?workerId=${workerId}&date=${date}`);
+    if (!response.ok) throw new Error("Failed to fetch timeline");
+    return response.json();
+  },
 };

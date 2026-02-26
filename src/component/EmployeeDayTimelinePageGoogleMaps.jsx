@@ -162,7 +162,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     fetchUsers()
   }, [])
 
-  // Fetch timeline data when user or date changes
+  // Fetch timeline data when user or date changes (uses new tracking/timeline API)
   useEffect(() => {
     if (!selectedUserId) return
 
@@ -170,50 +170,79 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await apiClient.getTimelineByEmployeeIdAndDate(
-          selectedUserId,
-          selectedDate
-        )
 
-        const timeline = response.timeline || response.data
+        // New API: tracking/timeline?workerId=&date=
+        const response = await apiClient.getTimeline(selectedUserId, selectedDate)
 
-        if (timeline) {
+        // Backend returns: { session, locations, tasks, idleLogs, idleMinutes }
+        const { session, locations = [], tasks = [], idleLogs = [], idleMinutes = 0 } = response || {}
+
+        if (session) {
+          const userFromList = users.find(u => String(u.id) === String(selectedUserId))
+
+          // Process locations by type - for start location
+          const startLocation = locations.find(loc => loc.locationType === 'start') || locations[0]
+          
+          // Process idle logs with start/end times
+          const idleLocations = (idleLogs || []).map((idle, idx) => {
+            // Find the location point data for this idle period
+            const correspondingLocation = locations.find(loc => 
+              loc.timestamp >= idle.startTime && loc.timestamp <= (idle.endTime || new Date())
+            )
+            
+            return {
+              lat: correspondingLocation?.latitude || 24.8607,
+              lng: correspondingLocation?.longitude || 67.0011,
+              title: correspondingLocation?.locationName || `Idle Location ${idx + 1}`,
+              start_time: idle.startTime ? new Date(idle.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+              end_time: idle.endTime ? new Date(idle.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Ongoing',
+            }
+          })
+
           setSelectedUser({
-            id: timeline.employeeId,
-            name: timeline.employeeName,
-            date: timeline.date,
-            office: timeline.office,
-            tasks: timeline.tasks || [],
+            id: session.workerId || selectedUserId,
+            name: session.workerName || userFromList?.name || `Worker ${selectedUserId}`,
+            date: session.date || selectedDate,
+            office: startLocation
+              ? { lat: startLocation.latitude, lng: startLocation.longitude, title: 'Start Location' }
+              : (userFromList?.office || { lat: 25.2854, lng: 51.5310, title: 'Office' }),
+            tasks: (tasks || []).map((t, idx) => ({
+              lat: t.latitude ?? t.lat,
+              lng: t.longitude ?? t.lng,
+              title: t.taskTitle || (t.taskId && t.taskId.title) || (t.taskId && t.taskId.name) || `Task ${idx + 1}`,
+              start_time: t.startTime ? new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (t.start_time || ''),
+              end_time: t.endTime ? new Date(t.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (t.end_time || ''),
+            })),
+            idleLocations,
+            idleMinutes,
           })
         } else {
-          throw new Error("Timeline not found")
+          throw new Error('No session found')
         }
       } catch (err) {
-        console.error("Failed to fetch timeline:", err)
+        console.error('Failed to fetch timeline:', err)
 
-        // Get user info from the users list
         const user = users.find(u => String(u.id) === String(selectedUserId))
 
-        // If no timeline found, show empty timeline with office location
         if (user) {
           setSelectedUser({
             id: user.id,
             name: user.name,
             date: selectedDate,
             office: {
-              lat: 25.2854,  // Doha, Qatar
+              lat: 25.2854,
               lng: 51.5310,
-              title: "Head Office - Doha"
+              title: 'Head Office - Doha',
             },
-            tasks: [],  // No tasks scheduled
+            tasks: [],
+            idleLocations: [],
           })
           setError(`No timeline found for ${selectedDate}. Showing office location only.`)
         } else {
           setError(`Failed to load timeline: ${err.message}`)
-          // Fallback to dummy data if user not found
           const fallbackUser = dummyEmployees.find(emp => emp.id === selectedUserId)
           if (fallbackUser) {
-            setSelectedUser({ ...fallbackUser, date: selectedDate })
+            setSelectedUser({ ...fallbackUser, date: selectedDate, idleLocations: [] })
           }
         }
       } finally {
@@ -328,6 +357,11 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                   <p className="text-sm text-gray-600">
                     {selectedUser.name} — {selectedDate}
                   </p>
+                  {selectedUser.idleMinutes !== undefined && (
+                    <p className="text-sm text-orange-600">
+                      Idle Time: {selectedUser.idleMinutes} minutes
+                    </p>
+                  )}
                 </div>
                 <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -424,6 +458,37 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                       </Marker>
                     ))}
 
+                    {/* Idle Location Markers - Orange Pause Icons */}
+                    {selectedUser.idleLocations && selectedUser.idleLocations.map((idle, index) => (
+                      <Marker
+                        key={`idle-${index}`}
+                        position={{ lat: idle.lat, lng: idle.lng }}
+                        onClick={() => setSelectedMarker({ type: "idle", data: idle, index })}
+                        icon={{
+                          path: "M6 4h4v16H6V4zm8 0h4v16h-4V4z",
+                          fillColor: "#f59e0b",
+                          fillOpacity: 1,
+                          strokeColor: "#ffffff",
+                          strokeWeight: 2,
+                          scale: 1.2,
+                        }}
+                      >
+                        {selectedMarker?.type === "idle" && selectedMarker.index === index && (
+                          <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                            <div className="text-sm">
+                              <strong>Idle Location {index + 1}</strong>
+                              <br />
+                              {idle.title}
+                              <br />
+                              {idle.start_time && idle.end_time && (
+                                <small>{idle.start_time} - {idle.end_time}</small>
+                              )}
+                            </div>
+                          </InfoWindow>
+                        )}
+                      </Marker>
+                    ))}
+
                     {/* Real Road Route using DirectionsRenderer */}
                     {directions && (
                       <DirectionsRenderer
@@ -442,43 +507,76 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                 </LoadScript>
               </div>
 
-              {/* Task Route List */}
+              {/* Task Route List with All Location Types */}
               <div className="rounded-lg border bg-white p-4 shadow-sm">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Task Route
+                  Complete Route Timeline
                 </h2>
 
-                {selectedUser.tasks.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No tasks scheduled for this date.</p>
+                {selectedUser.tasks && selectedUser.tasks.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No tasks or idle locations for this date.</p>
                 ) : (
                   <ol className="space-y-3">
+                    {/* Start Location */}
                     <li className="flex items-center gap-3">
-                      <span className="h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-xs">
-                        O
+                      <span className="h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-xs font-bold">
+                        S
                       </span>
-                      <span className="text-sm text-gray-700">
-                        {selectedUser.office.title} (Start Point)
-                      </span>
+                      <div className="flex-1">
+                        <span className="text-sm text-gray-700 font-medium">
+                          {selectedUser.office.title} (Start)
+                        </span>
+                      </div>
                     </li>
 
-                    {selectedUser.tasks.map((task, index) => (
-                      <li key={index} className="flex items-center gap-3">
-                        <span className="h-6 w-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs">
-                          {index + 1}
+                    {/* Tasks */}
+                    {selectedUser.tasks && selectedUser.tasks.map((task, index) => (
+                      <li key={`task-${index}`} className="flex items-center gap-3">
+                        <span className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                          T{index + 1}
                         </span>
                         <div className="flex-1">
                           <span className="text-sm text-gray-700 font-medium">
                             {task.title}
                           </span>
                           {(task.start_time || task.end_time) && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 mt-1">
                               {task.start_time} - {task.end_time}
                             </p>
                           )}
                         </div>
                       </li>
                     ))}
+
+                    {/* Idle Locations */}
+                    {selectedUser.idleLocations && selectedUser.idleLocations.map((idle, index) => (
+                      <li key={`idle-${index}`} className="flex items-center gap-3">
+                        <span className="h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">
+                          I{index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-700 font-medium">
+                            Idle Location {index + 1}
+                          </span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {idle.title}
+                            {idle.start_time && idle.end_time && (
+                              <> • {idle.start_time} - {idle.end_time}</>
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
                   </ol>
+                )}
+
+                {/* Idle Time Summary */}
+                {selectedUser.idleMinutes > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-gray-700">
+                      <strong>Total Idle Time:</strong> {selectedUser.idleMinutes} minutes
+                    </p>
+                  </div>
                 )}
               </div>
             </>
