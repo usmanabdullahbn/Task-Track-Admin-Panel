@@ -184,6 +184,11 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
           const startLocation = locations.find(loc => loc.locationType === 'start') || locations[0]
           const endLocation = locations.find(loc => loc.locationType === 'end') || locations[locations.length - 1]
 
+          // normalize formatting to 24‑hour clock
+          const fmt24 = (ts) => ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+          if (startLocation) startLocation.timeFormatted = fmt24(startLocation.timestamp);
+          if (endLocation) endLocation.timeFormatted = fmt24(endLocation.timestamp);
+
           // Process idle logs with start/end times
           const idleLocations = (idleLogs || []).map((idle, idx) => {
             const correspondingLocation = locations.find(loc => 
@@ -194,8 +199,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
               lat: correspondingLocation?.latitude || 24.8607,
               lng: correspondingLocation?.longitude || 67.0011,
               title: correspondingLocation?.locationName || `Idle Location ${idx + 1}`,
-              start_time: idle.startTime ? new Date(idle.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-              end_time: idle.endTime ? new Date(idle.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Ongoing',
+              start_time: idle.startTime ? new Date(idle.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+              end_time: idle.endTime ? new Date(idle.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Ongoing',
             }
           })
 
@@ -213,8 +218,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
               lat: t.latitude ?? t.lat,
               lng: t.longitude ?? t.lng,
               title: t.taskTitle || (t.taskId && t.taskId.title) || (t.taskId && t.taskId.name) || `Task ${idx + 1}`,
-              start_time: t.startTime ? new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (t.start_time || ''),
-              end_time: t.endTime ? new Date(t.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (t.end_time || ''),
+              start_time: t.startTime ? new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (t.start_time || ''),
+              end_time: t.endTime ? new Date(t.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (t.end_time || ''),
             })),
             idleLocations,
             idleMinutes,
