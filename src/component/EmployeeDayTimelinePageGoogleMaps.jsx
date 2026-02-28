@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react"
-import { GoogleMap, LoadScript, Marker, InfoWindow, DirectionsRenderer } from "@react-google-maps/api"
+import { GoogleMap, LoadScript, Marker, InfoWindow, DirectionsRenderer, Polyline } from "@react-google-maps/api"
 import Sidebar from "../component/sidebar"
 import { Link } from "react-router-dom"
 import { apiClient } from "../lib/api-client"
@@ -129,15 +129,15 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
           throw new Error("No users found")
         }
 
-        // Map users to have both _id and id for compatibility, and filter by designation
+        // Map users to have both _id and id for compatibility, and filter by role (technician / supervisor)
         const mappedUsers = userList
           .map(user => ({
             ...user,
             id: user._id || user.id // Use _id from MongoDB, fallback to id
           }))
           .filter(user => {
-            const designation = (user.designation || "").toLowerCase()
-            return designation.includes("technician") || designation.includes("supervisor")
+            const role = (user.role || "").toLowerCase()
+            return role.includes("technician") || role.includes("supervisor")
           })
 
         if (mappedUsers.length === 0) {
@@ -180,12 +180,12 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
         if (session) {
           const userFromList = users.find(u => String(u.id) === String(selectedUserId))
 
-          // Process locations by type - for start location
+          // derive start / end points from location array
           const startLocation = locations.find(loc => loc.locationType === 'start') || locations[0]
-          
+          const endLocation = locations.find(loc => loc.locationType === 'end') || locations[locations.length - 1]
+
           // Process idle logs with start/end times
           const idleLocations = (idleLogs || []).map((idle, idx) => {
-            // Find the location point data for this idle period
             const correspondingLocation = locations.find(loc => 
               loc.timestamp >= idle.startTime && loc.timestamp <= (idle.endTime || new Date())
             )
@@ -203,6 +203,9 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
             id: session.workerId || selectedUserId,
             name: session.workerName || userFromList?.name || `Worker ${selectedUserId}`,
             date: session.date || selectedDate,
+            startLocation,
+            endLocation,
+            locations,
             office: startLocation
               ? { lat: startLocation.latitude, lng: startLocation.longitude, title: 'Start Location' }
               : (userFromList?.office || { lat: 25.2854, lng: 51.5310, title: 'Office' }),
@@ -263,6 +266,11 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
   const routePath = useMemo(() => {
     if (!selectedUser) return []
 
+    // prefer raw GPS locations if available, otherwise fall back to office+task list
+    if (selectedUser.locations && selectedUser.locations.length > 0) {
+      return selectedUser.locations.map(loc => ({ lat: loc.latitude, lng: loc.longitude }))
+    }
+
     return [
       { lat: selectedUser.office.lat, lng: selectedUser.office.lng },
       ...selectedUser.tasks.map((t) => ({
@@ -277,10 +285,12 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     setDirections(null)
   }, [selectedUserId, selectedDate])
 
-  // Fetch directions when user data loads
+  // Fetch directions when user data loads (only used when we don't have raw GPS locations)
   useEffect(() => {
     if (!selectedUser) return
     if (routePath.length <= 1) return
+    // if we are using GPS location points we render our own polyline, no need for directions
+    if (selectedUser.locations && selectedUser.locations.length > 0) return
     if (directions) return // Prevent recalculation if already fetched
 
     const directionsService = new window.google.maps.DirectionsService()
@@ -402,30 +412,61 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                     center={mapCenter}
                     zoom={selectedUser?.tasks?.length ? 12 : 13}
                   >
-                    {/* Office Marker */}
-                    <Marker
-                      position={{
-                        lat: selectedUser.office.lat,
-                        lng: selectedUser.office.lng,
-                      }}
-                      onClick={() => setSelectedMarker({ type: "office", data: selectedUser.office })}
-                      icon={{
-                        path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z",
-                        fillColor: "#15803d",
-                        fillOpacity: 1,
-                        strokeColor: "#ffffff",
-                        strokeWeight: 2,
-                        scale: 1.2,
-                      }}
-                    >
-                      {selectedMarker?.type === "office" && (
-                        <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
-                          <div className="text-sm">
-                            <strong>{selectedUser.office.title}</strong>
-                          </div>
-                        </InfoWindow>
-                      )}
-                    </Marker>
+                    {/* Start Marker (first GPS point) */}
+                    {selectedUser.startLocation && (
+                      <Marker
+                        position={{
+                          lat: selectedUser.startLocation.latitude,
+                          lng: selectedUser.startLocation.longitude,
+                        }}
+                        onClick={() => setSelectedMarker({ type: "start", data: selectedUser.startLocation })}
+                        icon={{
+                          path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                          fillColor: "#15803d", // green
+                          fillOpacity: 1,
+                          strokeColor: "#ffffff",
+                          strokeWeight: 2,
+                          scale: 1.2,
+                        }}
+                      >
+                        {selectedMarker?.type === "start" && (
+                          <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                            <div className="text-sm">
+                              <strong>Start</strong><br />
+                              {selectedUser.startLocation.timeFormatted || new Date(selectedUser.startLocation.timestamp).toLocaleTimeString()}
+                            </div>
+                          </InfoWindow>
+                        )}
+                      </Marker>
+                    )}
+
+                    {/* End Marker (last GPS point) */}
+                    {selectedUser.endLocation && (
+                      <Marker
+                        position={{
+                          lat: selectedUser.endLocation.latitude,
+                          lng: selectedUser.endLocation.longitude,
+                        }}
+                        onClick={() => setSelectedMarker({ type: "end", data: selectedUser.endLocation })}
+                        icon={{
+                          path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                          fillColor: "#dc2626", // red
+                          fillOpacity: 1,
+                          strokeColor: "#ffffff",
+                          strokeWeight: 2,
+                          scale: 1.2,
+                        }}
+                      >
+                        {selectedMarker?.type === "end" && (
+                          <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                            <div className="text-sm">
+                              <strong>End</strong><br />
+                              {selectedUser.endLocation.timeFormatted || new Date(selectedUser.endLocation.timestamp).toLocaleTimeString()}
+                            </div>
+                          </InfoWindow>
+                        )}
+                      </Marker>
+                    )}
 
                     {/* Task Markers - Blue Location Icons */}
                     {selectedUser.tasks.map((task, index) => (
@@ -458,7 +499,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                       </Marker>
                     ))}
 
-                    {/* Idle Location Markers - Orange Pause Icons */}
+                    {/* Idle Location Markers - Yellow Icons */}
                     {selectedUser.idleLocations && selectedUser.idleLocations.map((idle, index) => (
                       <Marker
                         key={`idle-${index}`}
@@ -489,7 +530,20 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                       </Marker>
                     ))}
 
-                    {/* Real Road Route using DirectionsRenderer */}
+
+                    {/* If we have raw GPS locations draw direct polyline */}
+                    {selectedUser.locations && selectedUser.locations.length > 1 && (
+                      <Polyline
+                        path={selectedUser.locations.map(loc => ({ lat: loc.latitude, lng: loc.longitude }))}
+                        options={{
+                          strokeColor: "#15803d",
+                          strokeOpacity: 1,
+                          strokeWeight: 5,
+                        }}
+                      />
+                    )}
+
+                    {/* Real Road Route using DirectionsRenderer (fallback if no GPS path) */}
                     {directions && (
                       <DirectionsRenderer
                         options={{
@@ -513,21 +567,28 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                   Complete Route Timeline
                 </h2>
 
-                {selectedUser.tasks && selectedUser.tasks.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No tasks or idle locations for this date.</p>
+                {selectedUser.tasks && selectedUser.tasks.length === 0 && (!selectedUser.locations || selectedUser.locations.length === 0) ? (
+                  <p className="text-gray-500 text-sm">No tasks, locations or idle records for this date.</p>
                 ) : (
                   <ol className="space-y-3">
                     {/* Start Location */}
-                    <li className="flex items-center gap-3">
-                      <span className="h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-xs font-bold">
-                        S
-                      </span>
-                      <div className="flex-1">
-                        <span className="text-sm text-gray-700 font-medium">
-                          {selectedUser.office.title} (Start)
+                    {selectedUser.startLocation && (
+                      <li className="flex items-center gap-3">
+                        <span className="h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-xs font-bold">
+                          S
                         </span>
-                      </div>
-                    </li>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-700 font-medium">
+                            Start – {selectedUser.startLocation.locationName || ''}
+                          </span>
+                          {selectedUser.startLocation.timeFormatted && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {selectedUser.startLocation.timeFormatted}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    )}
 
                     {/* Tasks */}
                     {selectedUser.tasks && selectedUser.tasks.map((task, index) => (
@@ -567,6 +628,25 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                         </div>
                       </li>
                     ))}
+
+                    {/* End Location */}
+                    {selectedUser.endLocation && (
+                      <li className="flex items-center gap-3">
+                        <span className="h-6 w-6 rounded-full bg-pink-600 text-white flex items-center justify-center text-xs font-bold">
+                          E
+                        </span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-700 font-medium">
+                            End – {selectedUser.endLocation.locationName || ''}
+                          </span>
+                          {selectedUser.endLocation.timeFormatted && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {selectedUser.endLocation.timeFormatted}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    )}
                   </ol>
                 )}
 
