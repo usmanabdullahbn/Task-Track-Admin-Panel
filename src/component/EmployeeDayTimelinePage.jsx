@@ -345,16 +345,55 @@ const EmployeeDayTimelinePage = () => {
                   </Marker>
 
                   {/* Task Markers */}
-                  {selectedUser.tasks.map((task, index) => (
-                    <Marker key={index} position={[task.lat, task.lng]}>
+                  {selectedUser.tasks.map((task, index) => {
+                    const lefted = !!task.left_time;
+                    return (
+                      <Marker
+                        key={index}
+                        position={[task.lat, task.lng]}
+                        icon={{
+                          path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                          fillColor: lefted ? "#db2777" : "#2563eb",
+                          fillOpacity: 1,
+                          strokeColor: "#ffffff",
+                          strokeWeight: 2,
+                          scale: 1.2,
+                        }}
+                      >
+                        <Popup>
+                          <strong>Task {index + 1}</strong>
+                          <br />
+                          {task.title}
+                          <br />
+                          {task.start_time && (task.left_time || task.end_time) && (
+                            <small>
+                              {task.start_time} - {task.left_time || task.end_time}
+                              {task.left_time && ' (left)'}
+                            </small>
+                          )}
+                        </Popup>
+                      </Marker>
+                    )
+                  })}
+
+                  {/* Left-location markers */}
+                  {selectedUser.tasks.filter(t => t.left_lat && t.left_lng).map((task, idx) => (
+                    <Marker
+                      key={`left-${idx}`}
+                      position={[task.left_lat, task.left_lng]}
+                      icon={{
+                        path: "M12 2C6.48 2 2 6.48 2 12c0 4.84 3.94 8 10 13.1C18 20 22 16.84 22 12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
+                        fillColor: "#dc2626",
+                        fillOpacity: 1,
+                        strokeColor: "#ffffff",
+                        strokeWeight: 2,
+                        scale: 1.2,
+                      }}
+                    >
                       <Popup>
-                        <strong>Task {index + 1}</strong>
+                        <strong>Left Location {idx + 1}</strong>
                         <br />
-                        {task.title}
-                        <br />
-                        {task.start_time && task.end_time && (
-                          <small>{task.start_time} - {task.end_time}</small>
-                        )}
+                        {task.left_time}
                       </Popup>
                     </Marker>
                   ))}
@@ -400,9 +439,10 @@ const EmployeeDayTimelinePage = () => {
                           <span className="text-sm text-gray-700 font-medium">
                             {task.title}
                           </span>
-                          {(task.start_time || task.end_time) && (
+                          {(task.start_time || task.end_time || task.left_time) && (
                             <p className="text-xs text-gray-500">
-                              {task.start_time} - {task.end_time}
+                              {task.start_time} - {task.left_time || task.end_time}
+                              {task.left_time && ' (left)'}
                             </p>
                           )}
                         </div>
