@@ -625,7 +625,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                         </span>
                         <div className="flex-1">
                           <span className="text-sm text-gray-700 font-medium">
-                            Start – {selectedUser.startLocation.locationName || ''}
+                            Start Location – {selectedUser.startLocation.locationName || ''}
                           </span>
                           {selectedUser.startLocation.timeFormatted && (
                             <p className="text-xs text-gray-500 mt-1">
@@ -683,7 +683,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                         </span>
                         <div className="flex-1">
                           <span className="text-sm text-gray-700 font-medium">
-                            End – {selectedUser.endLocation.locationName || ''}
+                            Last Location – {selectedUser.endLocation.locationName || ''}
                           </span>
                           {selectedUser.endLocation.timeFormatted && (
                             <p className="text-xs text-gray-500 mt-1">
