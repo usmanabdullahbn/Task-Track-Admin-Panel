@@ -191,15 +191,16 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
 
           // Process idle logs with start/end times
           const idleLocations = (idleLogs || []).map((idle, idx) => {
-            const correspondingLocation = locations.find(loc => 
+            const correspondingLocation = locations.find(loc =>
               loc.timestamp >= idle.startTime && loc.timestamp <= (idle.endTime || new Date())
             )
-            
+
             return {
               lat: correspondingLocation?.latitude || 24.8607,
               lng: correspondingLocation?.longitude || 67.0011,
               title: correspondingLocation?.locationName || `Idle Location ${idx + 1}`,
               start_time: idle.startTime ? new Date(idle.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+              start_time_ts: idle.startTime, // Store original timestamp for sorting
               end_time: idle.endTime ? new Date(idle.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Ongoing',
             }
           })
@@ -219,6 +220,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
               lng: t.longitude ?? t.lng,
               title: t.taskTitle || (t.taskId && t.taskId.title) || (t.taskId && t.taskId.name) || `Task ${idx + 1}`,
               start_time: t.startTime ? new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (t.start_time || ''),
+              start_time_ts: t.startTime, // Store original timestamp for sorting
               // if worker left early, show leftTime as the end_time
               end_time: t.leftTime
                 ? new Date(t.leftTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -298,35 +300,197 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     setDirections(null)
   }, [selectedUserId, selectedDate])
 
-  // Fetch directions when user data loads (only used when we don't have raw GPS locations)
+  // Build sorted timeline with all locations
+  const sortedTimelineItems = useMemo(() => {
+    if (!selectedUser) return []
+
+    const items = []
+
+    // Add start location
+    if (selectedUser.startLocation) {
+      // Find the end time (when they leave for first task or go to first idle location)
+      let endTime = ''
+      if (selectedUser.tasks && selectedUser.tasks.length > 0) {
+        endTime = selectedUser.tasks[0].start_time // First task start time
+      } else if (selectedUser.idleLocations && selectedUser.idleLocations.length > 0) {
+        endTime = selectedUser.idleLocations[0].start_time
+      }
+
+      const startItem = {
+        type: 'start',
+        title: selectedUser.startLocation.locationName || 'Start Location',
+        time: selectedUser.startLocation.timestamp,
+        timeFormatted: selectedUser.startLocation.timeFormatted || (selectedUser.startLocation.timestamp ? new Date(selectedUser.startLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
+        endTimeFormatted: endTime ? endTime : 'Ongoing',
+      }
+      items.push(startItem)
+      console.log('Start Location:', startItem, selectedUser.startLocation)
+    }
+
+    // Add tasks
+    if (selectedUser.tasks && selectedUser.tasks.length > 0) {
+      selectedUser.tasks.forEach((task, idx) => {
+        const taskItem = {
+          type: 'task',
+          title: task.title || 'Task',
+          time: task.start_time_ts || task.start_time,
+          timeFormatted: task.start_time,
+          endTimeFormatted: task.end_time ? task.end_time : 'Ongoing',
+        }
+        items.push(taskItem)
+        console.log(`Task ${idx + 1}:`, taskItem, task)
+      })
+    }
+
+    // Add idle locations
+    if (selectedUser.idleLocations && selectedUser.idleLocations.length > 0) {
+      selectedUser.idleLocations.forEach((idle, idx) => {
+        const idleItem = {
+          type: 'idle',
+          title: idle.title || 'Idle Location',
+          time: idle.start_time_ts || idle.start_time,
+          timeFormatted: idle.start_time,
+          endTimeFormatted: idle.end_time ? idle.end_time : 'Ongoing',
+        }
+        items.push(idleItem)
+        console.log(`Idle Location ${idx + 1}:`, idleItem, idle)
+      })
+    }
+
+    // Add end location
+    if (selectedUser.endLocation) {
+      const endItem = {
+        type: 'end',
+        title: selectedUser.endLocation.locationName || 'End Location',
+        time: selectedUser.endLocation.timestamp,
+        timeFormatted: selectedUser.endLocation.timeFormatted || (selectedUser.endLocation.timestamp ? new Date(selectedUser.endLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
+        endTimeFormatted: 'Ongoing',
+      }
+      items.push(endItem)
+      console.log('End Location:', endItem, selectedUser.endLocation)
+    }
+
+    // Sort by time (ascending - earliest first)
+    items.sort((a, b) => {
+      const timeA = a.time ? (typeof a.time === 'string' ? new Date(a.time).getTime() : new Date(a.time).getTime()) : 0
+      const timeB = b.time ? (typeof b.time === 'string' ? new Date(b.time).getTime() : new Date(b.time).getTime()) : 0
+      return timeA - timeB
+    })
+
+    console.log('Complete sorted timeline items:', items)
+    return items
+  }, [selectedUser])
+
+  // Build complete route with all stops in chronological order
+  const buildCompleteRoute = useMemo(() => {
+    if (!selectedUser) return null
+
+    // Collect all stops with their timestamps
+    const allStops = []
+
+    // Add start location
+    if (selectedUser.startLocation) {
+      allStops.push({
+        lat: selectedUser.startLocation.latitude,
+        lng: selectedUser.startLocation.longitude,
+        time: selectedUser.startLocation.timestamp,
+        type: 'start',
+        title: 'Start Location',
+      })
+    }
+
+    // Add tasks
+    if (selectedUser.tasks && selectedUser.tasks.length > 0) {
+      selectedUser.tasks.forEach((task, idx) => {
+        allStops.push({
+          lat: task.lat,
+          lng: task.lng,
+          time: task.start_time,
+          type: 'task',
+          title: task.title,
+          index: idx,
+        })
+      })
+    }
+
+    // Add idle locations
+    if (selectedUser.idleLocations && selectedUser.idleLocations.length > 0) {
+      selectedUser.idleLocations.forEach((idle, idx) => {
+        allStops.push({
+          lat: idle.lat,
+          lng: idle.lng,
+          time: idle.start_time,
+          type: 'idle',
+          title: idle.title,
+          index: idx,
+        })
+      })
+    }
+
+    // Add end location
+    if (selectedUser.endLocation) {
+      allStops.push({
+        lat: selectedUser.endLocation.latitude,
+        lng: selectedUser.endLocation.longitude,
+        time: selectedUser.endLocation.timestamp,
+        type: 'end',
+        title: 'End Location',
+      })
+    }
+
+    // Sort by time
+    allStops.sort((a, b) => {
+      const timeA = a.time ? new Date(a.time).getTime() : 0
+      const timeB = b.time ? new Date(b.time).getTime() : 0
+      return timeA - timeB
+    })
+
+    return allStops
+  }, [selectedUser])
+
+  // Fetch directions for the complete route (always use Directions API to follow actual roads)
   useEffect(() => {
     if (!selectedUser) return
-    if (routePath.length <= 1) return
-    // if we are using GPS location points we render our own polyline, no need for directions
-    if (selectedUser.locations && selectedUser.locations.length > 0) return
-    if (directions) return // Prevent recalculation if already fetched
+    if (!buildCompleteRoute || buildCompleteRoute.length <= 1) return
+    if (directions) return
 
     const directionsService = new window.google.maps.DirectionsService()
+    const origin = buildCompleteRoute[0]
+    const destination = buildCompleteRoute[buildCompleteRoute.length - 1]
 
-    const waypoints = selectedUser.tasks.slice(0, -1).map(task => ({
-      location: { lat: task.lat, lng: task.lng },
-      stopover: true
+    // Get waypoints (all stops except origin and destination)
+    const waypoints = buildCompleteRoute.slice(1, -1).map(stop => ({
+      location: { lat: stop.lat, lng: stop.lng },
+      stopover: true,
     }))
+
+    // Google Directions API has a max of 25 waypoints
+    // If we have more, we need to split into multiple requests
+    if (waypoints.length > 25) {
+      console.warn('Too many waypoints for single request. Using first 25 waypoints.')
+
+      // For now, we'll just use the first 25 waypoints
+      // In production, you might want to split and combine multiple direction results
+      waypoints.length = 25
+    }
 
     directionsService.route(
       {
-        origin: routePath[0],
-        destination: routePath[routePath.length - 1],
+        origin: { lat: origin.lat, lng: origin.lng },
+        destination: { lat: destination.lat, lng: destination.lng },
         waypoints: waypoints,
         travelMode: window.google.maps.TravelMode.DRIVING,
+        optimizeWaypoints: false, // Keep waypoints in the order provided (chronological)
       },
       (result, status) => {
         if (status === window.google.maps.DirectionsStatus.OK) {
           setDirections(result)
+        } else {
+          console.error('Directions request failed:', status)
         }
       }
     )
-  }, [selectedUser])
+  }, [selectedUser, buildCompleteRoute])
 
   const mapCenter = selectedUser ? {
     lat: selectedUser.office.lat,
@@ -577,29 +741,17 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                     ))}
 
 
-                    {/* If we have raw GPS locations draw direct polyline */}
-                    {selectedUser.locations && selectedUser.locations.length > 1 && (
-                      <Polyline
-                        path={selectedUser.locations.map(loc => ({ lat: loc.latitude, lng: loc.longitude }))}
-                        options={{
-                          strokeColor: "#15803d",
-                          strokeOpacity: 1,
-                          strokeWeight: 5,
-                        }}
-                      />
-                    )}
-
-                    {/* Real Road Route using DirectionsRenderer (fallback if no GPS path) */}
+                    {/* Route following actual Google Maps roads */}
                     {directions && (
                       <DirectionsRenderer
+                        directions={directions}
                         options={{
-                          directions: directions,
                           polylineOptions: {
                             strokeColor: "#15803d",
-                            strokeOpacity: 1,
+                            strokeOpacity: 0.8,
                             strokeWeight: 5,
                           },
-                          suppressMarkers: true, // Don't show default markers
+                          suppressMarkers: true,
                         }}
                       />
                     )}
@@ -613,86 +765,44 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                   Complete Route Timeline
                 </h2>
 
-                {selectedUser.tasks && selectedUser.tasks.length === 0 && (!selectedUser.locations || selectedUser.locations.length === 0) ? (
+                {sortedTimelineItems.length === 0 ? (
                   <p className="text-gray-500 text-sm">No tasks, locations or idle records for this date.</p>
                 ) : (
                   <ol className="space-y-3">
-                    {/* Start Location */}
-                    {selectedUser.startLocation && (
-                      <li className="flex items-center gap-3">
-                        <span className="h-6 w-6 rounded-full bg-green-700 text-white flex items-center justify-center text-xs font-bold">
-                          S
-                        </span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-700 font-medium">
-                            Start Location – {selectedUser.startLocation.locationName || ''}
-                          </span>
-                          {selectedUser.startLocation.timeFormatted && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              {selectedUser.startLocation.timeFormatted}
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    )}
+                    {sortedTimelineItems.map((item, index) => {
+                      let badgeLabel = ''
+                      let badgeColor = ''
 
-                    {/* Tasks */}
-                    {selectedUser.tasks && selectedUser.tasks.map((task, index) => (
-                      <li key={`task-${index}`} className="flex items-center gap-3">
-                        <span className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                          T{index + 1}
-                        </span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-700 font-medium">
-                            {task.title}
-                          </span>
-                          {(task.start_time || task.end_time) && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              {task.start_time} - {task.end_time}
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
+                      if (item.type === 'start') {
+                        badgeLabel = 'S'
+                        badgeColor = 'bg-green-700'
+                      } else if (item.type === 'task') {
+                        badgeLabel = `T${index + 1}`
+                        badgeColor = 'bg-blue-600'
+                      } else if (item.type === 'idle') {
+                        badgeLabel = `I${index + 1}`
+                        badgeColor = 'bg-amber-500'
+                      } else if (item.type === 'end') {
+                        badgeLabel = 'E'
+                        badgeColor = 'bg-pink-600'
+                      }
 
-                    {/* Idle Locations */}
-                    {selectedUser.idleLocations && selectedUser.idleLocations.map((idle, index) => (
-                      <li key={`idle-${index}`} className="flex items-center gap-3">
-                        <span className="h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold">
-                          I{index + 1}
-                        </span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-700 font-medium">
-                            Idle Location {index + 1}
+                      return (
+                        <li key={`${item.type}-${index}`} className="flex items-center gap-3">
+                          <span className={`h-6 w-6 rounded-full ${badgeColor} text-white flex items-center justify-center text-xs font-bold flex-shrink-0`}>
+                            {badgeLabel}
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {idle.title}
-                            {idle.start_time && idle.end_time && (
-                              <> • {idle.start_time} - {idle.end_time}</>
-                            )}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-
-                    {/* End Location */}
-                    {selectedUser.endLocation && (
-                      <li className="flex items-center gap-3">
-                        <span className="h-6 w-6 rounded-full bg-pink-600 text-white flex items-center justify-center text-xs font-bold">
-                          E
-                        </span>
-                        <div className="flex-1">
-                          <span className="text-sm text-gray-700 font-medium">
-                            Last Location – {selectedUser.endLocation.locationName || ''}
-                          </span>
-                          {selectedUser.endLocation.timeFormatted && (
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm text-gray-700 font-medium block">
+                              {item.title}
+                            </span>
                             <p className="text-xs text-gray-500 mt-1">
-                              {selectedUser.endLocation.timeFormatted}
+                              {item.timeFormatted} - {item.endTimeFormatted}
                             </p>
-                          )}
-                        </div>
-                      </li>
-                    )}
+                          </div>
+                        </li>
+                      )
+                    })}
                   </ol>
                 )}
 
