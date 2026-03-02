@@ -198,7 +198,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
             return {
               lat: correspondingLocation?.latitude || 24.8607,
               lng: correspondingLocation?.longitude || 67.0011,
-              title: correspondingLocation?.locationName || `Idle Location ${idx + 1}`,
+              // keep a plain name (empty if unknown); generic label added later
+          title: correspondingLocation?.locationName || '',
               start_time: idle.startTime ? new Date(idle.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
               start_time_ts: idle.startTime, // Store original timestamp for sorting
               end_time: idle.endTime ? new Date(idle.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Ongoing',
@@ -318,10 +319,11 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
 
       const startItem = {
         type: 'start',
-        title: selectedUser.startLocation.locationName || 'Start Location',
+        // always show the generic label plus a name or 'Anonymous' when missing
+        title: `Start Location – ${selectedUser.startLocation.locationName || 'Anonymous'}`,
         time: selectedUser.startLocation.timestamp,
         timeFormatted: selectedUser.startLocation.timeFormatted || (selectedUser.startLocation.timestamp ? new Date(selectedUser.startLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
-        endTimeFormatted: endTime ? endTime : 'Ongoing',
+        endTimeFormatted:"" // we don't need an endTime for the initial 'S' entry, avoid showing "Ongoing"
       }
       items.push(startItem)
       console.log('Start Location:', startItem, selectedUser.startLocation)
@@ -347,7 +349,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
       selectedUser.idleLocations.forEach((idle, idx) => {
         const idleItem = {
           type: 'idle',
-          title: idle.title || 'Idle Location',
+          // show 'Anonymous' when no specific title provided
+          title: idle.title ? `Idle Location – ${idle.title}` : 'Idle Location – Anonymous',
           time: idle.start_time_ts || idle.start_time,
           timeFormatted: idle.start_time,
           endTimeFormatted: idle.end_time ? idle.end_time : 'Ongoing',
@@ -361,10 +364,11 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     if (selectedUser.endLocation) {
       const endItem = {
         type: 'end',
-        title: selectedUser.endLocation.locationName || 'End Location',
+        title: `LASTEST Location – ${selectedUser.endLocation.locationName || 'Anonymous'}`,
         time: selectedUser.endLocation.timestamp,
         timeFormatted: selectedUser.endLocation.timeFormatted || (selectedUser.endLocation.timestamp ? new Date(selectedUser.endLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
-        endTimeFormatted: 'Ongoing',
+        // we don't need an endTime for the final 'C' entry, avoid showing "Ongoing"
+        endTimeFormatted: '',
       }
       items.push(endItem)
       console.log('End Location:', endItem, selectedUser.endLocation)
@@ -783,8 +787,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                         badgeLabel = `I${index + 1}`
                         badgeColor = 'bg-amber-500'
                       } else if (item.type === 'end') {
-                        badgeLabel = 'E'
-                        badgeColor = 'bg-pink-600'
+                        badgeLabel = 'C'
+                        badgeColor = 'bg-red-600'
                       }
 
                       return (
@@ -797,7 +801,10 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                               {item.title}
                             </span>
                             <p className="text-xs text-gray-500 mt-1">
-                              {item.timeFormatted} - {item.endTimeFormatted}
+                              {item.timeFormatted}
+                              {item.type !== 'end' && item.endTimeFormatted && (
+                                <> - {item.endTimeFormatted}</>
+                              )}
                             </p>
                           </div>
                         </li>
