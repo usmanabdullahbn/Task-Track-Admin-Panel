@@ -112,6 +112,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
   const [error, setError] = useState(null)
   const [selectedMarker, setSelectedMarker] = useState(null)
   const [directions, setDirections] = useState(null)
+  const [map, setMap] = useState(null) // reference to Google Map instance
 
   // Fetch all users (technical and supervisor) on mount
   useEffect(() => {
@@ -296,9 +297,10 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     ]
   }, [selectedUser])
 
-  // Reset directions when user or date changes
+  // Reset directions/snapped path when user or date changes
   useEffect(() => {
     setDirections(null)
+    setSnappedPath([])
   }, [selectedUserId, selectedDate])
 
   // Build sorted timeline with all locations
@@ -323,7 +325,9 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
         title: `Start Location – ${selectedUser.startLocation.locationName || 'Anonymous'}`,
         time: selectedUser.startLocation.timestamp,
         timeFormatted: selectedUser.startLocation.timeFormatted || (selectedUser.startLocation.timestamp ? new Date(selectedUser.startLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
-        endTimeFormatted:"" // we don't need an endTime for the initial 'S' entry, avoid showing "Ongoing"
+        endTimeFormatted:"", // we don't need an endTime for the initial 'S' entry, avoid showing "Ongoing"
+        lat: selectedUser.startLocation.latitude,
+        lng: selectedUser.startLocation.longitude,
       }
       items.push(startItem)
       console.log('Start Location:', startItem, selectedUser.startLocation)
@@ -338,6 +342,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
           time: task.start_time_ts || task.start_time,
           timeFormatted: task.start_time,
           endTimeFormatted: task.end_time ? task.end_time : 'Ongoing',
+          lat: task.lat,
+          lng: task.lng,
         }
         items.push(taskItem)
         console.log(`Task ${idx + 1}:`, taskItem, task)
@@ -354,6 +360,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
           time: idle.start_time_ts || idle.start_time,
           timeFormatted: idle.start_time,
           endTimeFormatted: idle.end_time ? idle.end_time : 'Ongoing',
+          lat: idle.lat,
+          lng: idle.lng,
         }
         items.push(idleItem)
         console.log(`Idle Location ${idx + 1}:`, idleItem, idle)
@@ -369,6 +377,8 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
         timeFormatted: selectedUser.endLocation.timeFormatted || (selectedUser.endLocation.timestamp ? new Date(selectedUser.endLocation.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''),
         // we don't need an endTime for the final 'C' entry, avoid showing "Ongoing"
         endTimeFormatted: '',
+        lat: selectedUser.endLocation.latitude,
+        lng: selectedUser.endLocation.longitude,
       }
       items.push(endItem)
       console.log('End Location:', endItem, selectedUser.endLocation)
@@ -453,8 +463,10 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
   }, [selectedUser])
 
   // Fetch directions for the complete route (always use Directions API to follow actual roads)
+  // Skip if we already have raw GPS points – we'll draw those (snapped) instead
   useEffect(() => {
     if (!selectedUser) return
+    if (selectedUser.locations && selectedUser.locations.length > 0) return
     if (!buildCompleteRoute || buildCompleteRoute.length <= 1) return
     if (directions) return
 
@@ -508,6 +520,54 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
     width: "100%",
     height: "500px",
   }
+
+  // state to store snapped coordinates when user GPS points need road alignment
+  const [snappedPath, setSnappedPath] = useState([])
+
+  // attempt to snap raw GPS points to nearest road with Google Roads API
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_API_GOOGLE_MAPS_API_KEY
+    if (!apiKey || routePath.length < 2) return
+
+    // only snap if we are showing GPS raw points
+    if (!selectedUser || !(selectedUser.locations && selectedUser.locations.length > 0)) return
+
+    // Roads API allows up to 100 points per request; chunk if needed
+    const chunks = []
+    for (let i = 0; i < routePath.length; i += 100) {
+      chunks.push(routePath.slice(i, i + 100))
+    }
+
+    const snapChunk = async (pts) => {
+      const pathParam = pts.map(p => `${p.lat},${p.lng}`).join("|")
+      try {
+        const res = await fetch(
+          `https://roads.googleapis.com/v1/snapToRoads?interpolate=true&key=${apiKey}&path=${encodeURIComponent(pathParam)}`
+        )
+        const data = await res.json()
+        if (data && data.snappedPoints) {
+          return data.snappedPoints.map(sp => ({
+            lat: sp.location.latitude,
+            lng: sp.location.longitude,
+          }))
+        }
+      } catch (e) {
+        console.error("Roads API error", e)
+      }
+      return []
+    }
+
+    (async () => {
+      let allSnapped = []
+      for (const chunk of chunks) {
+        const snapped = await snapChunk(chunk)
+        allSnapped = allSnapped.concat(snapped)
+      }
+      if (allSnapped.length > 0) {
+        setSnappedPath(allSnapped)
+      }
+    })()
+  }, [routePath, selectedUser])
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -592,6 +652,7 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                     mapContainerStyle={mapContainerStyle}
                     center={mapCenter}
                     zoom={selectedUser?.tasks?.length ? 12 : 13}
+                    onLoad={mapInstance => setMap(mapInstance)}
                   >
                     {/* Start Marker (first GPS point) */}
                     {selectedUser.startLocation && (
@@ -745,8 +806,24 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                     ))}
 
 
-                    {/* Route following actual Google Maps roads */}
-                    {directions && (
+                    {/* Draw path for raw GPS locations (snapped to road if available) */}
+                    {selectedUser.locations && selectedUser.locations.length > 1 && (
+                      <Polyline
+                        path={snappedPath.length > 0
+                          ? snappedPath
+                          : selectedUser.locations.map(loc => ({ lat: loc.latitude, lng: loc.longitude }))
+                        }
+                        options={{
+                          strokeColor: "#15803d",
+                          strokeOpacity: 1,
+                          strokeWeight: 5,
+                        }}
+                      />
+                    )}
+
+                    {/* Route following actual Google Maps roads for complete route/dates without raw GPS */}
+                    {/* only show directions if there are no raw GPS points (snapping handles those) */}
+                    {directions && !(selectedUser.locations && selectedUser.locations.length > 0) && (
                       <DirectionsRenderer
                         directions={directions}
                         options={{
@@ -791,8 +868,19 @@ const EmployeeDayTimelinePageGoogleMaps = () => {
                         badgeColor = 'bg-red-600'
                       }
 
+                      const handleZoom = () => {
+                        if (map && item.lat != null && item.lng != null) {
+                          map.panTo({ lat: item.lat, lng: item.lng })
+                          map.setZoom(15)
+                        }
+                      }
+
                       return (
-                        <li key={`${item.type}-${index}`} className="flex items-center gap-3">
+                        <li
+                          key={`${item.type}-${index}`}
+                          className="flex items-center gap-3 cursor-pointer"
+                          onClick={handleZoom}
+                        >
                           <span className={`h-6 w-6 rounded-full ${badgeColor} text-white flex items-center justify-center text-xs font-bold flex-shrink-0`}>
                             {badgeLabel}
                           </span>
