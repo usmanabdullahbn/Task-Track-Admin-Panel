@@ -10,6 +10,7 @@ import ProjectsPage from "./projects/page";
 import EmployeeDayTimelinePage from "./component/EmployeeDayTimelinePage";
 import ProfilePage from "./component/ProfilePage";
 import CustomerProfilePage from "./CustomerScreens/CustomerDash/CustomerProfilePage";
+import ImportDataBtn from "./component/ImportDataBtn";
 
 
 // Asset pages
@@ -365,6 +366,7 @@ const App = () => {
         {/* 404 fallback */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      {user && (user.role === "admin" || user.role === "manager") && <ImportDataBtn />}
     </div>
   );
 };
