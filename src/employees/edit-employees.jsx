@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Sidebar from "../component/sidebar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
@@ -12,6 +13,7 @@ const EditEmployeePage = () => {
     designation: "",
     email: "",
     phone: "",
+    password: "",
     role: "employee",
     is_active: true,
   });
@@ -23,6 +25,7 @@ const EditEmployeePage = () => {
   // Success modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [employeeName, setEmployeeName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch employee data
   const fetchEmployee = async () => {
@@ -36,6 +39,7 @@ const EditEmployeePage = () => {
         designation: emp.designation || "",
         email: emp.email || "",
         phone: emp.phone || "",
+        password: emp.password || "",
         role: emp.role || "employee",
         is_active: emp.is_active !== undefined ? emp.is_active : true,
       });
@@ -188,6 +192,34 @@ const EditEmployeePage = () => {
               </div>
             </div>
 
+            {/* Row 3 - Password */}
+            {/* Row 3 - Password */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="New password (leave blank to keep current)"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 pr-10 text-sm focus:border-green-700 focus:ring-green-700"
+                  />
+
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Role */}
             {/* <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -214,12 +246,21 @@ const EditEmployeePage = () => {
                   type="checkbox"
                   name="is_active"
                   checked={formData.is_active}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_active: e.target.checked,
+                    }))
+                  }
                   className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
                 />
-                <span className="text-sm font-medium text-gray-700">Is Active</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Is Active
+                </span>
               </label>
-              <p className="text-xs text-gray-500 mt-1">Uncheck to deactivate this employee</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Uncheck to deactivate this employee
+              </p>
             </div>
 
             {/* Error Message */}
