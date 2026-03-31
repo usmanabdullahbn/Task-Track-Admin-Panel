@@ -64,11 +64,16 @@ export const apiClient = {
     return response.json();
   },
 
-  async validateUserMailbox(email) {
+  async validateUserMailbox(email, options = {}) {
+    const body = { email };
+    if (options?.ignoreUserId) {
+      body.ignoreUserId = options.ignoreUserId;
+    }
+
     const response = await fetch(`${API_BASE_URL}/users/validate-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -90,12 +95,14 @@ export const apiClient = {
         detailsLower.includes("route not found") ||
         detailsLower.includes("cannot post");
 
-      // Backward compatibility: older deployed backends may not have /users/validate-email yet.
-      // In that case, do not block user creation for a syntactically valid email.
+      // Strict validation: if backend verification route is unavailable,
+      // do not allow a false "verified" state.
       if (routeMissing) {
         return {
-          mailboxExists: true,
-          message: "Mailbox check service is unavailable on server. Proceeding with format validation.",
+          mailboxExists: false,
+          status: "verification_unavailable",
+          message:
+            "Email verification service is unavailable on server. Cannot confirm deliverability.",
           verificationUnavailable: true,
         };
       }

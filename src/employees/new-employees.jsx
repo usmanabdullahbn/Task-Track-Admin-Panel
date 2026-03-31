@@ -71,7 +71,9 @@ const NewEmployeePage = () => {
         if (canceled) return
         setEmailValidation({
           status: result.mailboxExists ? "valid" : "invalid",
-          message: result.mailboxExists ? "Mailbox verified." : "Mailbox does not exist",
+          message:
+            result.message ||
+            (result.mailboxExists ? "Mailbox verified." : "Mailbox does not exist"),
         })
       } catch (err) {
         if (canceled) return
@@ -122,7 +124,7 @@ const NewEmployeePage = () => {
       setError(
         emailValidation.status === "checking"
           ? "Please wait while email mailbox is being validated"
-          : "Mailbox does not exist"
+          : emailValidation.message || "Mailbox does not exist"
       )
       return
     }

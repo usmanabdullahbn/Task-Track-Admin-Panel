@@ -4,6 +4,8 @@ import Sidebar from "../component/sidebar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "../lib/api-client";
 
+const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/;
+
 const EditEmployeePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +23,10 @@ const EditEmployeePage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [emailValidation, setEmailValidation] = useState({
+    status: "idle",
+    message: "",
+  });
 
   // Success modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -55,6 +61,49 @@ const EditEmployeePage = () => {
     fetchEmployee();
   }, [id]);
 
+  useEffect(() => {
+    const email = formData.email.trim();
+
+    if (!email) {
+      setEmailValidation({ status: "idle", message: "" });
+      return;
+    }
+
+    if (!emailRe.test(email)) {
+      setEmailValidation({
+        status: "invalid",
+        message: "Please provide a valid email",
+      });
+      return;
+    }
+
+    let canceled = false;
+    const timeoutId = setTimeout(async () => {
+      setEmailValidation({ status: "checking", message: "Checking mailbox..." });
+      try {
+        const result = await apiClient.validateUserMailbox(email, { ignoreUserId: id });
+        if (canceled) return;
+        setEmailValidation({
+          status: result.mailboxExists ? "valid" : "invalid",
+          message:
+            result.message ||
+            (result.mailboxExists ? "Mailbox verified." : "Mailbox does not exist"),
+        });
+      } catch (err) {
+        if (canceled) return;
+        setEmailValidation({
+          status: "invalid",
+          message: err.message || "Mailbox does not exist",
+        });
+      }
+    }, 500);
+
+    return () => {
+      canceled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [formData.email, id]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -65,15 +114,18 @@ const EditEmployeePage = () => {
     if (e?.preventDefault) e.preventDefault();
 
     setError("");
-    setSubmitting(true);
-
-    const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/;
-
     if (!formData.name.trim()) return setError("Please provide a name");
-    if (!formData.designation.trim())
-      return setError("Please provide a designation");
-    if (!emailRe.test(formData.email))
-      return setError("Please provide a valid email");
+    if (!formData.designation.trim()) return setError("Please provide a designation");
+    if (!emailRe.test(formData.email)) return setError("Please provide a valid email");
+    if (emailValidation.status !== "valid") {
+      return setError(
+        emailValidation.status === "checking"
+          ? "Please wait while email mailbox is being validated"
+          : emailValidation.message || "Mailbox does not exist"
+      );
+    }
+
+    setSubmitting(true);
 
     try {
       const payload = {
@@ -93,6 +145,15 @@ const EditEmployeePage = () => {
       setSubmitting(false);
     }
   };
+
+  const isSubmitDisabled = submitting || emailValidation.status !== "valid";
+  const disabledReason = submitting
+    ? "Saving..."
+    : emailValidation.status === "checking"
+      ? "Checking mailbox..."
+      : emailValidation.status === "invalid"
+        ? emailValidation.message || "Mailbox does not exist"
+        : "Enter a valid, existing mailbox to continue";
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
@@ -175,6 +236,17 @@ const EditEmployeePage = () => {
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:ring-green-700"
                 />
+                {emailValidation.message && (
+                  <p
+                    className={`mt-1 text-xs ${
+                      emailValidation.status === "valid"
+                        ? "text-green-700"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {emailValidation.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -268,13 +340,20 @@ const EditEmployeePage = () => {
 
             {/* Buttons */}
             <div className="mt-8 flex flex-wrap gap-4">
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition disabled:opacity-60"
-              >
-                {submitting ? "Saving..." : "Save Changes"}
-              </button>
+              <div className="relative group inline-block">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitDisabled}
+                  className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Saving..." : "Save Changes"}
+                </button>
+                {isSubmitDisabled && (
+                  <div className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-red-600 px-3 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {disabledReason}
+                  </div>
+                )}
+              </div>
 
               <Link
                 to="/employees"
