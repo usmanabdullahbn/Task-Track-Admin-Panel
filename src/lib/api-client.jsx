@@ -64,6 +64,71 @@ export const apiClient = {
     return response.json();
   },
 
+  async validateUserMailbox(email) {
+    const response = await fetch(`${API_BASE_URL}/users/validate-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      let details = "";
+      try {
+        const data = await response.json();
+        details = data.message || JSON.stringify(data);
+      } catch (e) {
+        try {
+          details = await response.text();
+        } catch (ee) {
+          details = response.statusText || "Unknown error";
+        }
+      }
+
+      const detailsLower = String(details || "").toLowerCase();
+      const routeMissing =
+        response.status === 404 ||
+        detailsLower.includes("route not found") ||
+        detailsLower.includes("cannot post");
+
+      // Backward compatibility: older deployed backends may not have /users/validate-email yet.
+      // In that case, do not block user creation for a syntactically valid email.
+      if (routeMissing) {
+        return {
+          mailboxExists: true,
+          message: "Mailbox check service is unavailable on server. Proceeding with format validation.",
+          verificationUnavailable: true,
+        };
+      }
+
+      throw new Error(details || "Failed to validate email mailbox");
+    }
+
+    const data = await response.json();
+    const status = typeof data?.status === "string" ? data.status.toLowerCase() : "";
+    const explicitBoolean =
+      data?.mailboxExists ??
+      data?.exists ??
+      data?.deliverable ??
+      data?.isValid ??
+      data?.valid;
+
+    const mailboxExists =
+      typeof explicitBoolean === "boolean"
+        ? explicitBoolean
+        : ["valid", "deliverable", "ok", "exists"].includes(status)
+          ? true
+          : ["invalid", "undeliverable", "does_not_exist", "not_found"].includes(status)
+            ? false
+            : false;
+
+    return {
+      mailboxExists,
+      message:
+        data?.message ||
+        (mailboxExists ? "Mailbox verified successfully." : "Mailbox does not exist."),
+    };
+  },
+
   async updateUser(id, userData) {
     const response = await fetch(`${API_BASE_URL}/users/${id}`, {
       method: "PUT",

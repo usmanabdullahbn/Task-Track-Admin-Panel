@@ -3,6 +3,8 @@ import Sidebar from "../component/sidebar"
 import { Link, useNavigate } from "react-router-dom"
 import { apiClient } from "../lib/api-client"
 
+const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/
+
 const NewEmployeePage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -19,6 +21,10 @@ const NewEmployeePage = () => {
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [emailValidation, setEmailValidation] = useState({
+    status: "idle",
+    message: "",
+  })
   const [showModal, setShowModal] = useState(false)
   const [employeeData, setEmployeeData] = useState(null)
 
@@ -44,6 +50,44 @@ const NewEmployeePage = () => {
     fetchCustomers()
   }, [])
 
+  useEffect(() => {
+    const email = formData.email.trim()
+
+    if (!email) {
+      setEmailValidation({ status: "idle", message: "" })
+      return
+    }
+
+    if (!emailRe.test(email)) {
+      setEmailValidation({ status: "invalid", message: "Please provide a valid email" })
+      return
+    }
+
+    let canceled = false
+    const timeoutId = setTimeout(async () => {
+      setEmailValidation({ status: "checking", message: "Checking mailbox..." })
+      try {
+        const result = await apiClient.validateUserMailbox(email)
+        if (canceled) return
+        setEmailValidation({
+          status: result.mailboxExists ? "valid" : "invalid",
+          message: result.mailboxExists ? "Mailbox verified." : "Mailbox does not exist",
+        })
+      } catch (err) {
+        if (canceled) return
+        setEmailValidation({
+          status: "invalid",
+          message: err.message || "Mailbox does not exist",
+        })
+      }
+    }, 500)
+
+    return () => {
+      canceled = true
+      clearTimeout(timeoutId)
+    }
+  }, [formData.email])
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
@@ -65,35 +109,37 @@ const NewEmployeePage = () => {
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
     setError("")
-    setSubmitting(true)
-
-    const emailRe = /^[\w.-]+@[\w.-]+\.\w+$/
 
     if (!formData.name.trim()) {
       setError("Please provide a User name")
-      setSubmitting(false)
       return
     }
     if (!emailRe.test(formData.email)) {
       setError("Please provide a valid email")
-      setSubmitting(false)
+      return
+    }
+    if (emailValidation.status !== "valid") {
+      setError(
+        emailValidation.status === "checking"
+          ? "Please wait while email mailbox is being validated"
+          : "Mailbox does not exist"
+      )
       return
     }
     if (!formData.designation.trim()) {
       setError("Please provide a designation")
-      setSubmitting(false)
       return
     }
     if (!formData.role) {
       setError("Please provide a role")
-      setSubmitting(false)
       return
     }
     if (formData.role === "employee" && !formData.customerId) {
       setError("Please select a customer for employee role")
-      setSubmitting(false)
       return
     }
+
+    setSubmitting(true)
 
     try {
       const payload = { 
@@ -118,6 +164,15 @@ const NewEmployeePage = () => {
       setSubmitting(false)
     }
   }
+
+  const isSubmitDisabled = submitting || emailValidation.status !== "valid"
+  const disabledReason = submitting
+    ? "Adding employee..."
+    : emailValidation.status === "checking"
+      ? "Checking mailbox..."
+      : emailValidation.status === "invalid"
+        ? emailValidation.message || "Mailbox does not exist"
+        : "Enter a valid, existing mailbox to continue"
 
   const handleCloseModal = () => {
     setShowModal(false)
@@ -155,6 +210,15 @@ const NewEmployeePage = () => {
                     required={name1 === "name"}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-green-700 focus:outline-none focus:ring-1 focus:ring-green-700"
                   />
+                  {name1 === "email" && emailValidation.message && (
+                    <p
+                      className={`mt-1 text-xs ${
+                        emailValidation.status === "valid" ? "text-green-700" : "text-red-600"
+                      }`}
+                    >
+                      {emailValidation.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{name2}</label>
@@ -213,13 +277,20 @@ const NewEmployeePage = () => {
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors disabled:opacity-60"
-              >
-                {submitting ? "Adding..." : "Add Employee"}
-              </button>
+              <div className="relative group inline-block">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitDisabled}
+                  className="rounded-lg bg-green-700 px-6 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Adding..." : "Add Employee"}
+                </button>
+                {isSubmitDisabled && (
+                  <div className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-red-600 px-3 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {disabledReason}
+                  </div>
+                )}
+              </div>
 
               {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
 
