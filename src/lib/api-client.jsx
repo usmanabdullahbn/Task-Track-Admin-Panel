@@ -5,6 +5,43 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const FILE_BASE_URL = API_BASE_URL.replace('/api', '');
 
+const validateDomainMxRecords = async (domain) => {
+  const providers = [
+    `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`,
+    `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=MX`,
+  ];
+
+  let lastError = null;
+
+  for (const url of providers) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/dns-json",
+        },
+      });
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      const answers = Array.isArray(data?.Answer) ? data.Answer : [];
+      const hasMx = answers.some((record) => Number(record?.type) === 15);
+
+      return {
+        ok: true,
+        hasMx,
+      };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  return { ok: false, hasMx: false };
+};
+
 export const apiClient = {
   // ============================
   //         DASHBOARD
@@ -96,8 +133,47 @@ export const apiClient = {
         detailsLower.includes("cannot post");
 
       // Strict validation: if backend verification route is unavailable,
-      // do not allow a false "verified" state.
+      // fall back to DNS MX validation to keep live checks working.
       if (routeMissing) {
+        const emailDomain = String(email || "").split("@")[1];
+        if (!emailDomain) {
+          return {
+            mailboxExists: false,
+            status: "invalid",
+            message: "Please provide a valid email",
+            verificationUnavailable: true,
+          };
+        }
+
+        try {
+          const dnsResult = await validateDomainMxRecords(emailDomain);
+          if (dnsResult.hasMx) {
+            return {
+              mailboxExists: true,
+              status: "deliverable",
+              message: "Mailbox verified.",
+              verificationUnavailable: true,
+            };
+          }
+
+          return {
+            mailboxExists: false,
+            status: "invalid",
+            message: "Mailbox is undeliverable (domain has no MX records).",
+            verificationUnavailable: true,
+          };
+        } catch (dnsError) {
+          return {
+            mailboxExists: false,
+            status: "verification_unavailable",
+            message:
+              "Email verification service is unavailable on server. Cannot confirm deliverability.",
+            verificationUnavailable: true,
+          };
+        }
+      }
+
+      if (response.status >= 500) {
         return {
           mailboxExists: false,
           status: "verification_unavailable",
