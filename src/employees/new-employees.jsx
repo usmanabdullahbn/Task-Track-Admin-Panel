@@ -24,6 +24,7 @@ const NewEmployeePage = () => {
   const [emailValidation, setEmailValidation] = useState({
     status: "idle",
     message: "",
+    email: "",
   })
   const [showModal, setShowModal] = useState(false)
   const [employeeData, setEmployeeData] = useState(null)
@@ -54,18 +55,27 @@ const NewEmployeePage = () => {
     const email = formData.email.trim()
 
     if (!email) {
-      setEmailValidation({ status: "idle", message: "" })
+      setEmailValidation({ status: "idle", message: "", email: "" })
       return
     }
 
     if (!emailRe.test(email)) {
-      setEmailValidation({ status: "invalid", message: "Please provide a valid email" })
+      setEmailValidation({
+        status: "invalid",
+        message: "Please provide a valid email",
+        email,
+      })
       return
     }
 
     let canceled = false
+    setEmailValidation({
+      status: "checking",
+      message: "Checking mailbox...",
+      email,
+    })
+
     const timeoutId = setTimeout(async () => {
-      setEmailValidation({ status: "checking", message: "Checking mailbox..." })
       try {
         const result = await apiClient.validateUserMailbox(email)
         if (canceled) return
@@ -74,12 +84,14 @@ const NewEmployeePage = () => {
           message:
             result.message ||
             (result.mailboxExists ? "Mailbox verified." : "Mailbox does not exist"),
+          email,
         })
       } catch (err) {
         if (canceled) return
         setEmailValidation({
           status: "invalid",
           message: err.message || "Mailbox does not exist",
+          email,
         })
       }
     }, 500)
@@ -111,18 +123,20 @@ const NewEmployeePage = () => {
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
     setError("")
+    const normalizedEmail = formData.email.trim()
+    const isCurrentEmailValidated = emailValidation.email === normalizedEmail
 
     if (!formData.name.trim()) {
       setError("Please provide a User name")
       return
     }
-    if (!emailRe.test(formData.email)) {
+    if (!emailRe.test(normalizedEmail)) {
       setError("Please provide a valid email")
       return
     }
-    if (emailValidation.status !== "valid") {
+    if (!isCurrentEmailValidated || emailValidation.status !== "valid") {
       setError(
-        emailValidation.status === "checking"
+        !isCurrentEmailValidated || emailValidation.status === "checking"
           ? "Please wait while email mailbox is being validated"
           : emailValidation.message || "Mailbox does not exist"
       )
@@ -145,7 +159,8 @@ const NewEmployeePage = () => {
 
     try {
       const payload = { 
-        ...formData, 
+        ...formData,
+        email: normalizedEmail,
         role: String(formData.role).toLowerCase(),
         customer: formData.role === "employee" && formData.customerId ? {
           id: formData.customerId,
@@ -167,10 +182,15 @@ const NewEmployeePage = () => {
     }
   }
 
-  const isSubmitDisabled = submitting || emailValidation.status !== "valid"
+  const normalizedEmail = formData.email.trim()
+  const isCurrentEmailValidated = emailValidation.email === normalizedEmail
+  const isSubmitDisabled =
+    submitting || !isCurrentEmailValidated || emailValidation.status !== "valid"
   const disabledReason = submitting
     ? "Adding employee..."
-    : emailValidation.status === "checking"
+    : !normalizedEmail
+      ? "Enter a valid, existing mailbox to continue"
+      : !isCurrentEmailValidated || emailValidation.status === "checking"
       ? "Checking mailbox..."
       : emailValidation.status === "invalid"
         ? emailValidation.message || "Mailbox does not exist"
